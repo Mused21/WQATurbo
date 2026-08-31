@@ -1,5 +1,5 @@
----@class WQAchievements
-local WQA = WQAchievements
+---@class WQATurbo
+local WQA = WQATurbo
 
 local LibQTip = LibStub("LibQTip-1.0")
 
@@ -28,7 +28,7 @@ WQA.data.custom.mission = { missionID = "", rewardID = "", rewardType = "none" }
 local ldb = LibStub:GetLibrary("LibDataBroker-1.1")
 local dataobj =
 	ldb:NewDataObject(
-		"WQAchievements",
+		"WQATurbo",
 		{
 			type = "data source",
 			text = "WQA",
@@ -131,7 +131,7 @@ function WQA:OnInitialize()
 			}
 		}
 	}
-	self.db = LibStub("AceDB-3.0"):New("WQADB", defaults, true)
+	self.db = LibStub("AceDB-3.0"):New("WQATurboDB", defaults, true)
 
 	-- copy old data
 	if type(self.db.global.custom) == "table" then
@@ -150,7 +150,7 @@ function WQA:OnInitialize()
 	end
 
 	-- Minimap Icon
-	icon:Register("WQAchievements", dataobj, self.db.profile.options.LibDBIcon)
+	icon:Register("WQATurbo", dataobj, self.db.profile.options.LibDBIcon)
 end
 
 function WQA:OnEnable()
@@ -160,16 +160,16 @@ function WQA:OnEnable()
 	-- 	Options
 	------------------
 	LibStub("AceConfig-3.0"):RegisterOptionsTable(
-		"WQAchievements",
+		"WQATurbo",
 		function()
 			return self:GetOptions()
 		end
 	)
-	self.optionsFrame = LibStub("AceConfigDialog-3.0"):AddToBlizOptions("WQAchievements", "WQAchievements")
+	self.optionsFrame = LibStub("AceConfigDialog-3.0"):AddToBlizOptions("WQATurbo", "WQATurbo")
 	local profiles = LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db)
 	LibStub("AceConfig-3.0"):RegisterOptionsTable("WQAProfiles", profiles)
 	self.optionsFrame.Profiles =
-		LibStub("AceConfigDialog-3.0"):AddToBlizOptions("WQAProfiles", "Profiles", "WQAchievements")
+		LibStub("AceConfigDialog-3.0"):AddToBlizOptions("WQAProfiles", "Profiles", "WQATurbo")
 
 	self.event = CreateFrame("Frame")
 	self.event:RegisterEvent("PLAYER_ENTERING_WORLD")
@@ -181,6 +181,7 @@ function WQA:OnEnable()
 			if name == "PLAYER_ENTERING_WORLD" then
 				self:ScheduleTimer(
 					function()
+						local perfStart = self:PerfStart()
 						for i = 1, #self.ZoneIDList do
 							for _, mapID in pairs(self.ZoneIDList[i]) do
 								if self.db.profile.options.zone[mapID] == true then
@@ -197,6 +198,8 @@ function WQA:OnEnable()
 								end
 							end
 						end
+
+						self:PerfStop("StartupRewardPreload", perfStart)
 					end,
 					self.db.profile.options.delay
 				)
@@ -918,7 +921,12 @@ function WQA:Reward()
 	self.event:UnregisterEvent("GET_ITEM_INFO_RECEIVED")
 	self.rewards = false
 	local retry = false
-
+	local perfDiag = {
+    		maps = 0,
+    		quests = 0,
+    		missingRewardData = {},
+    		itemRetries = {}
+	}
 	-- Azerite Traits
 	if self.db.profile.options.reward.gear.azeriteTraits ~= "" then
 		self.azeriteTraitsList = {}
@@ -930,10 +938,12 @@ function WQA:Reward()
 	for i in pairs(self.ZoneIDList) do
 		for _, mapID in pairs(self.ZoneIDList[i]) do
 			if self.db.profile.options.zone[mapID] == true then
+				perfDiag.maps = perfDiag.maps + 1
 				local quests = C_TaskQuest.GetQuestsOnMap(mapID)
 				if quests then
 					for i = 1, #quests do
 						local questID = quests[i].questID
+						perfDiag.quests = perfDiag.quests + 1
 						local questTagInfo = GetQuestTagInfo(questID)
 						local worldQuestType = 0
 						if questTagInfo then
@@ -979,11 +989,23 @@ function WQA:Reward()
 							end
 
 							-- Skip reward data preload for quests with inaccurate or misleading Blizzard API results
-							if not SkipRewardDataPreloadQuests[questID] and HaveQuestData(questID) and not HaveQuestRewardData(questID) then
-								C_TaskQuest.RequestPreloadRewardData(questID)
-								retry = true
+							if
+    								not SkipRewardDataPreloadQuests[questID]
+    								and HaveQuestData(questID)
+    								and not HaveQuestRewardData(questID)
+							then
+    								C_TaskQuest.RequestPreloadRewardData(questID)
+
+    								perfDiag.missingRewardData[questID] = true
+    								retry = true
 							end
-							retry = self:CheckItems(questID) or retry
+
+							local itemRetry = self:CheckItems(questID)
+
+							if itemRetry then
+    								perfDiag.itemRetries[questID] = true
+    								retry = true
+							end
 							self:CheckCurrencies(questID)
 
 							-- Profession
@@ -1017,6 +1039,14 @@ function WQA:Reward()
 			end
 		end
 	end
+
+	self.perf.rewardDiagnostics = self.perf.rewardDiagnostics or {}
+	table.insert(self.perf.rewardDiagnostics, {
+    		maps = perfDiag.maps,
+    		quests = perfDiag.quests,
+    		missingRewardData = perfDiag.missingRewardData,
+    		itemRetries = perfDiag.itemRetries
+	})
 
 	if retry == true then
 		self.Debug("|cFFFF0000<<<RETRY>>>|r")
@@ -1782,33 +1812,48 @@ function dataobj:OnClick(button)
 	if button == "LeftButton" then
 		WQA:Show("popup")
 	elseif button == "RightButton" then
-		Settings.OpenToCategory("WQAchievements")
+		Settings.OpenToCategory("WQATurbo")
 	end
 end
 
 function WQA:AnnounceLDB(quests)
-	-- Hide PopUp
+	-- Hide LDB tooltip while the persistent popup is open.
 	if PopUpIsShown() then
 		return
 	end
 
 	self:CreateQTip()
-	self.tooltip:SetAutoHideDelay(
+
+	-- Capture the exact tooltip instance owned by this hover. A delayed
+	-- auto-hide callback must not release a tooltip that Turbo created later.
+	local tooltip = self.tooltip
+	if not tooltip then
+		return
+	end
+
+	tooltip:SetAutoHideDelay(
 		.25,
 		anchor,
 		function()
-			if not PopUpIsShown() then
-				LibQTip:Release(WQA.tooltip)
-				WQA.tooltip.quests = nil
-				WQA.tooltip.missions = nil
-				WQA.tooltip = nil
+			-- Ignore stale callbacks. The global reference may now belong to
+			-- another popup/hover tooltip, or may already have been cleared.
+			if PopUpIsShown() or WQA.tooltip ~= tooltip then
+				return
 			end
+
+			-- Detach first. LibQTip:Release() can trigger other UI callbacks,
+			-- so nothing after Release should dereference WQA.tooltip.
+			WQA.tooltip = nil
+			tooltip.quests = nil
+			tooltip.missions = nil
+			tooltip.pois = nil
+			LibQTip:Release(tooltip)
 		end
 	)
-	self.tooltip:SmartAnchorTo(anchor)
+
+	tooltip:SmartAnchorTo(anchor)
 	self:UpdateQTip(quests)
 end
-
 function WQA:UpdateLDBText(activeTasks, newTasks)
 	if newTasks ~= nil then
 		dataobj.text = "New World Quests active"
@@ -2038,8 +2083,8 @@ end
 
 function WQA:UpdateMinimapIcon()
 	if self.db.profile.options.LibDBIcon.hide then
-		icon:Hide("WQAchievements")
+		icon:Hide("WQATurbo")
 	else
-		icon:Show("WQAchievements")
+		icon:Show("WQATurbo")
 	end
 end
