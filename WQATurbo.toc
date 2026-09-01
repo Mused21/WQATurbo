@@ -2,9 +2,9 @@
 ## Title: WQA Turbo
 ## Notes: Performance-first World Quest achievement and reward tracking
 ## Author: Mused21; based on WQAchievements by Urtgard and contributors
-## Version: 0.1.0
+## Version: 0.1.1
 ## SavedVariables: WQATurboDB
-## OptionalDeps: CanIMogIt, AllTheThings
+## OptionalDeps: WQAchievements, CanIMogIt, AllTheThings
 ## IconTexture: Interface\Icons\INV_Misc_Map06
 ## X-Website: https://github.com/Mused21/WQATurbo
 ## X-Source: https://github.com/Mused21/WQATurbo
@@ -36,6 +36,7 @@ Achievements.lua
 Locales.lua
 Utilities.lua
 Tooltip.lua
+Migration.lua
 
 WQATurbo.lua
 CollectionCache.lua

@@ -44,11 +44,11 @@ function WQA:OnEnable()
 		)
 
 	local profiles = LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db)
-	LibStub("AceConfig-3.0"):RegisterOptionsTable("WQAProfiles", profiles)
+	LibStub("AceConfig-3.0"):RegisterOptionsTable("WQATurboProfiles", profiles)
 
 	self.optionsFrame.Profiles =
 		LibStub("AceConfigDialog-3.0"):AddToBlizOptions(
-			"WQAProfiles",
+			"WQATurboProfiles",
 			"Profiles",
 			"WQA Turbo"
 		)
@@ -95,7 +95,9 @@ function WQA:OnEnable()
 		end
 	end)
 
-	C_AddOns.LoadAddOn("Blizzard_GarrisonUI")
+	self:ScheduleTimer("MaybeOfferWQAMigration", 2)
+
+C_AddOns.LoadAddOn("Blizzard_GarrisonUI")
 end
 
 -- Keep the original /wqa command for users migrating from WQATurbo.
@@ -113,7 +115,11 @@ function WQA:TurboSlash(input)
 	elseif command == "new" then
 		self:Refresh("new")
 	elseif command == "popup" then
-		self:ShowCached("popup")
+
+self:ShowCached("popup")
+elseif command == "import" then
+
+self:ShowWQAMigrationPrompt(true)
 	elseif command == "perf" then
 		self:PrintPerfSummary()
 	elseif command == "reset" then
@@ -128,6 +134,7 @@ function WQA:TurboSlash(input)
 		print("/wqat refresh - rebuild and rescan")
 		print("/wqat new - refresh and announce newly found tasks")
 		print("/wqat popup - open cached popup")
+print("/wqat import - import WQAchievements settings")
 		print("/wqat perf - performance summary")
 		print("/wqat scan - scanner status")
 		print("/wqat cache - collection-cache status")
