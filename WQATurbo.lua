@@ -131,7 +131,9 @@ function WQA:OnInitialize()
 			}
 		}
 	}
-	self.db = LibStub("AceDB-3.0"):New("WQATurboDB", defaults, true)
+	self:ApplyPendingWQAMigrationBeforeAceDB()
+
+self.db = LibStub("AceDB-3.0"):New("WQATurboDB", defaults, true)
 
 	-- copy old data
 	if type(self.db.global.custom) == "table" then
@@ -167,9 +169,9 @@ function WQA:OnEnable()
 	)
 	self.optionsFrame = LibStub("AceConfigDialog-3.0"):AddToBlizOptions("WQATurbo", "WQATurbo")
 	local profiles = LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db)
-	LibStub("AceConfig-3.0"):RegisterOptionsTable("WQAProfiles", profiles)
+	LibStub("AceConfig-3.0"):RegisterOptionsTable("WQATurboProfiles", profiles)
 	self.optionsFrame.Profiles =
-		LibStub("AceConfigDialog-3.0"):AddToBlizOptions("WQAProfiles", "Profiles", "WQATurbo")
+		LibStub("AceConfigDialog-3.0"):AddToBlizOptions("WQATurboProfiles", "Profiles", "WQATurbo")
 
 	self.event = CreateFrame("Frame")
 	self.event:RegisterEvent("PLAYER_ENTERING_WORLD")
@@ -773,7 +775,7 @@ function WQA:AnnounceChat(tasks, silent)
 	end
 end
 
-local inspectScantip = CreateFrame("GameTooltip", "WorldQuestListInspectScanningTooltip", nil, "GameTooltipTemplate")
+local inspectScantip = CreateFrame("GameTooltip", "WQATurboInspectScanningTooltip", nil, "GameTooltipTemplate")
 inspectScantip:SetOwner(UIParent, "ANCHOR_NONE")
 
 local EquipLocToSlot1 = {

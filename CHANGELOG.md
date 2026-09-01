@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.1
+
+- Added automatic settings migration from WQAchievements.
+- Existing profiles, filters, popup settings, minimap settings, and other configuration can now be imported.
+- Added `/wqat import` to manually start the migration.
+- WQAchievements is temporarily loaded only when required for migration and disabled again automatically.
+- Fixed namespace collisions when WQAchievements and WQA Turbo are loaded together.
+- Prevented the original WQAchievements scanner and popup from starting during migration.
+
 ## 0.1.0
 
 Initial WQA Turbo beta.
