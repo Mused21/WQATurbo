@@ -209,7 +209,7 @@ function WQA:MaybeOfferWQAMigration()
 
     if self._wqaMigrationImportedThisLoad then
         print("|cff00ccffWQA Turbo|r: WQAchievements settings imported successfully.")
-        print("|cff00ccffWQA Turbo|r: Finishing migration...")
+        print("|cff00ccffWQA Turbo|r: Import complete. A UI reload is recommended to fully unload WQAchievements.")
 
         -- Clear this before ReloadUI so the final session does not reload
         -- again. WQAchievements has already been disabled for this character.
@@ -218,9 +218,7 @@ function WQA:MaybeOfferWQAMigration()
             state.cleanupReload = false
         end
 
-        C_Timer.After(0.5, function()
-            C_UI.Reload()
-        end)
+        StaticPopup_Show("WQATURBO_MIGRATION_RELOAD")
         return
     end
 
@@ -235,6 +233,23 @@ function WQA:MaybeOfferWQAMigration()
     self:ShowWQAMigrationPrompt(false)
 end
 
+StaticPopupDialogs["WQATURBO_MIGRATION_RELOAD"] = {
+    text = "WQAchievements settings were imported successfully.\n\nWQAchievements has been disabled. Reload the UI now to fully unload the old addon?",
+    button1 = "Reload now",
+    button2 = "Later",
+    OnAccept = function()
+        -- Reload is protected and must be called directly from a hardware
+        -- event. StaticPopup button clicks satisfy that requirement.
+        C_UI.Reload()
+    end,
+    OnCancel = function()
+        print("|cff00ccffWQA Turbo|r: Migration is complete. WQAchievements will be fully unloaded on your next UI reload or login.")
+    end,
+    timeout = 0,
+    whileDead = true,
+    hideOnEscape = false,
+    preferredIndex = 3,
+}
 StaticPopupDialogs["WQATURBO_IMPORT_WQA"] = {
     text = "WQA Turbo found WQAchievements.\n\nImport its settings into WQA Turbo?\n\nThis replaces your current WQA Turbo settings. WQAchievements will be disabled for this character after the import.",
     button1 = "Import",

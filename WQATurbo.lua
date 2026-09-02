@@ -3,6 +3,35 @@ local WQA = WQATurbo
 
 local LibQTip = LibStub("LibQTip-1.0")
 
+-- AllTheThings exposes SearchForLink before its search module has necessarily
+-- finished OnLoad initialization. Protect the integration from that startup
+-- race and avoid hammering ATT repeatedly while it is still becoming ready.
+local ATT_SEARCH_RETRY_DELAY = 1
+
+function WQA:SafeATTSearchForLink(itemLink)
+	local att = _G.AllTheThings
+
+	if type(att) ~= "table" or type(att.SearchForLink) ~= "function" then
+		return nil, false
+	end
+
+	local now = GetTime()
+	if self._attSearchRetryAfter and now < self._attSearchRetryAfter then
+		return nil, false
+	end
+
+	local ok, result = pcall(att.SearchForLink, itemLink)
+
+	if not ok then
+		self._attSearchRetryAfter = now + ATT_SEARCH_RETRY_DELAY
+		self:Debug("AllTheThings SearchForLink not ready", result)
+		return nil, false
+	end
+
+	self._attSearchRetryAfter = nil
+	return result, true
+end
+
 -- Blizzard
 local IsActive = C_TaskQuest.IsActive
 local GetQuestTagInfo = C_QuestLog.GetQuestTagInfo
@@ -1440,8 +1469,10 @@ function WQA:CheckReward(questID, isEmissary, rewardIndex)
 			if itemClassID == 2 or itemClassID == 4 then
 				local transmog
 				if AllTheThings then
-					local searchForLinkResult = AllTheThings.SearchForLink(itemLink)
-					if (searchForLinkResult and searchForLinkResult[1]) then
+					local searchForLinkResult, attReady = self:SafeATTSearchForLink(itemLink)
+					if not attReady then
+						retry = true
+					elseif searchForLinkResult and searchForLinkResult[1] then
 						local state = searchForLinkResult[1].collected
 						if not state then
 							transmog = "|TInterface\\Addons\\AllTheThings\\assets\\unknown:0|t"
@@ -2006,8 +2037,10 @@ function WQA:CheckMissions()
 									if itemClassID == 2 or itemClassID == 4 then
 										local transmog
 										if AllTheThings then
-											local searchForLinkResult = AllTheThings.SearchForLink(itemLink)
-											if not searchForLinkResult or not searchForLinkResult[1] then
+											local searchForLinkResult, attReady = self:SafeATTSearchForLink(itemLink)
+											if not attReady then
+												retry = true
+											elseif not searchForLinkResult or not searchForLinkResult[1] then
 												retry = true
 											else
 												local state = searchForLinkResult[1].collected

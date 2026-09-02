@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.2
+- Updated Midnight zone coverage with Atal'Aman, The Den, Val, Naigtal, and The Coiled Isle.
+- Fixed a startup race with AllTheThings where `SearchForLink` could be called before ATT finished initializing its search module.
+- Added guarded ATT lookups with a short retry cooldown to prevent repeated Lua errors during startup.
+- Fixed settings migration attempting a protected UI reload from a timer; the cleanup reload is now explicitly user-triggered.
+
 ## 0.1.1
 
 - Added automatic settings migration from WQAchievements.
