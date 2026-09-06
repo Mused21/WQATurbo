@@ -1,4 +1,11 @@
 # Changelog
+## 0.1.3
+- PvP World Quests are hidden while War Mode is off by default; a new option allows achievement hunters to keep tracking them anyway.
+- Added Midnight World Quest achievement tracking for **No Time to Paws**, **Lysikas Would Be Proud**, and **A Stack of Snacks**.
+- Added tracking for the Midnight PvP World Quest achievements **Investigating the Rise** and **Uprising**.
+- Added tracking for **Showdown Success: Val** and **Showdown Success: Naigtal**, using Blizzard's live achievement criteria so rotating Showdown World Quests stay current.
+- Fixed Midnight static achievement data not being registered because `CreateQuestList()` still stopped at The War Within.
+- Made automatic achievement-criteria registration safely ignore non-quest criteria instead of attempting to register a nil quest ID.
 
 ## 0.1.2
 - Updated Midnight zone coverage with Atal'Aman, The Den, Val, Naigtal, and The Coiled Isle.

@@ -60,6 +60,10 @@ local function scheduleCheckRetry(self)
 end
 
 local function isQuestActive(self, questID)
+	if not self:ShouldIncludeWorldQuestForCurrentMode(questID) then
+		return false
+	end
+
 	return
 		IsActive(questID)
 		or self:EmissaryIsActive(questID)
