@@ -49,7 +49,11 @@ function WQA.Achievements:Register(achievement, forced, forcedByMe)
                         elseif achievement.criteriaType == "AREA_POI" then
                             self:Register_AREA_POI(achievement, i)
                         else
-                            WQA:AddRewardToQuest(questID, "ACHIEVEMENT", id)
+                            if questID then
+                                WQA:AddRewardToQuest(questID, "ACHIEVEMENT", id)
+                            else
+                                WQA:Debug("Achievement criterion has no questID", id, i)
+                            end
                         end
                     end
                 end

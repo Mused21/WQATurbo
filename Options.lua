@@ -874,7 +874,23 @@ function WQA:UpdateOptions()
 							return WQA.db.profile.options.delayCombat
 						end
 					},
-					WorldQuestTracker = {
+					showWarModeQuestsWithoutWarMode = {
+						type = "toggle",
+						name = "Show PvP World Quests while War Mode is disabled",
+						desc = "Shows PvP World Quests even when War Mode is off. These quests may not count toward their associated achievements until War Mode is enabled.",
+						width = "double",
+						set = function(info, val)
+							WQA.db.profile.options.showWarModeQuestsWithoutWarMode = val
+							WQA:Show("new", true)
+						end,
+						descStyle = "inline",
+						get = function()
+							return WQA.db.profile.options.showWarModeQuestsWithoutWarMode
+						end,
+						order = newOrder()
+					},
+					
+WorldQuestTracker = {
 						type = "toggle",
 						name = L["Use World Quest Tracker"],
 						width = "double",

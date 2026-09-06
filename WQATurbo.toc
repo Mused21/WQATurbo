@@ -2,7 +2,7 @@
 ## Title: WQA Turbo
 ## Notes: Performance-first World Quest achievement and reward tracking
 ## Author: Mused21; based on WQAchievements by Urtgard and contributors
-## Version: 0.1.2
+## Version: 0.1.3
 ## SavedVariables: WQATurboDB
 ## OptionalDeps: WQAchievements, CanIMogIt, AllTheThings
 ## IconTexture: Interface\Icons\INV_Misc_Map06

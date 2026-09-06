@@ -56,6 +56,7 @@ function WQA:OnEnable()
 	self.event = CreateFrame("Frame")
 	self.event:RegisterEvent("PLAYER_ENTERING_WORLD")
 	self.event:RegisterEvent("GARRISON_MISSION_LIST_UPDATE")
+	self.event:RegisterEvent("WAR_MODE_STATUS_UPDATE")
 
 	self.event:SetScript("OnEvent", function(_, eventName, id)
 		if eventName == "PLAYER_ENTERING_WORLD" then
@@ -90,7 +91,11 @@ function WQA:OnEnable()
 		elseif eventName == "QUEST_TURNED_IN" then
 			self.db.global.completed[id] = true
 
-		elseif eventName == "GARRISON_MISSION_LIST_UPDATE" then
+		elseif eventName == "WAR_MODE_STATUS_UPDATE" then
+			self:Show("new", true)
+
+		
+elseif eventName == "GARRISON_MISSION_LIST_UPDATE" then
 			self:CheckMissions()
 		end
 	end)

@@ -33,6 +33,23 @@ function WQA:SafeATTSearchForLink(itemLink)
 end
 
 -- Blizzard
+-- Blizzard may report PvP World Quests as active even while War Mode is off.
+-- Hide them by default because their related achievements require War Mode,
+-- but allow achievement hunters to opt into seeing them anyway.
+function WQA:ShouldIncludeWorldQuestForCurrentMode(questID, questTagInfo)
+	questTagInfo = questTagInfo or C_QuestLog.GetQuestTagInfo(questID)
+
+	if
+		questTagInfo
+		and questTagInfo.worldQuestType == Enum.QuestTagType.PvP
+		and not C_PvP.IsWarModeDesired()
+		and not self.db.profile.options.showWarModeQuestsWithoutWarMode
+	then
+		return false
+	end
+
+	return true
+end
 local IsActive = C_TaskQuest.IsActive
 local GetQuestTagInfo = C_QuestLog.GetQuestTagInfo
 local GetBountiesForMapID = C_QuestLog.GetBountiesForMapID
@@ -100,6 +117,7 @@ function WQA:OnInitialize()
 				chat = true,
 				PopUp = false,
 				popupRememberPosition = false,
+				showWarModeQuestsWithoutWarMode = false,
 				popupX = 600,
 				popupY = 800,
 				zone = { ["*"] = true },
@@ -291,7 +309,7 @@ function WQA:CreateQuestList()
 	self.questFlagList = {}
 	self.Criterias.AreaPoi.list = {}
 
-	for expansionID = 7, 11 do
+	for expansionID = 7, 12 do
 		local data = self.data[expansionID]
 
 		if (data.achievements) then

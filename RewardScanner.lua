@@ -168,6 +168,10 @@ function WQA:RewardScannerProcessInitialQuest(state, work)
 	local questID = work.questID
 	local mapID = work.mapID
 	local questTagInfo = GetQuestTagInfo(questID)
+
+	if not self:ShouldIncludeWorldQuestForCurrentMode(questID, questTagInfo) then
+		return
+	end
 	local worldQuestType = questTagInfo and questTagInfo.worldQuestType or 0
 	local worldQuestTypeOptions = self.db.profile.options.reward.general.worldQuestType
 
