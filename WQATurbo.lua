@@ -33,15 +33,48 @@ function WQA:SafeATTSearchForLink(itemLink)
 end
 
 -- Blizzard
--- Blizzard may report PvP World Quests as active even while War Mode is off.
--- Hide them by default because their related achievements require War Mode,
--- but allow achievement hunters to opt into seeing them anyway.
-function WQA:ShouldIncludeWorldQuestForCurrentMode(questID, questTagInfo)
+-- Return the quest type used by WQA Turbo filters.
+--
+-- Preserve explicit special types. For older profession WQs, Blizzard may
+-- expose a tradeskillLineID even when worldQuestType is missing/inconsistent.
+function WQA:GetEffectiveWorldQuestType(questID, questTagInfo)
 	questTagInfo = questTagInfo or C_QuestLog.GetQuestTagInfo(questID)
 
+	if not questTagInfo then
+		return 0
+	end
+
+	local worldQuestType = questTagInfo.worldQuestType
+
 	if
-		questTagInfo
-		and questTagInfo.worldQuestType == Enum.QuestTagType.PvP
+		worldQuestType == Enum.QuestTagType.PvP
+		or worldQuestType == Enum.QuestTagType.PetBattle
+		or worldQuestType == Enum.QuestTagType.Dungeon
+		or worldQuestType == Enum.QuestTagType.Profession
+	then
+		return worldQuestType
+	end
+
+	if questTagInfo.tradeskillLineID then
+		return Enum.QuestTagType.Profession
+	end
+
+	return worldQuestType or 0
+end
+
+-- Final eligibility gate for every World Quest, including achievement-backed
+-- quests that are available before background reward enrichment finishes.
+function WQA:ShouldIncludeWorldQuestForCurrentMode(questID, questTagInfo)
+	questTagInfo = questTagInfo or C_QuestLog.GetQuestTagInfo(questID)
+	local worldQuestType = self:GetEffectiveWorldQuestType(questID, questTagInfo)
+	local typeOptions = self.db.profile.options.reward.general.worldQuestType
+
+	if typeOptions[worldQuestType] == false then
+		return false
+	end
+
+	if
+		worldQuestType == Enum.QuestTagType.PvP
 		and not C_PvP.IsWarModeDesired()
 		and not self.db.profile.options.showWarModeQuestsWithoutWarMode
 	then
@@ -50,6 +83,7 @@ function WQA:ShouldIncludeWorldQuestForCurrentMode(questID, questTagInfo)
 
 	return true
 end
+
 local IsActive = C_TaskQuest.IsActive
 local GetQuestTagInfo = C_QuestLog.GetQuestTagInfo
 local GetBountiesForMapID = C_QuestLog.GetBountiesForMapID
