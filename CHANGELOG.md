@@ -1,4 +1,11 @@
 # Changelog
+## 0.1.4
+- Fixed World Quest Type filters not always applying to the intended quest type.
+- Fixed achievement-related Pet Battle World Quests ignoring the Pet Battle filter.
+- Improved Profession World Quest classification.
+- Fixed Profession recipe World Quests being missed when tooltip scanning returned the crafted item instead of the actual recipe reward.
+- World Quest Type changes now refresh the displayed results immediately.
+
 ## 0.1.3
 - PvP World Quests are hidden while War Mode is off by default; a new option allows achievement hunters to keep tracking them anyway.
 - Added Midnight World Quest achievement tracking for **No Time to Paws**, **Lysikas Would Be Proud**, and **A Stack of Snacks**.
@@ -14,7 +21,6 @@
 - Fixed settings migration attempting a protected UI reload from a timer; the cleanup reload is now explicitly user-triggered.
 
 ## 0.1.1
-
 - Added automatic settings migration from WQAchievements.
 - Existing profiles, filters, popup settings, minimap settings, and other configuration can now be imported.
 - Added `/wqat import` to manually start the migration.
@@ -23,7 +29,6 @@
 - Prevented the original WQAchievements scanner and popup from starting during migration.
 
 ## 0.1.0
-
 Initial WQA Turbo beta.
 
 ### Performance architecture

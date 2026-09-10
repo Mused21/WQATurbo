@@ -945,15 +945,19 @@ WorldQuestTracker = {
 		order = newOrder()
 	}
 	for k, v in pairs(worldQuestType) do
-		args[k] = {
+		local optionKey = k
+		local worldQuestTypeID = v
+
+		args[optionKey] = {
 			type = "toggle",
-			name = L[k],
+			name = L[optionKey],
 			set = function(info, val)
-				WQA.db.profile.options.reward.general.worldQuestType[v] = val
+				WQA.db.profile.options.reward.general.worldQuestType[worldQuestTypeID] = val
+				WQA:Show("new", true)
 			end,
 			descStyle = "inline",
 			get = function()
-				return WQA.db.profile.options.reward.general.worldQuestType[v] or false
+				return WQA.db.profile.options.reward.general.worldQuestType[worldQuestTypeID] or false
 			end,
 			order = newOrder()
 		}
