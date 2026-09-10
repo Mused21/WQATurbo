@@ -1231,6 +1231,22 @@ function WQA:CheckReward(questID, isEmissary, rewardIndex)
 			return true
 		end
 
+		-- Some reward tooltips (notably profession recipes) contain a link to
+		-- the item the recipe creates. Tooltip scanning can return that embedded
+		-- link instead of the actual quest reward.
+		--
+		-- GetQuestLogRewardInfo() already gave us the authoritative reward itemID.
+		-- Keep the richer scanned link when it refers to that same item (important
+		-- for scaled/bonus gear), otherwise fall back to the actual reward link.
+		local scannedItemID = C_Item.GetItemInfoInstant(itemLink)
+		if scannedItemID ~= itemID then
+			local _, rewardItemLink = C_Item.GetItemInfo(itemID)
+			if not rewardItemLink then
+				return true
+			end
+			itemLink = rewardItemLink
+		end
+
 		local itemName,
 		_,
 		itemRarity,
