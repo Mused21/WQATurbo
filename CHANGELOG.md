@@ -1,5 +1,17 @@
 # WQA Turbo Changelog
 
+## 1.0.1
+
+### Improvements
+- Added Shift-left-click on the minimap button to refresh World Quest data immediately.
+- Improved transmog tracking by using Blizzard's appearance/source collection APIs directly.
+
+### Fixes
+- Fixed transmog rewards sometimes being classified as an unknown appearance when the appearance was already collected from another item.
+- Fixed `Unknown appearance` and `Unknown source` filtering being reversed or incorrect for some multi-source appearances.
+- Fixed multi-source appearances where Blizzard's per-source `appearanceIsCollected` value did not reflect ownership of another source belonging to the same appearance.
+- WQA Turbo now considers an appearance collected when any Blizzard source for that appearance is collected, while still tracking exact-source ownership separately.
+
 ## 1.0.0
 
 ### New features
