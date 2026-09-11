@@ -81,7 +81,71 @@ function WQA:ShouldIncludeWorldQuestForCurrentMode(questID, questTagInfo)
 		return false
 	end
 
+	-- Zone filtering is a final publication gate too, not only a scanner
+	-- optimization. Static achievement/mount/pet/toy mappings can put a World
+	-- Quest into questList before RewardScanner sees it; without this check a
+	-- disabled zone could therefore still appear in the popup. AceDB defaults
+	-- zone entries to true, so only an explicit false excludes a quest.
+	if self.GetQuestZoneID then
+		local zoneID = self:GetQuestZoneID(questID)
+		if type(zoneID) == "number" and self.db.profile.options.zone[zoneID] == false then
+			return false
+		end
+	end
+
 	return true
+end
+
+-- Treat both classic Exalted reputations and modern Major Factions at maximum
+-- Renown as finished for the optional "hide maxed reputations" setting.
+function WQA:IsReputationMaxed(factionID)
+	if type(factionID) ~= "number" then
+		return false
+	end
+
+	-- Friendship reputations (for example Captain Tokka) do not use the
+	-- classic Hated -> Exalted reaction scale and are not Major Factions.
+	-- Query their dedicated API first and treat standing >= maxRep, or a
+	-- missing next threshold at a valid friendship rank, as fully completed.
+	if C_GossipInfo and type(C_GossipInfo.GetFriendshipReputation) == "function" then
+		local ok, friendship = pcall(C_GossipInfo.GetFriendshipReputation, factionID)
+		if
+			ok
+			and type(friendship) == "table"
+			and type(friendship.friendshipFactionID) == "number"
+			and friendship.friendshipFactionID ~= 0
+		then
+			if
+				type(friendship.standing) == "number"
+				and type(friendship.maxRep) == "number"
+				and friendship.maxRep > 0
+				and friendship.standing >= friendship.maxRep
+			then
+				return true
+			end
+
+			if friendship.nextThreshold == nil and type(friendship.standing) == "number" and friendship.standing > 0 then
+				return true
+			end
+		end
+	end
+
+	if
+		C_Reputation
+		and type(C_Reputation.IsMajorFaction) == "function"
+		and C_Reputation.IsMajorFaction(factionID)
+		and C_MajorFactions
+		and type(C_MajorFactions.HasMaximumRenown) == "function"
+	then
+		local ok, hasMaximumRenown = pcall(C_MajorFactions.HasMaximumRenown, factionID)
+		if ok and hasMaximumRenown then
+			return true
+		end
+	end
+
+	local factionData = C_Reputation and C_Reputation.GetFactionDataByID
+		and C_Reputation.GetFactionDataByID(factionID)
+	return factionData and type(factionData.reaction) == "number" and factionData.reaction >= 8 or false
 end
 
 local IsActive = C_TaskQuest.IsActive
@@ -153,6 +217,7 @@ function WQA:OnInitialize()
 				popupRememberPosition = false,
 				popupCollapsedExpansions = {},
 				showWarModeQuestsWithoutWarMode = false,
+				hideExaltedReputations = false,
 				popupX = 600,
 				popupY = 800,
 				zone = { ["*"] = true },
@@ -1683,7 +1748,14 @@ function WQA:GetRewardTextByID(questID, key, value, i, type)
 	elseif k == "item" then
 		text = self:GetRewardForID(questID, k, type)
 	elseif k == "reputation" then
-		if v.itemLink then
+		if v.direct then
+			local reputationText = self:GetRewardLinkByID(questID, k, v, i)
+			if v.amount then
+				text = v.amount .. " " .. reputationText
+			else
+				text = reputationText
+			end
+		elseif v.itemLink then
 			text = self:GetRewardLinkByID(questID, k, v, i)
 		else
 			text = v.amount .. " " .. self:GetRewardLinkByID(questID, k, v, i)
@@ -1722,7 +1794,11 @@ function WQA:GetRewardLinkByID(questID, key, value, i)
 	elseif k == "item" then
 		link = v.itemLink
 	elseif k == "reputation" then
-		if v.itemLink then
+		if v.direct then
+			local factionData = C_Reputation.GetFactionDataByID(v.factionID)
+			local factionName = v.name or (factionData and factionData.name) or tostring(v.factionID)
+			link = v.reputationText or ("|cff00ff00[" .. factionName .. "]|r")
+		elseif v.itemLink then
 			link = v.itemLink
 		else
 			link = v.currencyLink or GetCurrencyLink(v.currencyID, v.amount)
@@ -1759,7 +1835,9 @@ function WQA:SetRewardLinkByID(questID, key, value, i, link)
 	elseif k == "chance" then
 		v[i].itemLink = link
 	elseif k == "reputation" then
-		if not v.itemLink then
+		if v.direct then
+			v.reputationText = link
+		elseif not v.itemLink then
 			v.currencyLink = link
 		end
 	elseif k == "currency" then
@@ -1905,12 +1983,25 @@ end
 local anchor
 function dataobj:OnEnter()
 	anchor = self
-	if not PopUpIsShown() then
-		WQA:Show("LDB")
-	end
+
+	-- Keep the minimap hover intentionally lightweight. The full World Quest
+	-- list belongs to the persistent left-click popup; hover only documents the
+	-- two available mouse actions.
+	GameTooltip:SetOwner(self, "ANCHOR_LEFT")
+	GameTooltip:ClearLines()
+	GameTooltip:AddLine("WQA Turbo")
+	GameTooltip:AddLine(L["MINIMAP_LEFT_CLICK"], 0.75, 0.75, 0.75)
+	GameTooltip:AddLine(L["MINIMAP_RIGHT_CLICK"], 0.75, 0.75, 0.75)
+	GameTooltip:Show()
+end
+
+function dataobj:OnLeave()
+	GameTooltip:Hide()
 end
 
 function dataobj:OnClick(button)
+	GameTooltip:Hide()
+
 	if button == "LeftButton" then
 		WQA:Show("popup")
 	elseif button == "RightButton" then

@@ -352,7 +352,10 @@ function WQA:CheckWQ(mode, fromRetry)
 		end
 	end
 
-	if mode == "new" then
+	if mode == "settings" then
+		-- Settings-triggered refreshes update the cache (and any already-open
+		-- popup below) without spamming chat or opening a new popup.
+	elseif mode == "new" then
 		self:AnnounceChat(self.newTasks, self.first)
 
 		if self.db.profile.options.PopUp == true then
