@@ -151,6 +151,7 @@ function WQA:OnInitialize()
 				chat = true,
 				PopUp = false,
 				popupRememberPosition = false,
+				popupCollapsedExpansions = {},
 				showWarModeQuestsWithoutWarMode = false,
 				popupX = 600,
 				popupY = 800,
@@ -1954,6 +1955,7 @@ function WQA:AnnounceLDB(quests)
 
 	tooltip:SmartAnchorTo(anchor)
 	self:UpdateQTip(quests)
+	self:ApplyQTipScrolling(tooltip)
 end
 function WQA:UpdateLDBText(activeTasks, newTasks)
 	if newTasks ~= nil then

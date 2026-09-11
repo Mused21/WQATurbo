@@ -46,6 +46,42 @@ local function GetIconTexture(questID)
     return [[Interface\GossipFrame\auctioneerGossipIcon]]
 end
 
+-- Keep both the persistent popup and the minimap hover tooltip at a
+-- comfortable maximum height. LibQTip only enables scrolling when needed.
+function WQA:ApplyQTipScrolling(tooltip)
+    if not tooltip then
+        return
+    end
+
+    local maxTooltipHeight = math.max(240, UIParent:GetHeight() * 0.60)
+    tooltip:UpdateScrolling(maxTooltipHeight)
+end
+
+-- Rebuild whichever WQA display the user is currently interacting with.
+-- Expansion headers use this after changing their collapsed state.
+function WQA:RefreshVisibleQTip()
+    if self.PopUp and self.PopUp.shown then
+        if self.TurboRefreshOpenPopup then
+            self:TurboRefreshOpenPopup()
+        end
+        return
+    end
+
+    -- Minimap/LDB hover tooltips are transient. Release the current LibQTip
+    -- instance and let the normal LDB path recreate it against the existing
+    -- minimap anchor.
+    local tooltip = self.tooltip
+    if tooltip then
+        self.tooltip = nil
+        tooltip.quests = nil
+        tooltip.missions = nil
+        tooltip.pois = nil
+        LibQTip:Release(tooltip)
+    end
+
+    self:Show("LDB")
+end
+
 function WQA:UpdateQTip(tasks)
     local tooltip = self.tooltip
     if next(tasks) == nil then
@@ -65,17 +101,68 @@ function WQA:UpdateQTip(tasks)
             then
                 local j = 1
 
+                local expansionCollapsed = false
+
                 if self.db.profile.options.popupShowExpansion then
                     j = 2
-                    if self:GetExpansion(task) ~= expansion then
-                        expansion = self:GetExpansion(task)
-                        tooltip:AddLine(string.format("|cff33ff33%s|r", self:GetExpansionName(expansion)))
+                    local taskExpansion = self:GetExpansion(task)
+
+                    if taskExpansion ~= expansion then
+                        expansion = taskExpansion
+                        expansionCollapsed =
+                            self.db.profile.options.popupCollapsedExpansions[expansion] == true
+
+                        local collapseMarker = expansionCollapsed and "[+] " or "[-] "
+                        local headerLine = tooltip:AddLine()
                         i = i + 1
+
+                        tooltip:SetCell(
+                            headerLine,
+                            1,
+                            string.format(
+                                "|cff33ff33%s%s|r",
+                                collapseMarker,
+                                self:GetExpansionName(expansion)
+                            ),
+                            nil,
+                            "LEFT",
+                            tooltip:GetColumnCount()
+                        )
+
+                        local headerExpansion = expansion
+
+                        tooltip:SetLineScript(
+                            headerLine,
+                            "OnMouseDown",
+                            function()
+                                local collapsed =
+                                    WQA.db.profile.options.popupCollapsedExpansions
+
+                                collapsed[headerExpansion] =
+                                    not collapsed[headerExpansion]
+
+                                -- Do not release/reacquire LibQTip inside its own
+                                -- click callback. Rebuild on the next frame.
+                                C_Timer.After(
+                                    0,
+                                    function()
+                                        if WQA.RefreshVisibleQTip then
+                                            WQA:RefreshVisibleQTip()
+                                        end
+                                    end
+                                )
+                            end
+                        )
+
                         zoneID = nil
+                    else
+                        expansionCollapsed =
+                            self.db.profile.options.popupCollapsedExpansions[expansion] == true
                     end
                 end
 
-                tooltip:AddLine()
+                if not expansionCollapsed then
+                    tooltip:AddLine()
                 i = i + 1
 
                 if self.db.profile.options.popupShowZone then
@@ -354,6 +441,7 @@ function WQA:UpdateQTip(tasks)
                         end
                     end
                 end
+                end -- if not expansionCollapsed
             end
         end
     end
@@ -368,6 +456,7 @@ function WQA:AnnouncePopUp(quests, silent)
         end
         self.PopUp = PopUp
         PopUp:SetMovable(true)
+        PopUp:SetClampedToScreen(true)
         PopUp:EnableMouse(true)
         PopUp:RegisterForDrag("LeftButton")
         PopUp:SetScript(
@@ -424,6 +513,9 @@ function WQA:AnnouncePopUp(quests, silent)
     self.tooltip:ClearAllPoints()
     self.tooltip:SetPoint("TOP", PopUp, "TOP", 2, -27)
     self:UpdateQTip(quests)
+
+    self:ApplyQTipScrolling(self.tooltip)
+
     PopUp:SetWidth(self.tooltip:GetWidth() + 8.5)
     PopUp:SetHeight(self.tooltip:GetHeight() + 32)
     PopUp:SetScale(self.tooltip:GetScale())
