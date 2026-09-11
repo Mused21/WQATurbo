@@ -50,6 +50,7 @@ local L = WQA.L
 	L["MissionID"] ="MissionID"
 	L["MINIMAP_LEFT_CLICK"] = "Left-click: Open World Quest list"
 	L["MINIMAP_RIGHT_CLICK"] = "Right-click: Open settings" 
+	L["MINIMAP_SHIFT_LEFT_CLICK"] = "Shift-left-click: Refresh World Quest data"
 	L["NO_QUESTS"] = "No interesting World Quests active!"
 	L["Options"] = "Options"
 	L["PopUp"] = "PopUp"
