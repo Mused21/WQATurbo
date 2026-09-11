@@ -1,0 +1,76 @@
+name: Validate addon
+
+on:
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check Lua syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y lua5.1
+          while IFS= read -r -d '' file; do
+            echo "Checking $file"
+            luac5.1 -p "$file"
+          done < <(find . -type f -name '*.lua' -not -path './Libs/*' -not -path './.release/*' -print0)
+
+      - name: Build package with externals
+        uses: BigWigsMods/packager@v2
+        with:
+          args: -d
+
+      - name: Validate embedded libraries
+        shell: python
+        run: |
+          from pathlib import Path
+          import zipfile
+
+          zips = [p for p in Path(".release").glob("WQATurbo-*.zip") if "nolib" not in p.name.lower()]
+          if not zips:
+              raise SystemExit("No WQATurbo ZIP was produced.")
+
+          package = max(zips, key=lambda p: p.stat().st_mtime)
+          with zipfile.ZipFile(package) as zf:
+              names = set(zf.namelist())
+
+          required = (
+              "WQATurbo/WQATurbo.toc",
+              "WQATurbo/Libs/AceAddon-3.0/",
+              "WQATurbo/Libs/AceConfig-3.0/",
+              "WQATurbo/Libs/AceDB-3.0/",
+              "WQATurbo/Libs/LibDBIcon-1.0/",
+              "WQATurbo/Libs/LibQTip-1.0/",
+              "WQATurbo/Libs/LibStub/",
+          )
+
+          for item in required:
+              if item.endswith("/"):
+                  ok = any(name.startswith(item) for name in names)
+              else:
+                  ok = item in names
+              if not ok:
+                  raise SystemExit(f"Missing from package: {item}")
+
+          print(f"Validated {package}")
+
+      - name: Upload PR test build
+        uses: actions/upload-artifact@v4
+        with:
+          name: WQATurbo-PR-${{ github.event.pull_request.number || github.run_number }}
+          path: .release/WQATurbo-*.zip
+          if-no-files-found: error
+          retention-days: 7
+          include-hidden-files: true
