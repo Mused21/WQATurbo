@@ -1328,6 +1328,24 @@ end
 function WQA:ToggleGet()
 end
 
+local function GetTrackedObjectTooltipHyperlink(groupName, object)
+	if groupName == "achievements" and object.id then
+		return GetAchievementLink(object.id)
+	end
+
+	-- Most mount/pet/toy rows already carry the item that teaches or
+	-- represents the collectible. Let Blizzard render its native tooltip.
+	if object.itemID then
+		return "item:" .. tostring(object.itemID)
+	end
+
+	-- Defensive fallback for mount entries that only carry a spell ID.
+	if groupName == "mounts" and object.spellID then
+		return "spell:" .. tostring(object.spellID)
+	end
+
+	return nil
+end
 function WQA:CreateGroup(options, data, groupName)
 	if data[groupName] then
 		options[groupName] = {
@@ -1356,12 +1374,15 @@ function WQA:CreateGroup(options, data, groupName)
 		for _, object in pairs(data) do
 			local id = object.id or object.spellID or object.creatureID or object.itemID
 			local idString = tostring(id)
+			local tooltipHyperlink = GetTrackedObjectTooltipHyperlink(groupName, object)
 			args[idString .. "Name"] = {
 				type = "description",
 				name = idString,
 				fontSize = "medium",
 				order = newOrder(),
-				width = 1.5
+				width = 1.5,
+				dialogControl = tooltipHyperlink and "InteractiveLabel" or nil,
+				tooltipHyperlink = tooltipHyperlink
 			}
 			args[idString] = {
 				type = "select",
@@ -1766,7 +1787,8 @@ function WQA:SortOptions()
 					elseif kk == "toys" then
 						completed = PlayerHasToy(id)
 					end
-					vvv.disabled = completed
+					-- Keep completed interactive labels hoverable.
+					vvv.disabled = completed and not vvv.tooltipHyperlink
 					table.insert(
 						t,
 						{
