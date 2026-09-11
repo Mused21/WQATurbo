@@ -1,6 +1,6 @@
 # WQA Turbo Changelog
 
-## 0.1.5
+## 0.2.0
 
 ### Improvements
 - Added scrolling for long World Quest lists so tooltips no longer extend excessively off-screen.
