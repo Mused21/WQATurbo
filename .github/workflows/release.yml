@@ -3,6 +3,7 @@ name: Automatic release
 on:
   push:
     branches: [master]
+
   workflow_dispatch:
     inputs:
       bump:
@@ -10,7 +11,16 @@ on:
         required: true
         default: patch
         type: choice
-        options: [patch, minor, major]
+        options:
+          - patch
+          - minor
+          - major
+
+      retry_tag:
+        description: "Optional existing tag to rebuild/release, e.g. v0.2.0"
+        required: false
+        default: ""
+        type: string
 
 permissions:
   contents: write
@@ -23,81 +33,191 @@ concurrency:
 jobs:
   release:
     runs-on: ubuntu-latest
+
     env:
       GH_TOKEN: ${{ github.token }}
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out repository
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
           ref: master
 
-      - name: Determine next version
+      - name: Determine release version
         id: version
         shell: bash
         env:
           MANUAL_BUMP: ${{ github.event.inputs.bump }}
+          RETRY_TAG: ${{ github.event.inputs.retry_tag }}
         run: |
           set -euo pipefail
 
-          existing_tag="$(git tag --points-at HEAD | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n1 || true)"
-          if [[ -n "$existing_tag" ]]; then
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+          echo "create_tag=false" >> "$GITHUB_OUTPUT"
+          echo "retry=false" >> "$GITHUB_OUTPUT"
+
+          if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" && -n "${RETRY_TAG:-}" ]]; then
+            if [[ ! "$RETRY_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "::error::retry_tag must have the form vX.Y.Z"
+              exit 1
+            fi
+
+            if ! git rev-parse -q --verify "refs/tags/${RETRY_TAG}^{commit}" >/dev/null; then
+              echo "::error::Tag ${RETRY_TAG} does not exist."
+              exit 1
+            fi
+
+            echo "Retrying existing release ${RETRY_TAG}"
+
             echo "skip=false" >> "$GITHUB_OUTPUT"
             echo "create_tag=false" >> "$GITHUB_OUTPUT"
-            echo "tag=$existing_tag" >> "$GITHUB_OUTPUT"
-            echo "version=${existing_tag#v}" >> "$GITHUB_OUTPUT"
+            echo "retry=true" >> "$GITHUB_OUTPUT"
+            echo "tag=$RETRY_TAG" >> "$GITHUB_OUTPUT"
+            echo "version=${RETRY_TAG#v}" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
           bump="patch"
 
-          if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
-            bump="${MANUAL_BUMP:-patch}"
-          else
-            pr_number="$(gh api "repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/pulls" --jq '.[0].number // empty' 2>/dev/null || true)"
+          if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
+            pr_number="$(
+              gh api \
+                "repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/pulls" \
+                --jq '.[0].number // empty' \
+                2>/dev/null || true
+            )"
+
             if [[ -n "$pr_number" ]]; then
-              labels="$(gh pr view "$pr_number" --repo "$GITHUB_REPOSITORY" --json labels --jq '.labels[].name')"
+              echo "Merged PR: #${pr_number}"
+
+              labels="$(
+                gh pr view "$pr_number" \
+                  --repo "$GITHUB_REPOSITORY" \
+                  --json labels \
+                  --jq '.labels[].name'
+              )"
+
+              echo "PR labels:"
+              printf '%s\n' "$labels"
 
               if grep -Fxq 'release:none' <<< "$labels"; then
+                echo "release:none found; skipping release."
                 echo "skip=true" >> "$GITHUB_OUTPUT"
+                echo "create_tag=false" >> "$GITHUB_OUTPUT"
+                echo "retry=false" >> "$GITHUB_OUTPUT"
                 exit 0
-              elif grep -Fxq 'release:major' <<< "$labels"; then
+              fi
+
+              if grep -Fxq 'release:major' <<< "$labels"; then
                 bump="major"
               elif grep -Fxq 'release:minor' <<< "$labels"; then
                 bump="minor"
               fi
+            else
+              echo "No merged PR found for ${GITHUB_SHA}; defaulting to patch release."
             fi
+
+          else
+            # Manual workflow run without retry_tag.
+            bump="${MANUAL_BUMP:-patch}"
           fi
 
-          latest="$(git tag --list | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n1 || true)"
-          [[ -n "$latest" ]] || latest="v0.0.0"
+          existing_tag="$(
+            git tag \
+              --points-at HEAD \
+              --sort=-v:refname |
+              grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' |
+              head -n1 || true
+          )"
+
+          if [[ -n "$existing_tag" ]]; then
+            echo "HEAD already has release tag ${existing_tag}; reusing it."
+
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+            echo "create_tag=false" >> "$GITHUB_OUTPUT"
+            echo "retry=false" >> "$GITHUB_OUTPUT"
+            echo "tag=$existing_tag" >> "$GITHUB_OUTPUT"
+            echo "version=${existing_tag#v}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          latest="$(
+            git tag --list |
+              grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' |
+              sort -V |
+              tail -n1 || true
+          )"
+
+          if [[ -z "$latest" ]]; then
+            latest="v0.0.0"
+          fi
+
+          echo "Latest release: ${latest}"
+          echo "Requested bump: ${bump}"
 
           IFS='.' read -r major minor patch <<< "${latest#v}"
 
           case "$bump" in
-            patch) patch=$((patch + 1)) ;;
-            minor) minor=$((minor + 1)); patch=0 ;;
-            major) major=$((major + 1)); minor=0; patch=0 ;;
+            patch)
+              patch=$((patch + 1))
+              ;;
+
+            minor)
+              minor=$((minor + 1))
+              patch=0
+              ;;
+
+            major)
+              major=$((major + 1))
+              minor=0
+              patch=0
+              ;;
+
+            *)
+              echo "::error::Unknown version bump: ${bump}"
+              exit 1
+              ;;
           esac
 
           version="${major}.${minor}.${patch}"
           tag="v${version}"
 
+          echo "Next release: ${tag}"
+
           echo "skip=false" >> "$GITHUB_OUTPUT"
           echo "create_tag=true" >> "$GITHUB_OUTPUT"
+          echo "retry=false" >> "$GITHUB_OUTPUT"
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
 
-      - name: Verify packaging config
+      - name: Check out retry tag
+        if: steps.version.outputs.skip != 'true' && steps.version.outputs.retry == 'true'
+        shell: bash
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          set -euo pipefail
+
+          echo "Checking out ${TAG}"
+          git checkout --detach "$TAG"
+
+      - name: Verify packaging configuration
         if: steps.version.outputs.skip != 'true'
         shell: bash
         run: |
           set -euo pipefail
+
           grep -Fx '## Version: @project-version@' WQATurbo.toc
           grep -Fx 'package-as: WQATurbo' .pkgmeta
           grep -Fx 'externals:' .pkgmeta
 
-      - name: Create tag
+          test -f CHANGELOG.md
+          grep -Fx 'manual-changelog:' .pkgmeta
+          grep -Fx '  filename: CHANGELOG.md' .pkgmeta
+          grep -Fx '  markup-type: markdown' .pkgmeta
+
+      - name: Create local release tag
         if: steps.version.outputs.skip != 'true' && steps.version.outputs.create_tag == 'true'
         shell: bash
         env:
@@ -105,26 +225,114 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           set -euo pipefail
+
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
           git tag -a "$TAG" -m "WQA Turbo $VERSION"
-          git push origin "$TAG"
 
-      - name: Build GitHub release package
-        if: steps.version.outputs.skip != 'true'
-        uses: BigWigsMods/packager@v2
-        with:
-          args: -d
+          echo "Created local tag ${TAG}"
+          git show --no-patch "$TAG"
 
-      - name: Locate package
+      - name: Build release package
         if: steps.version.outputs.skip != 'true'
-        id: package
         shell: bash
         run: |
           set -euo pipefail
-          package="$(find .release -maxdepth 1 -type f -name 'WQATurbo-*.zip' ! -name '*nolib*' | head -n1)"
-          [[ -n "$package" ]]
+
+          # WQA Turbo uses SVN-based WowAce externals.
+          if ! command -v svn >/dev/null 2>&1; then
+            sudo apt-get update -qq
+            sudo apt-get install -yq subversion
+          fi
+
+          curl -fsSL \
+            https://raw.githubusercontent.com/BigWigsMods/packager/v2/release.sh \
+            -o /tmp/wow-packager.sh
+
+          chmod +x /tmp/wow-packager.sh
+
+          # -d = build package but do not upload it anywhere.
+          GITHUB_EVENT_NAME=workflow_dispatch \
+            /tmp/wow-packager.sh -d
+
+      - name: Locate release package
+        if: steps.version.outputs.skip != 'true'
+        id: package
+        shell: bash
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          set -euo pipefail
+
+          if [[ ! -d ".release" ]]; then
+            echo "::error::BigWigs Packager did not create the .release directory."
+            exit 1
+          fi
+
+          package=".release/WQATurbo-${TAG}.zip"
+
+          if [[ ! -f "$package" ]]; then
+            echo "::error::Expected package was not produced: ${package}"
+            echo
+            echo "Contents of .release:"
+            find .release -maxdepth 2 -type f -print || true
+            exit 1
+          fi
+
+          echo "Found package: ${package}"
           echo "zip=$package" >> "$GITHUB_OUTPUT"
+
+      - name: Validate embedded libraries
+        if: steps.version.outputs.skip != 'true'
+        shell: python
+        env:
+          PACKAGE: ${{ steps.package.outputs.zip }}
+        run: |
+          import os
+          import zipfile
+          from pathlib import Path
+
+          package = Path(os.environ["PACKAGE"])
+
+          if not package.is_file():
+              raise SystemExit(f"Package does not exist: {package}")
+
+          with zipfile.ZipFile(package) as zf:
+              names = set(zf.namelist())
+
+          required = (
+              "WQATurbo/WQATurbo.toc",
+              "WQATurbo/Libs/AceAddon-3.0/",
+              "WQATurbo/Libs/AceConfig-3.0/",
+              "WQATurbo/Libs/AceDB-3.0/",
+              "WQATurbo/Libs/LibDBIcon-1.0/",
+              "WQATurbo/Libs/LibQTip-1.0/",
+              "WQATurbo/Libs/LibStub/",
+          )
+
+          for item in required:
+              if item.endswith("/"):
+                  present = any(name.startswith(item) for name in names)
+              else:
+                  present = item in names
+
+              if not present:
+                  raise SystemExit(f"Missing from package: {item}")
+
+          print(f"Validated embedded libraries in {package}")
+
+      - name: Push release tag
+        if: steps.version.outputs.skip != 'true' && steps.version.outputs.create_tag == 'true'
+        shell: bash
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          set -euo pipefail
+
+          git push origin "$TAG"
+
+          echo "Published tag ${TAG}"
 
       - name: Create or update GitHub Release
         if: steps.version.outputs.skip != 'true'
@@ -135,8 +343,49 @@ jobs:
           PACKAGE: ${{ steps.package.outputs.zip }}
         run: |
           set -euo pipefail
-          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            gh release upload "$TAG" "$PACKAGE" --repo "$GITHUB_REPOSITORY" --clobber
+
+          if gh release view "$TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            >/dev/null 2>&1
+          then
+            echo "GitHub Release ${TAG} already exists; updating package."
+
+            gh release upload \
+              "$TAG" \
+              "$PACKAGE" \
+              --repo "$GITHUB_REPOSITORY" \
+              --clobber
           else
-            gh release create "$TAG" "$PACKAGE" --repo "$GITHUB_REPOSITORY" --title "WQA Turbo $VERSION" --generate-notes
+            echo "Creating GitHub Release ${TAG}."
+
+            gh release create \
+              "$TAG" \
+              "$PACKAGE" \
+              --repo "$GITHUB_REPOSITORY" \
+              --title "WQA Turbo $VERSION" \
+              --generate-notes
           fi
+
+      - name: Trigger CurseForge packaging
+        if: ${{ steps.version.outputs.skip != 'true' && (steps.version.outputs.create_tag == 'true' || steps.version.outputs.retry == 'true') }}
+        shell: bash
+        env:
+          CURSEFORGE_PACKAGE_URL: ${{ secrets.CURSEFORGE_PACKAGE_URL }}
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${CURSEFORGE_PACKAGE_URL:-}" ]]; then
+            echo "::error::Repository secret CURSEFORGE_PACKAGE_URL is not configured."
+            exit 1
+          fi
+
+          curl \
+            --fail-with-body \
+            --silent \
+            --show-error \
+            -X POST \
+            -d '' \
+            "$CURSEFORGE_PACKAGE_URL" \
+            >/dev/null
+
+          echo "CurseForge packaging was triggered successfully."
