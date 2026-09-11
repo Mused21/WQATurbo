@@ -1,5 +1,34 @@
 # WQA Turbo Changelog
 
+## 1.0.0
+
+### New features
+- Redesigned the addon settings with tree-based navigation for easier browsing across Tracking, Rewards, Custom, and Options.
+- Added collection search across achievements, mounts, pets, and toys, including name and ID lookup.
+- Added category-level and expansion-level bulk tracking controls for Default, Always Track, and Don't Track.
+- Added native hover tooltips in Settings for achievements and supported collectibles, including Blizzard achievement criteria/progress.
+- Added minimap button shortcuts: left-click opens the World Quest list and right-click opens WQA Turbo settings.
+- Added automatic refresh after tracking and reward-filter changes, plus a manual Refresh page.
+- Added an option to hide Exalted reputations and Major Factions already at maximum Renown from reputation filters.
+- Added Midnight reward-filter support, including current currencies and reputation factions.
+- Added direct Blizzard API-based reputation reward detection for modern World Quests.
+
+### Improvements
+- Reordered expansions newest-to-oldest throughout the redesigned settings.
+- Split long option pages into clearer sections with readable, full-width explanations.
+- Simplified the minimap hover to show only left/right-click instructions; the full World Quest list now opens only on left-click.
+- Limited Mission Table settings to expansions that actually use mission tables.
+- Kept completed collection entries hoverable in Settings.
+- Added scanner diagnostics for reputation checks and matches.
+
+### Fixes
+- Fixed achievement search in the new Tracking search page.
+- Fixed completed achievements, mounts, pets, and toys not showing hover tooltips.
+- Fixed right-clicking the minimap button failing to open Blizzard Settings on Midnight.
+- Fixed disabled zones still showing achievement-backed World Quests.
+- Fixed Midnight reputation filters not detecting World Quests that directly award reputation.
+- Fixed several Settings labels/descriptions overflowing the Blizzard Settings pane.
+
 ## 0.2.0
 
 ### Improvements

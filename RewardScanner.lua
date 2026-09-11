@@ -36,6 +36,8 @@ local GetQuestTagInfo = C_QuestLog.GetQuestTagInfo
 local GetQuestZoneID = C_TaskQuest.GetQuestZoneID
 local GetQuestsOnMap = C_TaskQuest.GetQuestsOnMap
 local RequestPreloadRewardData = C_TaskQuest.RequestPreloadRewardData
+local DoesQuestAwardReputationWithFaction = C_QuestLog.DoesQuestAwardReputationWithFaction
+local GetQuestLogMajorFactionReputationRewards = C_QuestLog.GetQuestLogMajorFactionReputationRewards
 
 local FRAME_BUDGET_MS = 2.0
 local RETRY_INTERVAL_SECONDS = 0.50
@@ -97,6 +99,43 @@ local function buildEnabledMaps(self)
 	return result
 end
 
+local function buildEnabledReputationFactionIDs(self)
+	local result = {}
+
+	for factionID, enabled in pairs(self.db.profile.options.reward.reputation or {}) do
+		if type(factionID) == "number" and enabled == true then
+			local hiddenBecauseMaxed =
+				self.db.profile.options.hideExaltedReputations
+				and self.IsReputationMaxed
+				and self:IsReputationMaxed(factionID)
+
+			if not hiddenBecauseMaxed then
+				result[#result + 1] = factionID
+			end
+		end
+	end
+
+	table.sort(result)
+	return result
+end
+
+local function getMajorFactionRewardAmounts(questID)
+	local amounts = {}
+
+	if type(GetQuestLogMajorFactionReputationRewards) ~= "function" then
+		return amounts
+	end
+
+	local rewards = GetQuestLogMajorFactionReputationRewards(questID) or {}
+	for _, reward in ipairs(rewards) do
+		if reward.factionID then
+			amounts[reward.factionID] = reward.rewardAmount
+		end
+	end
+
+	return amounts
+end
+
 local function addPending(
 	state,
 	kind,
@@ -124,6 +163,35 @@ local function timedOut(entry)
 	return GetTime() - entry.firstSeen >= MAX_PENDING_AGE_SECONDS
 end
 
+function WQA:RewardScannerProcessReputations(state, questID)
+	if
+		type(DoesQuestAwardReputationWithFaction) ~= "function"
+		or not state.enabledReputationFactionIDs
+		or #state.enabledReputationFactionIDs == 0
+	then
+		return
+	end
+
+	local majorRewardAmounts = getMajorFactionRewardAmounts(questID)
+
+	for _, factionID in ipairs(state.enabledReputationFactionIDs) do
+		local awardsReputation = DoesQuestAwardReputationWithFaction(questID, factionID)
+		state.stats.reputationChecks = state.stats.reputationChecks + 1
+
+		if awardsReputation then
+			local factionData = C_Reputation.GetFactionDataByID(factionID)
+			self:AddRewardToQuest(questID, "REPUTATION", {
+				direct = true,
+				factionID = factionID,
+				name = factionData and factionData.name or tostring(factionID),
+				amount = majorRewardAmounts[factionID]
+			})
+			state.stats.reputationMatches = state.stats.reputationMatches + 1
+			state.enrichmentDirty = true
+		end
+	end
+end
+
 function WQA:RewardScannerProcessProfession(state, work, questTagInfo, zoneID)
 	local tradeskillLineID = questTagInfo and questTagInfo.tradeskillLineID
 	if not tradeskillLineID then
@@ -144,6 +212,11 @@ end
 function WQA:RewardScannerProcessRewardDetails(state, work, questTagInfo, zoneID)
 	local questID = work.questID
 
+	-- Modern Retail exposes reputation rewards directly by quest/faction. Do
+	-- this before the legacy item/currency mappings so older mappings can
+	-- still replace the generic text with their richer reward details.
+	self:RewardScannerProcessReputations(state, questID)
+
 	local itemRetry = self:CheckItems(questID)
 
 	self:CheckCurrencies(questID)
@@ -151,9 +224,9 @@ function WQA:RewardScannerProcessRewardDetails(state, work, questTagInfo, zoneID
 
 	state.stats.enrichedQuests = state.stats.enrichedQuests + 1
 
-	-- Initial-pass enrichment is already present before the first normal
-	-- output. Retry-pass enrichment arrived later and should be published to
-	-- the UI as soon as this retry batch finishes.
+	-- Initial-pass reputation matches are published once the frame-budgeted
+	-- initial pass finishes. Retry-pass enrichment is published as soon as its
+	-- retry batch finishes.
 	if state.phase == "background-retry" then
 		state.enrichmentDirty = true
 	end
@@ -338,7 +411,10 @@ function WQA:RewardScannerInitialPassFinished(state)
 
 	-- IMPORTANT: WQA is already usable. self.rewards was deliberately set to
 	-- true as soon as the background scan was scheduled, so CheckWQ did not
-	-- wait for this point.
+	-- wait for this point. Publish any dynamic matches discovered during the
+	-- initial frame-budgeted pass once before entering the retry phase.
+	self:RewardScannerPublishPendingChanges(state)
+
 	if #state.pending > 0 then
 		self:RewardScannerScheduleRetry(state)
 	else
@@ -512,6 +588,7 @@ function WQA:Reward()
 		currentQuestIndex = 1,
 
 		zoneToExpansion = buildZoneToExpansion(self.ZoneIDList),
+		enabledReputationFactionIDs = buildEnabledReputationFactionIDs(self),
 
 		pending = {},
 		retryQueue = nil,
@@ -531,6 +608,8 @@ function WQA:Reward()
 			retryChecks = 0,
 			preloadReissues = 0,
 			enrichedQuests = 0,
+			reputationChecks = 0,
+			reputationMatches = 0,
 			publishCount = 0,
 			timedOut = 0,
 			slices = 0,
@@ -566,7 +645,7 @@ function WQA:PrintRewardScannerStatus()
 	local pending = state and #state.pending or (stats.pendingRemaining or 0)
 
 	print(string.format(
-		"|cff00ccffWQA TURBO SCAN|r phase=%s usable=yes maps=%d quests=%d pending=%d rewardPending=%d itemPending=%d retries=%d reissues=%d enriched=%d publishes=%d timedOut=%d slices=%d cpu=%.3fms maxSlice=%.3fms initial=%.0fms enrichment=%.0fms",
+		"|cff00ccffWQA TURBO SCAN|r phase=%s usable=yes maps=%d quests=%d pending=%d rewardPending=%d itemPending=%d retries=%d reissues=%d enriched=%d repChecks=%d repMatches=%d publishes=%d timedOut=%d slices=%d cpu=%.3fms maxSlice=%.3fms initial=%.0fms enrichment=%.0fms",
 		phase,
 		stats.mapsScanned or 0,
 		stats.questVisits or 0,
@@ -576,6 +655,8 @@ function WQA:PrintRewardScannerStatus()
 		stats.retryChecks or 0,
 		stats.preloadReissues or 0,
 		stats.enrichedQuests or 0,
+		stats.reputationChecks or 0,
+		stats.reputationMatches or 0,
 		stats.publishCount or 0,
 		stats.timedOut or 0,
 		stats.slices or 0,
