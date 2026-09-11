@@ -249,7 +249,7 @@ function WQA:OnEnable()
 			return self:GetOptions()
 		end
 	)
-	self.optionsFrame = LibStub("AceConfigDialog-3.0"):AddToBlizOptions("WQATurbo", "WQATurbo")
+	self.optionsFrame, self.optionsCategoryID = LibStub("AceConfigDialog-3.0"):AddToBlizOptions("WQATurbo", "WQATurbo")
 	local profiles = LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db)
 	LibStub("AceConfig-3.0"):RegisterOptionsTable("WQATurboProfiles", profiles)
 	self.optionsFrame.Profiles =
@@ -1914,7 +1914,13 @@ function dataobj:OnClick(button)
 	if button == "LeftButton" then
 		WQA:Show("popup")
 	elseif button == "RightButton" then
-		Settings.OpenToCategory("WQATurbo")
+		if type(WQA.optionsCategoryID) == "number" then
+			Settings.OpenToCategory(WQA.optionsCategoryID)
+		else
+			-- Defensive fallback if AceConfigDialog does not expose a
+			-- numeric Blizzard Settings category ID for some reason.
+			LibStub("AceConfigDialog-3.0"):Open("WQATurbo")
+		end
 	end
 end
 
@@ -1954,6 +1960,28 @@ function WQA:AnnounceLDB(quests)
 	)
 
 	tooltip:SmartAnchorTo(anchor)
+	-- Minimap click hints. Keep these on the transient LDB tooltip only;
+	-- the persistent /wqat popup does not need minimap-button instructions.
+	local leftClickLine = tooltip:AddLine()
+	tooltip:SetCell(
+		leftClickLine,
+		1,
+		"|cffaaaaaa" .. L["MINIMAP_LEFT_CLICK"] .. "|r",
+		nil,
+		"LEFT",
+		tooltip:GetColumnCount()
+	)
+
+	local rightClickLine = tooltip:AddLine()
+	tooltip:SetCell(
+		rightClickLine,
+		1,
+		"|cffaaaaaa" .. L["MINIMAP_RIGHT_CLICK"] .. "|r",
+		nil,
+		"LEFT",
+		tooltip:GetColumnCount()
+	)
+	tooltip:AddSeparator()
 	self:UpdateQTip(quests)
 	self:ApplyQTipScrolling(tooltip)
 end

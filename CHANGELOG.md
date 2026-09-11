@@ -1,5 +1,13 @@
 # WQA Turbo Changelog
 
+## 1.0.0
+
+### New features
+- Added minimap button shortcuts:
+  - Left-click opens the World Quest list.
+  - Right-click opens the WQA Turbo settings directly.
+- Added minimap tooltip hints so the available mouse actions are easy to discover.
+
 ## 0.2.0
 
 ### Improvements
