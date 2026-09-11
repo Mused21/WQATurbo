@@ -1234,11 +1234,14 @@ local jewelryCache = {
 	[165785] = true -- Tortollan Trader's Stock
 }
 
--- CanIMogIt
+-- Transmog tracking.
+--
+-- Blizzard exposes both the account-wide appearance state and the exact item
+-- source state. Use those APIs as the source of truth; ATT/CanIMogIt are only
+-- used for their familiar display icons. This avoids treating "appearance
+-- collected from another item" as a completely unknown appearance.
 function WQA:IsTransmogable(itemLink)
-	-- Returns whether the item is transmoggable or not.
-
-	-- White items are not transmoggable.
+	-- White/poor items are not useful transmog rewards.
 	local quality = select(3, C_Item.GetItemInfo(itemLink))
 	if quality == nil then
 		return
@@ -1247,20 +1250,94 @@ function WQA:IsTransmogable(itemLink)
 		return false
 	end
 
-	local itemID, _, _, slotName = C_Item.GetItemInfoInstant(itemLink)
+	local _, _, _, slotName = C_Item.GetItemInfoInstant(itemLink)
 
-	-- See if the game considers it transmoggable
-	local transmoggable = select(3, C_TransmogCollection.GetItemInfo(itemID))
-	if transmoggable == false then
-		return false
-	end
-
-	-- See if the item is in a valid transmoggable slot
+	-- See if the item is in a valid transmoggable slot.
 	local slot = EquipLocToSlot1[slotName]
 	if slot == nil or slot == 11 or slot == 13 or slot == 2 then
 		return false
 	end
+
 	return true
+end
+
+local function GetUnknownAppearanceIcon()
+	if _G.AllTheThings then
+		return "|TInterface\\Addons\\AllTheThings\\assets\\unknown:0|t"
+	end
+	if _G.CanIMogIt then
+		return "|TInterface\\AddOns\\CanIMogIt\\Icons\\UNKNOWN:0|t"
+	end
+
+	-- Standalone fallback when neither collection addon is installed.
+	return "|TInterface\\RaidFrame\\ReadyCheck-NotReady:0|t"
+end
+
+local function GetUnknownSourceIcon()
+	if _G.AllTheThings then
+		return "|TInterface\\Addons\\AllTheThings\\assets\\known_circle:0|t"
+	end
+	if _G.CanIMogIt then
+		return "|TInterface\\AddOns\\CanIMogIt\\Icons\\KNOWN_circle:0|t"
+	end
+
+	-- Standalone fallback: appearance is known, but this exact source is not.
+	return "|TInterface\\RaidFrame\\ReadyCheck-Waiting:0|t"
+end
+
+---Return the icon WQA Turbo should show for a transmog reward.
+---
+---The first state is account-wide appearance ownership. The second is exact
+---source ownership (the specific item). They intentionally map to the two
+---separate settings "Unknown appearance" and "Unknown source".
+---@param itemLink string
+---@return string? icon
+---@return boolean retry
+function WQA:GetTrackedTransmogIcon(itemLink)
+	local appearanceID, sourceID = C_TransmogCollection.GetItemInfo(itemLink)
+	if not appearanceID or not sourceID then
+		return nil, true
+	end
+
+	-- `appearanceIsCollected` from GetAppearanceInfoBySource() is not reliable
+	-- for every multi-source appearance. Determine both states from the actual
+	-- sources instead: exact-source ownership comes from this source, while
+	-- appearance ownership is true when ANY source for the appearance is owned.
+	local sourceInfo = C_TransmogCollection.GetAppearanceSourceInfo(sourceID)
+	if not sourceInfo then
+		return nil, true
+	end
+
+	local sourceIsCollected = sourceInfo.isCollected == true
+	local appearanceIsCollected = sourceIsCollected
+
+	if not appearanceIsCollected then
+		local appearanceSources = C_TransmogCollection.GetAllAppearanceSources(appearanceID)
+		if not appearanceSources then
+			return nil, true
+		end
+
+		for _, appearanceSourceID in ipairs(appearanceSources) do
+			local appearanceSourceInfo = C_TransmogCollection.GetAppearanceSourceInfo(appearanceSourceID)
+			if appearanceSourceInfo and appearanceSourceInfo.isCollected then
+				appearanceIsCollected = true
+				break
+			end
+		end
+	end
+
+	if not appearanceIsCollected then
+		if self.db.profile.options.reward.gear.unknownAppearance then
+			return GetUnknownAppearanceIcon(), false
+		end
+		return nil, false
+	end
+
+	if not sourceIsCollected and self.db.profile.options.reward.gear.unknownSource then
+		return GetUnknownSourceIcon(), false
+	end
+
+	return nil, false
 end
 
 function WQA:CheckItems(questID, isEmissary)
@@ -1599,33 +1676,15 @@ function WQA:CheckReward(questID, isEmissary, rewardIndex)
 		end
 
 		-- Transmog
-		if self.db.profile.options.reward.gear.unknownAppearance and self:IsTransmogable(itemLink) then
+		if
+			(self.db.profile.options.reward.gear.unknownAppearance or self.db.profile.options.reward.gear.unknownSource)
+			and self:IsTransmogable(itemLink)
+		then
 			if itemClassID == 2 or itemClassID == 4 then
-				local transmog
-				if AllTheThings then
-					local searchForLinkResult, attReady = self:SafeATTSearchForLink(itemLink)
-					if not attReady then
-						retry = true
-					elseif searchForLinkResult and searchForLinkResult[1] then
-						local state = searchForLinkResult[1].collected
-						if not state then
-							transmog = "|TInterface\\Addons\\AllTheThings\\assets\\unknown:0|t"
-						elseif state == 2 and self.db.profile.options.reward.gear.unknownSource then
-							transmog = "|TInterface\\Addons\\AllTheThings\\assets\\known_circle:0|t"
-						end
-					end
-				end
-
-				if CanIMogIt and not transmog then
-					if CanIMogIt:IsEquippable(itemLink) and CanIMogIt:CharacterCanLearnTransmog(itemLink) then
-						if not CanIMogIt:PlayerKnowsTransmog(itemLink) then
-							transmog = "|TInterface\\AddOns\\CanIMogIt\\Icons\\UNKNOWN:0|t"
-						elseif not CanIMogIt:PlayerKnowsTransmogFromItem(itemLink) and self.db.profile.options.reward.gear.unknownSource then
-							transmog = "|TInterface\\AddOns\\CanIMogIt\\Icons\\KNOWN_circle:0|t"
-						end
-					end
-				end
-				if transmog then
+				local transmog, transmogRetry = self:GetTrackedTransmogIcon(itemLink)
+				if transmogRetry then
+					retry = true
+				elseif transmog then
 					local item = { itemLink = itemLink, transmog = transmog }
 					self:AddRewardToQuest(questID, "ITEM", item, isEmissary)
 				end
@@ -1986,12 +2045,13 @@ function dataobj:OnEnter()
 
 	-- Keep the minimap hover intentionally lightweight. The full World Quest
 	-- list belongs to the persistent left-click popup; hover only documents the
-	-- two available mouse actions.
+	-- available mouse actions.
 	GameTooltip:SetOwner(self, "ANCHOR_LEFT")
 	GameTooltip:ClearLines()
 	GameTooltip:AddLine("WQA Turbo")
 	GameTooltip:AddLine(L["MINIMAP_LEFT_CLICK"], 0.75, 0.75, 0.75)
 	GameTooltip:AddLine(L["MINIMAP_RIGHT_CLICK"], 0.75, 0.75, 0.75)
+	GameTooltip:AddLine(L["MINIMAP_SHIFT_LEFT_CLICK"], 0.75, 0.75, 0.75)
 	GameTooltip:Show()
 end
 
@@ -2002,7 +2062,11 @@ end
 function dataobj:OnClick(button)
 	GameTooltip:Hide()
 
-	if button == "LeftButton" then
+	if button == "LeftButton" and IsShiftKeyDown() then
+		-- Silent manual rescan. If the persistent popup is already open, the
+		-- settings refresh path rebuilds it once the scan completes.
+		WQA:Refresh("settings", true)
+	elseif button == "LeftButton" then
 		WQA:Show("popup")
 	elseif button == "RightButton" then
 		if type(WQA.optionsCategoryID) == "number" then
@@ -2222,43 +2286,21 @@ function WQA:CheckMissions()
 								end
 
 								-- Transmog
-								if self.db.profile.options.reward.gear.unknownAppearance and self:IsTransmogable(itemLink) then
+								if
+									(self.db.profile.options.reward.gear.unknownAppearance or self.db.profile.options.reward.gear.unknownSource)
+									and self:IsTransmogable(itemLink)
+								then
 									if itemClassID == 2 or itemClassID == 4 then
-										local transmog
-										if AllTheThings then
-											local searchForLinkResult, attReady = self:SafeATTSearchForLink(itemLink)
-											if not attReady then
-												retry = true
-											elseif not searchForLinkResult or not searchForLinkResult[1] then
-												retry = true
-											else
-												local state = searchForLinkResult[1].collected
-												if not state then
-													transmog = "|TInterface\\Addons\\AllTheThings\\assets\\unknown:0|t"
-												elseif state == 2 and self.db.profile.options.reward.gear.unknownSource then
-													transmog =
-													"|TInterface\\Addons\\AllTheThings\\assets\\known_circle:0|t"
-												end
-											end
-										elseif CanIMogIt then
-											if CanIMogIt:IsEquippable(itemLink) and CanIMogIt:CharacterCanLearnTransmog(itemLink) then
-												if not CanIMogIt:PlayerKnowsTransmog(itemLink) then
-													transmog = "|TInterface\\AddOns\\CanIMogIt\\Icons\\UNKNOWN:0|t"
-												elseif
-													not CanIMogIt:PlayerKnowsTransmogFromItem(itemLink) and self.db.profile.options.reward.gear.unknownSource
-												then
-													transmog = "|TInterface\\AddOns\\CanIMogIt\\Icons\\KNOWN_circle:0|t"
-												end
-											end
-										end
-										if transmog then
+										local transmog, transmogRetry = self:GetTrackedTransmogIcon(itemLink)
+										if transmogRetry then
+											retry = true
+										elseif transmog then
 											local item = { itemLink = itemLink, transmog = transmog }
 											self:AddRewardToMission(missionID, "ITEM", item)
 											addMission = true
 										end
 									end
 								end
-
 								-- Conduit
 								if self.db.profile.options.reward.gear.conduit and C_Soulbinds.IsItemConduitByItemInfo(itemLink) then
 									self:AddRewardToMission(missionID, "ITEM", { itemLink = itemLink })
