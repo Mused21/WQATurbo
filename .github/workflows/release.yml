@@ -1,43 +1,142 @@
-# This is a basic workflow to help you get started with Actions
+name: Automatic release
 
-name: Package and release
-
-# Controls when the action will run.
 on:
-  # Triggers the workflow on push or pull request events but only for the master branch
   push:
-    tags:
-      - "v*.*.*-**"
-
-  # Allows you to run this workflow manually from the Actions tab
+    branches: [master]
   workflow_dispatch:
+    inputs:
+      bump:
+        description: Version increment
+        required: true
+        default: patch
+        type: choice
+        options: [patch, minor, major]
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+permissions:
+  contents: write
+  pull-requests: read
+
+concurrency:
+  group: wqaturbo-release
+  cancel-in-progress: false
+
 jobs:
-  # "release" is a job, you can name it anything you want
   release:
-    # we can run our steps on pretty much anything, but the "ubuntu-latest" image is a safe bet
     runs-on: ubuntu-latest
-
-    # specify the environment variables used by the packager, matching the secrets from the project on GitHub
     env:
-      CF_API_KEY: ${{ secrets.CF_API_KEY }}
-      WOWI_API_TOKEN: ${{ secrets.WOWI_API_TOKEN }}
-      WAGO_API_TOKEN: ${{ secrets.WAGO_API_TOKEN }}
-      GITHUB_OAUTH:
-        ${{ secrets.GITHUB_TOKEN }} # "GITHUB_TOKEN" is a secret always provided to the workflow
-        # for your own token, the name cannot start with "GITHUB_"
+      GH_TOKEN: ${{ github.token }}
 
-    # "steps" holds a list of all the steps needed to package and release our AddOn
     steps:
-      # we first have to clone the AddOn project, this is a required step
-      - name: Clone project
-        uses: actions/checkout@v1
+      - uses: actions/checkout@v4
         with:
-          # you can specify how much of the commit history you want to fetch,
-          # which is useful for controlling the length of the automated changelog
-          fetch-depth: 50
+          fetch-depth: 0
+          ref: master
 
-      # once cloned, we just run the GitHub Action for the packager project
-      - name: Package and release
-        uses: BigWigsMods/packager@master
+      - name: Determine next version
+        id: version
+        shell: bash
+        env:
+          MANUAL_BUMP: ${{ github.event.inputs.bump }}
+        run: |
+          set -euo pipefail
+
+          existing_tag="$(git tag --points-at HEAD | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n1 || true)"
+          if [[ -n "$existing_tag" ]]; then
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+            echo "create_tag=false" >> "$GITHUB_OUTPUT"
+            echo "tag=$existing_tag" >> "$GITHUB_OUTPUT"
+            echo "version=${existing_tag#v}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          bump="patch"
+
+          if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
+            bump="${MANUAL_BUMP:-patch}"
+          else
+            pr_number="$(gh api "repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/pulls" --jq '.[0].number // empty' 2>/dev/null || true)"
+            if [[ -n "$pr_number" ]]; then
+              labels="$(gh pr view "$pr_number" --repo "$GITHUB_REPOSITORY" --json labels --jq '.labels[].name')"
+
+              if grep -Fxq 'release:none' <<< "$labels"; then
+                echo "skip=true" >> "$GITHUB_OUTPUT"
+                exit 0
+              elif grep -Fxq 'release:major' <<< "$labels"; then
+                bump="major"
+              elif grep -Fxq 'release:minor' <<< "$labels"; then
+                bump="minor"
+              fi
+            fi
+          fi
+
+          latest="$(git tag --list | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n1 || true)"
+          [[ -n "$latest" ]] || latest="v0.0.0"
+
+          IFS='.' read -r major minor patch <<< "${latest#v}"
+
+          case "$bump" in
+            patch) patch=$((patch + 1)) ;;
+            minor) minor=$((minor + 1)); patch=0 ;;
+            major) major=$((major + 1)); minor=0; patch=0 ;;
+          esac
+
+          version="${major}.${minor}.${patch}"
+          tag="v${version}"
+
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+          echo "create_tag=true" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Verify packaging config
+        if: steps.version.outputs.skip != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fx '## Version: @project-version@' WQATurbo.toc
+          grep -Fx 'package-as: WQATurbo' .pkgmeta
+          grep -Fx 'externals:' .pkgmeta
+
+      - name: Create tag
+        if: steps.version.outputs.skip != 'true' && steps.version.outputs.create_tag == 'true'
+        shell: bash
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "WQA Turbo $VERSION"
+          git push origin "$TAG"
+
+      - name: Build GitHub release package
+        if: steps.version.outputs.skip != 'true'
+        uses: BigWigsMods/packager@v2
+        with:
+          args: -d
+
+      - name: Locate package
+        if: steps.version.outputs.skip != 'true'
+        id: package
+        shell: bash
+        run: |
+          set -euo pipefail
+          package="$(find .release -maxdepth 1 -type f -name 'WQATurbo-*.zip' ! -name '*nolib*' | head -n1)"
+          [[ -n "$package" ]]
+          echo "zip=$package" >> "$GITHUB_OUTPUT"
+
+      - name: Create or update GitHub Release
+        if: steps.version.outputs.skip != 'true'
+        shell: bash
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+          VERSION: ${{ steps.version.outputs.version }}
+          PACKAGE: ${{ steps.package.outputs.zip }}
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$PACKAGE" --repo "$GITHUB_REPOSITORY" --clobber
+          else
+            gh release create "$TAG" "$PACKAGE" --repo "$GITHUB_REPOSITORY" --title "WQA Turbo $VERSION" --generate-notes
+          fi
