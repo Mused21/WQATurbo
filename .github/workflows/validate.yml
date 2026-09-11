@@ -71,6 +71,6 @@ jobs:
         with:
           name: WQATurbo-PR-${{ github.event.pull_request.number || github.run_number }}
           path: .release/WQATurbo-*.zip
-	  include-hidden-files: true
           if-no-files-found: error
           retention-days: 7
+          include-hidden-files: true
