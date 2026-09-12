@@ -1,7 +1,9 @@
 # WQA Turbo Developer Documentation
 
-> **Documentation baseline:** `feature/popupandcontainers`, planned WQA Turbo **1.1.0**  
-> **Previous public baseline:** 1.0.1  
+> **Documentation baseline:** `refactor/1.2.0`, local WQA Turbo **1.2.0** refactor
+>
+> **Behavioral baseline:** 1.1.0 functionality merged to master
+>
 > **Last major documentation refresh:** 2026-09-12
 
 This directory is the canonical architectural and functional reference for WQA Turbo.
@@ -47,6 +49,7 @@ This rule should be the first thing checked when debugging a function that appea
 | [KNOWN_LIMITATIONS.md](KNOWN_LIMITATIONS.md) | Current limitations, technical debt and research-only findings |
 | [MAINTAINING_DOCUMENTATION.md](MAINTAINING_DOCUMENTATION.md) | Mandatory documentation-update rules and PR checklist |
 | [VERSION_1.1.0.md](VERSION_1.1.0.md) | Planned 1.1.0 behavior delta |
+| [VERSION_1.2.0.md](VERSION_1.2.0.md) | Active refactor plan, local progress and validation |
 | [ARCHITECTURE_FLOWS.md](ARCHITECTURE_FLOWS.md) | End-to-end sequence/data-flow traces |
 | [API_AND_FUNCTION_INDEX.md](API_AND_FUNCTION_INDEX.md) | Maintainer index of important functions/runtime entry points |
 | [TESTING_REFERENCE.md](TESTING_REFERENCE.md) | Functional/performance regression matrix |
@@ -95,9 +98,12 @@ When debugging or extending the addon:
 
 ## Current release direction
 
-The `feature/popupandcontainers` branch is intended to become **1.1.0**.
+Current work is the incremental **1.2.0** refactor on `refactor/1.2.0`.
+Steps 2 and 3 are implemented and have passed local checks and initial in-game
+smoke testing. See
+[VERSION_1.2.0.md](VERSION_1.2.0.md) for validation status and the next steps.
 
-Its key changes are:
+The preserved **1.1.0** behavior includes:
 
 - Shift+Left-click on the minimap button opens the cached World Quest popup and starts a silent refresh.
 - Dragonflight racing reward containers can be tracked.

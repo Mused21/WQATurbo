@@ -23,5 +23,6 @@ ignore:
   - tools
   - dist
   - docs
+  - AGENTS.md
   - RELEASE_CHECKLIST.md
   - CURSEFORGE_DESCRIPTION.md

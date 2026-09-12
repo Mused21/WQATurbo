@@ -61,6 +61,16 @@ Ordinary values:
 
 Character-specific/exclusive modes can also exist on individual entries.
 
+In 1.2 Step 3, mode keys come from `WQA.Constants.TrackingMode` and common rules
+live in `TrackingPolicy.lua`. `GetState` returns enabled, always and character-only
+flags; `IsBulkMode` accepts only disabled/default/always; `SetValue` updates the
+mode and exclusive owner together. `Options.lua` still schedules refreshes.
+
+Existing behavior is preserved: only achievements consume the character-only
+flag, and their inherited `forcedByMe` reset remains a separate correctness issue.
+A missing exclusive owner still displays the original mode in Settings, while
+runtime eligibility rejects it for a named character.
+
 ### Category bulk tracking
 
 Example:

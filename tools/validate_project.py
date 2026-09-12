@@ -47,6 +47,8 @@ REQUIRED_PROJECT_FILES = (
     "WQATurbo.toc",
     ".pkgmeta",
     "Core.lua",
+    "Constants.lua",
+    "TrackingPolicy.lua",
     "WQATurbo.lua",
     "CollectionCache.lua",
     "RewardScanner.lua",
@@ -63,6 +65,8 @@ REQUIRED_PROJECT_FILES = (
 
 REQUIRED_PACKAGE_ITEMS = (
     "WQATurbo/WQATurbo.toc",
+    "WQATurbo/Constants.lua",
+    "WQATurbo/TrackingPolicy.lua",
 )
 
 REQUIRED_PACKAGE_PREFIXES = (
@@ -80,6 +84,11 @@ FORBIDDEN_PACKAGE_PREFIXES = (
     "WQATurbo/tools/",
     "WQATurbo/dist/",
     "WQATurbo/docs/",
+)
+
+FORBIDDEN_PACKAGE_ITEMS = (
+    "WQATurbo/AGENTS.md",
+    "WQATurbo/.travis.yml",
 )
 
 FORBIDDEN_REPOSITORY_SUFFIXES = (
@@ -176,6 +185,19 @@ def validate_toc(validation: Validation) -> None:
     sources = parse_toc_sources(text)
     seen: set[str] = set()
 
+    # Constants and tracking policy must exist before their runtime consumers.
+    startup = ("Core.lua", "Constants.lua", "TrackingPolicy.lua")
+    for source in startup:
+        if source not in sources:
+            validation.error(f"TOC must load {source}.")
+    if all(source in sources for source in startup):
+        positions = [sources.index(source) for source in startup]
+        if positions != sorted(positions):
+            validation.error("TOC must load Core, Constants, then TrackingPolicy.")
+        for source in sources[:positions[-1]]:
+            if source.endswith(".lua") and not source.startswith("Libs/") and source not in startup:
+                validation.error(f"TOC must load TrackingPolicy before {source}.")
+
     for source in sources:
         key = source.lower()
         if key in seen:
@@ -225,7 +247,7 @@ def validate_pkgmeta(validation: Validation) -> None:
         return
 
     ignored = parse_pkgmeta_ignore(text)
-    required_ignored = {".git", ".github", "tools", "dist", "docs"}
+    required_ignored = {".git", ".github", "tools", "dist", "docs", "AGENTS.md"}
 
     for path in sorted(required_ignored - ignored):
         validation.error(
@@ -253,6 +275,11 @@ def iter_project_files():
 
 
 def validate_repository_hygiene(validation: Validation) -> None:
+    if (ROOT / ".travis.yml").exists():
+        validation.error(
+            "Obsolete .travis.yml must not be restored; GitHub Actions own CI."
+        )
+
     for _, relative in iter_project_files():
         name = relative.name.lower()
 
@@ -297,28 +324,21 @@ def validate_static_data(validation: Validation) -> None:
                 )
 
 
-def validate_known_namespace_fragility(validation: Validation) -> None:
-    """
-    Temporary 1.2 migration warnings.
-
-    These are intentionally warnings, not errors: current master is known to
-    contain them and the 1.2 refactor will remove them incrementally.
-    """
+def validate_namespace_identity(validation: Validation) -> None:
+    """Enum modules must preserve the namespaces initialized by Core.lua."""
     reward_type = read_text(ROOT / "Rewards" / "RewardType.lua", validation)
     criteria_type = read_text(ROOT / "Criterias" / "CriteriaType.lua", validation)
 
     if re.search(r"\bWQA\.Rewards\s*=\s*{", reward_type):
-        validation.warn(
+        validation.error(
             "Rewards/RewardType.lua replaces the whole WQA.Rewards namespace. "
-            "1.2 should change this to field assignment after compatibility "
-            "checks are in place."
+            "Assign WQA.Rewards.RewardType instead."
         )
 
     if re.search(r"\bWQA\.Criterias\s*=\s*{", criteria_type):
-        validation.warn(
+        validation.error(
             "Criterias/CriteriaType.lua replaces the whole WQA.Criterias "
-            "namespace. 1.2 should change this to field assignment after "
-            "compatibility checks are in place."
+            "namespace. Assign WQA.Criterias.CriteriaType instead."
         )
 
 
@@ -349,6 +369,10 @@ def validate_package(path: Path, validation: Validation) -> None:
     for required in REQUIRED_PACKAGE_ITEMS:
         if required not in names:
             validation.error(f"Missing from package: {required}")
+
+    for forbidden in FORBIDDEN_PACKAGE_ITEMS:
+        if forbidden in names:
+            validation.error(f"Development-only file leaked into package: {forbidden}")
 
     for prefix in REQUIRED_PACKAGE_PREFIXES:
         if not any(name.startswith(prefix) for name in names):
@@ -396,7 +420,7 @@ def main() -> int:
     validate_pkgmeta(validation)
     validate_repository_hygiene(validation)
     validate_static_data(validation)
-    validate_known_namespace_fragility(validation)
+    validate_namespace_identity(validation)
 
     if args.package:
         package = (

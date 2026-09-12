@@ -1,5 +1,6 @@
 ---@class WQATurbo
 local WQA = WQATurbo
+local TaskType = WQA.Constants.TaskType
 
 --[[
 WQA Turbo progressive CheckWQ
@@ -82,7 +83,7 @@ function WQA:TurboPrepareWorldQuest(questID)
 
 	local questLink = self:GetTaskLink({
 		id = questID,
-		type = "WORLD_QUEST"
+		type = TaskType.WorldQuest
 	})
 
 	if not questLink then
@@ -277,7 +278,7 @@ function WQA:CheckWQ(mode, fromRetry)
 			self.activeTasks,
 			{
 				id = id,
-				type = "WORLD_QUEST"
+				type = TaskType.WorldQuest
 			}
 		)
 	end
@@ -287,7 +288,7 @@ function WQA:CheckWQ(mode, fromRetry)
 			self.activeTasks,
 			{
 				id = id,
-				type = "MISSION"
+				type = TaskType.Mission
 			}
 		)
 	end
@@ -299,7 +300,7 @@ function WQA:CheckWQ(mode, fromRetry)
 				{
 					id = poiId,
 					mapId = mapId,
-					type = "AREA_POI"
+					type = TaskType.AreaPoi
 				}
 			)
 		end
@@ -316,7 +317,7 @@ function WQA:CheckWQ(mode, fromRetry)
 			self.newTasks,
 			{
 				id = id,
-				type = "WORLD_QUEST"
+				type = TaskType.WorldQuest
 			}
 		)
 	end
@@ -328,7 +329,7 @@ function WQA:CheckWQ(mode, fromRetry)
 			self.newTasks,
 			{
 				id = id,
-				type = "MISSION"
+				type = TaskType.Mission
 			}
 		)
 	end
@@ -346,7 +347,7 @@ function WQA:CheckWQ(mode, fromRetry)
 				{
 					id = poiId,
 					mapId = mapId,
-					type = "AREA_POI"
+					type = TaskType.AreaPoi
 				}
 			)
 		end

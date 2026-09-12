@@ -9,6 +9,24 @@ WQA Turbo has two kinds of correctness requirements:
 
 A feature is not finished until both are considered.
 
+## Local tracking regression checks
+
+From the repository root with a Lua 5.1 interpreter:
+
+```text
+lua5.1 tools/test_tracking_policy.lua
+```
+
+The test loads actual registration and Settings methods with stubbed Blizzard
+APIs. It covers default/disabled/always/exclusive/character-only modes, missing
+owners, unknown values, owned/unowned collections, completed tracking quests,
+unknown journal entries, achievement completion and inherited forcing, exclusive
+owner cleanup, bulk state and one refresh per bulk operation. It also checks
+that repeated registration reuses journal snapshots.
+
+This is separate from `luac5.1 -p`, which checks syntax without running code.
+Both checks run in GitHub Actions; in-game smoke testing is still required.
+
 ## 2. Baseline smoke test
 
 After any meaningful change:

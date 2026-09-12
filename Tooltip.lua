@@ -1,5 +1,6 @@
 ---@class WQATurbo
 local WQA = WQATurbo
+local TaskType = WQA.Constants.TaskType
 
 local L = WQA.L
 local LibQTip = LibStub("LibQTip-1.0")
@@ -96,8 +97,8 @@ function WQA:UpdateQTip(tasks)
         for _, task in ipairs(tasks) do
             local id = task.id
             if
-                (task.type == "WORLD_QUEST" and not tooltip.quests[id]) or (task.type == "MISSION" and not tooltip.missions[id]) or
-                (task.type == "AREA_POI" and not tooltip.pois[id])
+                (task.type == TaskType.WorldQuest and not tooltip.quests[id]) or (task.type == TaskType.Mission and not tooltip.missions[id]) or
+                (task.type == TaskType.AreaPoi and not tooltip.pois[id])
             then
                 local j = 1
 
@@ -178,9 +179,9 @@ function WQA:UpdateQTip(tasks)
                     j = j + 1
                 end
 
-                if task.type == "WORLD_QUEST" then
+                if task.type == TaskType.WorldQuest then
                     tooltip.quests[id] = true
-                elseif task.type == "MISSION" then
+                elseif task.type == TaskType.Mission then
                     tooltip.missions[id] = true
                 end
 
@@ -196,11 +197,11 @@ function WQA:UpdateQTip(tasks)
                         GameTooltip:ClearLines()
                         GameTooltip:ClearAllPoints()
                         GameTooltip:SetPoint("BOTTOMLEFT", self, "TOPLEFT", 0, 0)
-                        if task.type == "WORLD_QUEST" then
+                        if task.type == TaskType.WorldQuest then
                             if string.find(link, "|Hquest:") then
                                 GameTooltip:SetHyperlink(link)
                             end
-                        elseif task.type == "MISSION" then
+                        elseif task.type == TaskType.Mission then
                             GameTooltip:SetText(C_Garrison.GetMissionName(id))
                             GameTooltip:AddLine(
                                 string.format(GARRISON_MISSION_TOOLTIP_NUM_REQUIRED_FOLLOWERS,
@@ -229,7 +230,7 @@ function WQA:UpdateQTip(tasks)
                                     1
                                 )
                             end
-                        elseif task.type == "AREA_POI" then
+                        elseif task.type == TaskType.AreaPoi then
                             local poiInfo = C_AreaPoiInfo.GetAreaPOIInfo(task.mapId, task.id)
 
                             GameTooltip_SetTitle(GameTooltip, poiInfo.name, HIGHLIGHT_FONT_COLOR)
@@ -280,7 +281,7 @@ function WQA:UpdateQTip(tasks)
                     function()
                         if ChatEdit_TryInsertChatLink(link) ~= true then
                             if
-                                task.type == "WORLD_QUEST" and not WQA.questList[id].isEmissary and
+                                task.type == TaskType.WorldQuest and not WQA.questList[id].isEmissary and
                                 not (self.questPinList[id] or self.questFlagList[id])
                             then
                                 if WorldQuestTrackerAddon and self.db.profile.options.WorldQuestTracker then
@@ -335,11 +336,11 @@ function WQA:UpdateQTip(tasks)
                 )
 
                 local list
-                if task.type == "WORLD_QUEST" then
+                if task.type == TaskType.WorldQuest then
                     list = WQA.questList[id].reward
-                elseif task.type == "MISSION" then
+                elseif task.type == TaskType.Mission then
                     list = WQA.missionList[id].reward
-                elseif task.type == "AREA_POI" then
+                elseif task.type == TaskType.AreaPoi then
                     list = WQA.Criterias.AreaPoi.list[task.id][task.mapId].reward
                 end
 
@@ -531,21 +532,21 @@ function WQA:AnnouncePopUp(quests, silent)
 end
 
 function WQA:SortByZoneName(a, b)
-    if a.type == "MISSION" and b.type ~= "MISSION" then
+    if a.type == TaskType.Mission and b.type ~= TaskType.Mission then
         return false
-    elseif b.type == "MISSION" and a.type ~= "MISSION" then
+    elseif b.type == TaskType.Mission and a.type ~= TaskType.Mission then
         return true
-    elseif a.type == "MISSION" and b.type == "MISSION" then
+    elseif a.type == TaskType.Mission and b.type == TaskType.Mission then
         return self:GetTaskZoneName(a) < self:GetTaskZoneName(b)
     end
 
-    if a.type == "WORLD_QUEST" and WQA.questList[a.id].isEmissary ~= nil then
-        if b.type == "WORLD_QUEST" and WQA.questList[b.id].isEmissary ~= nil then
+    if a.type == TaskType.WorldQuest and WQA.questList[a.id].isEmissary ~= nil then
+        if b.type == TaskType.WorldQuest and WQA.questList[b.id].isEmissary ~= nil then
             return false
         else
             return true
         end
-    elseif b.type == "WORLD_QUEST" and WQA.questList[b.id].isEmissary ~= nil then
+    elseif b.type == TaskType.WorldQuest and WQA.questList[b.id].isEmissary ~= nil then
         return false
     end
 

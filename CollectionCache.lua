@@ -1,5 +1,7 @@
 ---@class WQATurbo
 local WQA = WQATurbo
+local RewardType = WQA.Constants.RewardType
+local TrackingPolicy = WQA.TrackingPolicy
 
 local IsQuestFlaggedCompleted = C_QuestLog.IsQuestFlaggedCompleted
 
@@ -124,24 +126,14 @@ function WQA:AddMounts(mounts)
 		-- Upstream only sees mounts that exist in GetMountIDs(), so preserve
 		-- that behaviour instead of treating an unknown spellID as uncollected.
 		if spellID and cache.mountKnown[spellID] then
-			local setting = self.db.profile.mounts[spellID]
-
-			local enabled =
-				not (
-					setting == "disabled"
-					or (
-						setting == "exclusive"
-						and self.db.profile.mounts.exclusive[spellID] ~= self.playerName
-					)
-				)
+			local enabled, forced = TrackingPolicy.GetState(
+				self.db.profile.mounts, spellID, self.playerName)
 
 			if enabled then
-				local forced = setting == "always"
-
 				if not cache.mountCollected[spellID] or forced then
 					for _, quest in pairs(mount.quest) do
 						if not IsQuestFlaggedCompleted(quest.trackingID or 0) then
-							self:AddRewardToQuest(quest.wqID, "CHANCE", mount.itemID)
+							self:AddRewardToQuest(quest.wqID, RewardType.Chance, mount.itemID)
 						end
 					end
 				end
@@ -176,23 +168,13 @@ function WQA:AddPets(pets)
 		then
 			processed[companionID] = true
 
-			local setting = self.db.profile.pets[companionID]
-
-			local enabled =
-				not (
-					setting == "disabled"
-					or (
-						setting == "exclusive"
-						and self.db.profile.pets.exclusive[companionID] ~= self.playerName
-					)
-				)
+			local enabled, forced = TrackingPolicy.GetState(
+				self.db.profile.pets, companionID, self.playerName)
 
 			if enabled then
-				local forced = setting == "always"
-
 				if not cache.petOwned[companionID] or forced then
 					if pet.emissary == true then
-						self:AddEmissaryReward(pet.questID, "CHANCE", pet.itemID)
+						self:AddEmissaryReward(pet.questID, RewardType.Chance, pet.itemID)
 					end
 
 					if pet.source and pet.source.type == "ITEM" then
@@ -200,13 +182,13 @@ function WQA:AddPets(pets)
 					end
 
 					if pet.questID then
-						self:AddRewardToQuest(pet.questID, "CHANCE", pet.itemID)
+						self:AddRewardToQuest(pet.questID, RewardType.Chance, pet.itemID)
 					end
 
 					if pet.quest then
 						for _, quest in pairs(pet.quest) do
 							if not IsQuestFlaggedCompleted(quest.trackingID) then
-								self:AddRewardToQuest(quest.wqID, "CHANCE", pet.itemID)
+								self:AddRewardToQuest(quest.wqID, RewardType.Chance, pet.itemID)
 							end
 						end
 					end

@@ -15,6 +15,16 @@ Change when:
 
 Avoid putting feature-specific logic here.
 
+### `Constants.lua`
+
+Canonical reward, criteria, task and tracking-mode strings under `WQA.Constants`.
+Loaded immediately after `Core.lua`; content and SavedVariables values stay stable.
+
+### `TrackingPolicy.lua`
+
+Shared tracking-mode flags, bulk-mode eligibility and exclusive-owner updates.
+No collection API calls, scanning or refresh scheduling.
+
 ### `WQATurbo.lua`
 
 Large compatibility/core implementation.
@@ -204,7 +214,7 @@ Adding a zone affects standard scanner coverage and Settings zone pages.
 
 ### `Criterias/CriteriaType.lua`
 
-Criteria enum/namespace.
+Compatibility alias to `WQA.Constants.CriteriaType`; preserves `WQA.Criterias`.
 
 ### `Criterias/AreaPoi.lua`
 
@@ -216,7 +226,7 @@ Maintains active/new/watched POI state and retry behavior.
 
 ### `Rewards/RewardType.lua`
 
-Canonical reward type strings.
+Compatibility alias to `WQA.Constants.RewardType`; preserves `WQA.Rewards`.
 
 ### `Rewards/Reward.lua`
 
@@ -289,13 +299,18 @@ See [RELEASE_AND_CI.md](RELEASE_AND_CI.md).
 
 Development tooling/scripts. Excluded from release package.
 
+`validate_project.py` checks structure, startup load order and package hygiene.
+`test_tracking_policy.lua` exercises tracking behavior with stubbed Blizzard APIs
+and runs under Lua 5.1 in the validation workflow.
+
 ### `.gitignore`
 
 Repository ignore rules.
 
 ### `.travis.yml`
 
-Legacy CI configuration if still retained. GitHub Actions are the active documented workflows.
+Removed in 1.2 Step 2. GitHub Actions own validation and release; the project
+validator rejects reintroducing this obsolete configuration.
 
 ## File ownership rule of thumb
 

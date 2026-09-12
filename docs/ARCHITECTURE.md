@@ -20,6 +20,8 @@ The TOC loads the addon approximately in this order:
 ```text
 embedded libraries
 Core.lua
+Constants.lua
+TrackingPolicy.lua
 
 DB/Data/*
 DB/Expansions.lua
@@ -91,6 +93,18 @@ It establishes shared state such as:
 - watched-task sets
 - criteria namespace
 - reward namespace
+
+### `Constants.lua` and `TrackingPolicy.lua`
+
+`Constants.lua` owns `WQA.Constants.RewardType`, `CriteriaType`, `TaskType` and
+`TrackingMode`. Their string values remain compatible with content data and
+SavedVariables. The existing reward/criteria enum modules expose aliases to
+these same tables without replacing the namespaces created by `Core.lua`.
+
+`TrackingPolicy.lua` owns mode eligibility/force flags, ordinary bulk-mode
+eligibility and mode/owner writes. Achievements, collectible registration and
+Settings reuse these helpers. Collection/criterion completion checks stay in
+their existing runtime owners; refresh scheduling stays in Settings.
 
 ### `DB/Data/*.lua`
 

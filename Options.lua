@@ -1,4 +1,8 @@
 local WQA = WQATurbo
+local TrackingMode = WQA.Constants.TrackingMode
+local TrackingPolicy = WQA.TrackingPolicy
+local CriteriaType = WQA.Constants.CriteriaType
+local TaskType = WQA.Constants.TaskType
 local L = WQA.L
 
 -- Blizzard
@@ -46,48 +50,6 @@ local CurrencyIDList = {
 	},
 	[12] = {
 		3316 -- Voidlight Marl
-	}
-}
-
-local CraftingReagentIDList = {
-	[7] = {
-		124124, -- Blood of Sargeras
-		133680, -- Slice of Bacon
-		124444, -- Infernal Brimstone
-		151564, -- Empyrium
-		123919, -- Felslate
-		123918, -- Leystone Ore
-		124116, -- Felhide
-		136533, -- Dreadhide Leather
-		151566, -- Fiendish Leather
-		124113, -- Stonehide Leather
-		124115, -- Stormscale
-		124106, -- Felwort
-		124101, -- Aethril
-		124102, -- Dreamleaf
-		124103, -- Foxflower
-		124104, -- Fjarnskaggl
-		124105, -- Starlight Rose
-		151565 -- Astral Glory
-	},
-	[8] = {
-		152513, -- Platinum Ore
-		152512, -- Monelite Ore
-		152579, -- Storm Silver Ore
-		152542, -- Hardened Tempest Hide
-		153051, -- Mistscale
-		154165, -- Calcified Bone
-		154722, -- Tempest Hide
-		152541, -- Coarse Leather
-		153050, -- Shimmerscale
-		154164, -- Blood-Stained Bone
-		152510, -- Anchor Weed
-		152505, -- Riverbud
-		152506, -- Star Moss
-		152507, -- Akunda's Bite
-		152508, -- Winter's Kiss
-		152509, -- Siren's Pollen
-		152511 -- Sea Stalk
 	}
 }
 
@@ -228,9 +190,9 @@ local TRACKING_GROUP_ORDER = {
 
 local BULK_TRACKING_VALUES = {
 	mixed = "Mixed / choose setting",
-	disabled = L["tracking_disabled"],
-	default = L["tracking_default"],
-	always = L["tracking_always"]
+	[TrackingMode.Disabled] = L["tracking_disabled"],
+	[TrackingMode.Default] = L["tracking_default"],
+	[TrackingMode.Always] = L["tracking_always"]
 }
 
 local function GetSortedExpansionIDs(expansionList, minID, maxID)
@@ -527,9 +489,9 @@ function WQA:UpdateOptions()
 								L["IsActive:\nUse this as a last resort. Works for some daily quests.\n\nIsQuestFlaggedCompleted:\nUse this for quests, that are always active.\n\nQuest Pin:\nUse this, if the daily is marked with a quest pin on the world map.\n\nWorld Quest:\nUse this, if you want to track a world quest."],
 								type = "select",
 								values = {
-									WORLD_QUEST = L["World Quest"],
-									QUEST_PIN = L["Quest Pin"],
-									QUEST_FLAG = L["IsQuestFlaggedCompleted"],
+									[TaskType.WorldQuest] = L["World Quest"],
+									[CriteriaType.QuestPin] = L["Quest Pin"],
+									[CriteriaType.QuestFlag] = L["IsQuestFlaggedCompleted"],
 									IsActive = L["IsActive"]
 								},
 								set = function(info, val)
@@ -588,7 +550,7 @@ function WQA:UpdateOptions()
 									local mapId = self.data.custom.mapID
 									local questID = self.data.custom.wqID
 									return (questID == nil or questID == "") or
-										(self.data.custom.questType == "QUEST_PIN" and (mapId == nil or mapId == ""))
+										(self.data.custom.questType == CriteriaType.QuestPin and (mapId == nil or mapId == ""))
 								end
 							},
 							-- Configure
@@ -1666,13 +1628,12 @@ function WQA:SetTrackingValue(groupName, id, value, suppressRefresh)
 		return
 	end
 
-	WQA.db.profile[groupName][id] = value
-	if value == "exclusive" then
+	local currentCharacter
+	if value == TrackingMode.Exclusive then
 		local name, server = UnitFullName("player")
-		WQA.db.profile[groupName].exclusive[id] = name .. "-" .. server
-	elseif WQA.db.profile[groupName].exclusive[id] then
-		WQA.db.profile[groupName].exclusive[id] = nil
+		currentCharacter = name .. "-" .. server
 	end
+	TrackingPolicy.SetValue(WQA.db.profile[groupName], id, value, currentCharacter)
 
 	if not suppressRefresh then
 		self:ScheduleOptionsRefresh()
@@ -1798,11 +1759,11 @@ function WQA:AddTrackedObjectRow(args, groupName, object, keyPrefix, order)
 	}
 
 	local trackingValues = {
-		disabled = L["tracking_disabled"],
-		default = L["tracking_default"],
-		always = L["tracking_always"],
-		wasEarnedByMe = L["tracking_wasEarnedByMe"],
-		exclusive = L["tracking_exclusive"]
+		[TrackingMode.Disabled] = L["tracking_disabled"],
+		[TrackingMode.Default] = L["tracking_default"],
+		[TrackingMode.Always] = L["tracking_always"],
+		[TrackingMode.WasEarnedByMe] = L["tracking_wasEarnedByMe"],
+		[TrackingMode.Exclusive] = L["tracking_exclusive"]
 	}
 
 	args[optionKey] = {
@@ -1816,7 +1777,7 @@ function WQA:AddTrackedObjectRow(args, groupName, object, keyPrefix, order)
 		get = function()
 			trackingValues.other = nil
 			local value = WQA.db.profile[groupName][id]
-			if value == "exclusive" then
+			if value == TrackingMode.Exclusive then
 				local name, server = UnitFullName("player")
 				local currentCharacter = name .. "-" .. server
 				local owner = WQA.db.profile[groupName].exclusive[id]
@@ -1841,7 +1802,7 @@ function WQA:GetBulkTrackingState(objects, groupName)
 		local id = self:GetTrackedObjectID(object)
 		if id then
 			local value = WQA.db.profile[groupName][id]
-			if value ~= "disabled" and value ~= "default" and value ~= "always" then
+			if not TrackingPolicy.IsBulkMode(value) then
 				return "mixed"
 			end
 			if not found then
@@ -1857,7 +1818,7 @@ function WQA:GetBulkTrackingState(objects, groupName)
 end
 
 function WQA:SetTrackingForCategory(objects, groupName, value, suppressRefresh)
-	if value ~= "disabled" and value ~= "default" and value ~= "always" then
+	if not TrackingPolicy.IsBulkMode(value) then
 		return
 	end
 
@@ -1882,7 +1843,7 @@ function WQA:GetExpansionBulkTrackingState(expansionData)
 			local id = self:GetTrackedObjectID(object)
 			if id then
 				local value = WQA.db.profile[groupName][id]
-				if value ~= "disabled" and value ~= "default" and value ~= "always" then
+				if not TrackingPolicy.IsBulkMode(value) then
 					return "mixed"
 				end
 				if not found then
@@ -2126,9 +2087,9 @@ function WQA:UpdateCustomQuests()
 			L["IsActive:\nUse this as a last resort. Works for some daily quests.\n\nIsQuestFlaggedCompleted:\nUse this for quests, that are always active.\n\nQuest Pin:\nUse this, if the daily is marked with a quest pin on the world map.\n\nWorld Quest:\nUse this, if you want to track a world quest."],
 			type = "select",
 			values = {
-				WORLD_QUEST = L["World Quest"],
-				QUEST_PIN = L["Quest Pin"],
-				QUEST_FLAG = L["IsQuestFlaggedCompleted"],
+				[TaskType.WorldQuest] = L["World Quest"],
+				[CriteriaType.QuestPin] = L["Quest Pin"],
+				[CriteriaType.QuestFlag] = L["IsQuestFlaggedCompleted"],
 				IsActive = L["IsActive"]
 			},
 			width = .8,

@@ -166,6 +166,11 @@ refresh
 → discard/rebuild on next refresh as appropriate
 ```
 
+Mode eligibility now uses `TrackingPolicy.GetState` after the same known-entry
+checks. This helper returns flags without allocating tables or querying journals.
+The once-per-refresh snapshots and per-quest tracking gates are unchanged.
+Scanner changes in Step 3 only replace reward/mode literals with equal constants.
+
 This avoids:
 
 ```text

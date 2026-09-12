@@ -44,9 +44,14 @@ default
 disabled
 always
 exclusive
+wasEarnedByMe
 ```
 
 Exclusive ownership metadata is stored separately under `.exclusive`.
+`Constants.lua` defines these stable values in `WQA.Constants.TrackingMode`;
+`TrackingPolicy.lua` reads/writes the existing schema without migration.
+`wasEarnedByMe` retains the legacy achievement-specific behavior; collectibles
+handle it like Default.
 
 ## 3. Core runtime tables
 
@@ -119,6 +124,9 @@ Entries use task descriptors such as:
 { id = areaPoiID, mapId = mapID, type = "AREA_POI" }
 ```
 
+`WQA.Constants.TaskType` names these three task values. Task descriptors keep
+their existing string representation.
+
 ### `WQA.newTasks`
 
 Tasks considered newly discovered relative to watched state.
@@ -147,7 +155,9 @@ State for quest-flag based criteria.
 
 ## 4. Reward types
 
-`Rewards/RewardType.lua` defines canonical reward type constants:
+`Constants.lua` defines canonical reward type constants under
+`WQA.Constants.RewardType`. `Rewards/RewardType.lua` keeps the existing
+`WQA.Rewards.RewardType` access path as an alias to that same table:
 
 ```text
 ACHIEVEMENT
@@ -369,7 +379,9 @@ Zone profile defaults use wildcard `true`, and individual maps can be disabled.
 
 ## 10. Criteria model
 
-`Criterias/CriteriaType.lua` currently formalizes the criteria subsystem around Area POI criteria.
+`Constants.lua` defines all eight achievement/POI criteria types under
+`WQA.Constants.CriteriaType`. `Criterias/CriteriaType.lua` exposes the same table
+as `WQA.Criterias.CriteriaType`. Declarative data retains its existing strings.
 
 `Criterias/AreaPoi.lua` maintains:
 
@@ -378,7 +390,7 @@ Zone profile defaults use wildcard `true`, and individual maps can be disabled.
 - active/new results;
 - link readiness/retry state.
 
-Achievement data also uses legacy string criterion types handled by `Achievements.lua`.
+Achievement criteria are dispatched by `Achievements.lua` using these constants.
 
 ## 11. Collection caches
 

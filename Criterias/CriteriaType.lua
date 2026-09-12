@@ -1,11 +1,5 @@
 ---@class WQATurbo
 local WQA = WQATurbo
 
----@enum CriteriaType
-local CriteriaType = {
-    AreaPoi = "AREA_POI"
-}
-
-WQA.Criterias = {
-    CriteriaType = CriteriaType
-}
+-- Compatibility alias; Constants.lua owns the enum values.
+WQA.Criterias.CriteriaType = WQA.Constants.CriteriaType

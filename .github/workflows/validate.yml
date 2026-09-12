@@ -30,6 +30,9 @@ jobs:
             luac5.1 -p "$file"
           done < <(find . -type f -name '*.lua' -not -path './Libs/*' -not -path './.release/*' -print0)
 
+      - name: Test tracking policy
+        run: lua5.1 tools/test_tracking_policy.lua
+
       - name: Build package with externals
         uses: BigWigsMods/packager@v2
         with:

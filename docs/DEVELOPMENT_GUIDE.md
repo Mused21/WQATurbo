@@ -51,6 +51,17 @@ This rule applies especially to:
 - `OnEnable`
 - collection registration helpers.
 
+### Shared constants and tracking rules
+
+Use `WQA.Constants.RewardType`, `CriteriaType`, `TaskType` and `TrackingMode` in
+runtime code. `WQA.Rewards.RewardType` and `WQA.Criterias.CriteriaType` remain
+compatible aliases. Keep persisted string values stable; declarative content
+can continue using those strings.
+
+Use `WQA.TrackingPolicy` for shared mode flags, bulk eligibility and ownership
+writes. Do not move collection API calls or refresh scheduling into this module.
+Run `lua5.1 tools/test_tracking_policy.lua` after changing tracking rules.
+
 ## 3. Adding a new achievement mapping
 
 1. Identify the expansion data file.

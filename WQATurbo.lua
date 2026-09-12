@@ -1,5 +1,10 @@
 ---@class WQATurbo
 local WQA = WQATurbo
+local RewardType = WQA.Constants.RewardType
+local CriteriaType = WQA.Constants.CriteriaType
+local TaskType = WQA.Constants.TaskType
+local TrackingMode = WQA.Constants.TrackingMode
+local TrackingPolicy = WQA.TrackingPolicy
 
 local LibQTip = LibStub("LibQTip-1.0")
 
@@ -165,9 +170,8 @@ do
 	end
 end
 
-WQA.data.custom = { wqID = "", rewardID = "", rewardType = "none", questType = "WORLD_QUEST" }
+WQA.data.custom = { wqID = "", rewardID = "", rewardType = "none", questType = TaskType.WorldQuest }
 WQA.data.custom.mission = { missionID = "", rewardID = "", rewardType = "none" }
---WQA.data.customReward = 0
 
 local ldb = LibStub:GetLibrary("LibDataBroker-1.1")
 local dataobj =
@@ -262,10 +266,10 @@ function WQA:OnInitialize()
 				delay = 5,
 				LibDBIcon = { hide = false }
 			},
-			["achievements"] = { exclusive = {}, ["*"] = "default" },
-			["mounts"] = { exclusive = {}, ["*"] = "default" },
-			["pets"] = { exclusive = {}, ["*"] = "default" },
-			["toys"] = { exclusive = {}, ["*"] = "default" },
+			["achievements"] = { exclusive = {}, ["*"] = TrackingMode.Default },
+			["mounts"] = { exclusive = {}, ["*"] = TrackingMode.Default },
+			["pets"] = { exclusive = {}, ["*"] = TrackingMode.Default },
+			["toys"] = { exclusive = {}, ["*"] = TrackingMode.Default },
 			custom = {
 				["*"] = { ["*"] = true }
 			},
@@ -391,7 +395,6 @@ function WQA:slash(input)
 	local arg1 = string.lower(input)
 
 	if arg1 == "" then
-		--self:CheckWQ()
 		self:Show()
 	elseif arg1 == "new" then
 		self:Show("new")
@@ -429,10 +432,6 @@ function WQA:CreateQuestList()
 		if (data.toys) then
 			self:AddToys(data.toys)
 		end
-
-		if (data.miscellaneous) then
-			--  self:AddMiscellaneous(data.miscellaneous)
-		end
 	end
 
 
@@ -445,22 +444,16 @@ end
 function WQA:AddMounts(mounts)
 	for i, id in pairs(C_MountJournal.GetMountIDs()) do
 		local n, spellID, _, _, _, _, _, _, _, _, isCollected = C_MountJournal.GetMountInfoByID(id)
-		local forced = false
+		local enabled, forced = TrackingPolicy.GetState(
+			self.db.profile.mounts, spellID, self.playerName)
 
-		if
-			not (self.db.profile.mounts[spellID] == "disabled" or
-				(self.db.profile.mounts[spellID] == "exclusive" and self.db.profile.mounts.exclusive[spellID] ~= self.playerName))
-		then
-			if self.db.profile.mounts[spellID] == "always" then
-				forced = true
-			end
-
+		if enabled then
 			if not isCollected or forced then
 				for _, mount in pairs(mounts) do
 					if spellID == mount.spellID then
 						for _, v in pairs(mount.quest) do
 							if not IsQuestFlaggedCompleted(v.trackingID or 0) then
-								self:AddRewardToQuest(v.wqID, "CHANCE", mount.itemID)
+								self:AddRewardToQuest(v.wqID, RewardType.Chance, mount.itemID)
 							end
 						end
 					end
@@ -474,21 +467,15 @@ function WQA:AddPets(pets)
 	local total = C_PetJournal.GetNumPets()
 	for i = 1, total do
 		local petID, _, owned, _, _, _, _, _, _, _, companionID = C_PetJournal.GetPetInfoByIndex(i)
-		local forced = false
+		local enabled, forced = TrackingPolicy.GetState(
+			self.db.profile.pets, companionID, self.playerName)
 
-		if
-			not (self.db.profile.pets[companionID] == "disabled" or
-				(self.db.profile.pets[companionID] == "exclusive" and self.db.profile.pets.exclusive[companionID] ~= self.playerName))
-		then
-			if self.db.profile.pets[companionID] == "always" then
-				forced = true
-			end
-
+		if enabled then
 			if not owned or forced then
 				for _, pet in pairs(pets) do
 					if companionID == pet.creatureID then
 						if pet.emissary == true then
-							self:AddEmissaryReward(pet.questID, "CHANCE", pet.itemID)
+							self:AddEmissaryReward(pet.questID, RewardType.Chance, pet.itemID)
 						end
 
 						if pet.source and pet.source.type == "ITEM" then
@@ -496,13 +483,13 @@ function WQA:AddPets(pets)
 						end
 
 						if pet.questID then
-							self:AddRewardToQuest(pet.questID, "CHANCE", pet.itemID)
+							self:AddRewardToQuest(pet.questID, RewardType.Chance, pet.itemID)
 						end
 
 						if pet.quest then
 							for _, v in pairs(pet.quest) do
 								if not IsQuestFlaggedCompleted(v.trackingID) then
-									self:AddRewardToQuest(v.wqID, "CHANCE", pet.itemID)
+									self:AddRewardToQuest(v.wqID, RewardType.Chance, pet.itemID)
 								end
 							end
 						end
@@ -518,26 +505,20 @@ end
 function WQA:AddToys(toys)
 	for _, toy in pairs(toys) do
 		local itemID = toy.itemID
-		local forced = false
+		local enabled, forced = TrackingPolicy.GetState(
+			self.db.profile.toys, itemID, self.playerName)
 
-		if
-			not (self.db.profile.toys[itemID] == "disabled" or
-				(self.db.profile.toys[itemID] == "exclusive" and self.db.profile.toys.exclusive[itemID] ~= self.playerName))
-		then
-			if self.db.profile.toys[itemID] == "always" then
-				forced = true
-			end
-
+		if enabled then
 			if not PlayerHasToy(toy.itemID) or forced then
 				if toy.source and toy.source.type == "ITEM" then
 					self.itemList[toy.source.itemID] = true
 				else
 					if toy.questID then
-						self:AddRewardToQuest(toy.questID, "CHANCE", toy.itemID)
+						self:AddRewardToQuest(toy.questID, RewardType.Chance, toy.itemID)
 					else
 						for _, v in pairs(toy.quest) do
 							if not IsQuestFlaggedCompleted(v.trackingID) then
-								self:AddRewardToQuest(v.wqID, "CHANCE", toy.itemID)
+								self:AddRewardToQuest(v.wqID, RewardType.Chance, toy.itemID)
 							end
 						end
 					end
@@ -552,10 +533,10 @@ function WQA:AddCustom()
 	if type(self.db.global.custom.worldQuest) == "table" then
 		for questID, v in pairs(self.db.global.custom.worldQuest) do
 			if self.db.profile.custom.worldQuest[questID] == true then
-				self:AddRewardToQuest(questID, "CUSTOM")
-				if v.questType == "QUEST_FLAG" then
+				self:AddRewardToQuest(questID, RewardType.Custom)
+				if v.questType == CriteriaType.QuestFlag then
 					self.questFlagList[questID] = true
-				elseif v.questType == "QUEST_PIN" and v.mapID then
+				elseif v.questType == CriteriaType.QuestPin and v.mapID then
 					C_QuestLine.RequestQuestLinesForMap(v.mapID)
 					self.questPinMapList[v.mapID] = true
 					self.questPinList[questID] = true
@@ -568,7 +549,7 @@ function WQA:AddCustom()
 	if type(self.db.global.custom.mission) == "table" then
 		for k, v in pairs(self.db.global.custom.mission) do
 			if self.db.profile.custom.mission[k] == true then
-				self:AddRewardToMission(k, "CUSTOM")
+				self:AddRewardToMission(k, RewardType.Custom)
 			end
 		end
 	end
@@ -624,7 +605,7 @@ function WQA:CheckWQ(mode)
 			IsActive(questID) or self:EmissaryIsActive(questID) or self:isQuestPinActive(questID) or
 			self:IsQuestFlaggedCompleted(questID)
 		then
-			local questLink = self:GetTaskLink({ id = questID, type = "WORLD_QUEST" })
+			local questLink = self:GetTaskLink({ id = questID, type = TaskType.WorldQuest })
 			local link
 			for k, v in pairs(self.questList[questID].reward) do
 				if k == "custom" or k == "professionSkillup" or k == "gold" then
@@ -706,14 +687,14 @@ function WQA:CheckWQ(mode)
 
 	self.activeTasks = {}
 	for id in pairs(activeQuests) do
-		table.insert(self.activeTasks, { id = id, type = "WORLD_QUEST" })
+		table.insert(self.activeTasks, { id = id, type = TaskType.WorldQuest })
 	end
 	for id in pairs(activeMissions) do
-		table.insert(self.activeTasks, { id = id, type = "MISSION" })
+		table.insert(self.activeTasks, { id = id, type = TaskType.Mission })
 	end
 	for poiId, mapIds in pairs(pois.active) do
 		for mapId in pairs(mapIds) do
-			table.insert(self.activeTasks, { id = poiId, mapId = mapId, type = "AREA_POI" })
+			table.insert(self.activeTasks, { id = poiId, mapId = mapId, type = TaskType.AreaPoi })
 		end
 	end
 
@@ -722,11 +703,11 @@ function WQA:CheckWQ(mode)
 	self.newTasks = {}
 	for id in pairs(newQuests) do
 		self.watched[id] = true
-		table.insert(self.newTasks, { id = id, type = "WORLD_QUEST" })
+		table.insert(self.newTasks, { id = id, type = TaskType.WorldQuest })
 	end
 	for id in pairs(newMissions) do
 		self.watchedMissions[id] = true
-		table.insert(self.newTasks, { id = id, type = "MISSION" })
+		table.insert(self.newTasks, { id = id, type = TaskType.Mission })
 	end
 	for poiId, mapIds in pairs(pois.new) do
 		for mapId in pairs(mapIds) do
@@ -735,7 +716,7 @@ function WQA:CheckWQ(mode)
 			end
 			self.Criterias.AreaPoi.watched[poiId][mapId] = true
 
-			table.insert(self.newTasks, { id = poiId, mapId = mapId, type = "AREA_POI" })
+			table.insert(self.newTasks, { id = poiId, mapId = mapId, type = TaskType.AreaPoi })
 		end
 	end
 
@@ -774,7 +755,7 @@ end
 
 function WQA:GetRewardForID(questID, key, type)
 	local l
-	if type == "MISSION" then
+	if type == TaskType.Mission then
 		l = self.missionList[questID].reward
 	else
 		l = self.questList[questID].reward
@@ -875,11 +856,11 @@ function WQA:AnnounceChat(tasks, silent)
 		end
 
 		local l
-		if task.type == "WORLD_QUEST" then
+		if task.type == TaskType.WorldQuest then
 			l = self.questList[task.id]
-		elseif task.type == "MISSION" then
+		elseif task.type == TaskType.Mission then
 			l = self.missionList[task.id]
-		elseif task.type == "AREA_POI" then
+		elseif task.type == TaskType.AreaPoi then
 			l = self.Criterias.AreaPoi.list[task.id][task.mapId]
 		end
 
@@ -1120,20 +1101,20 @@ function WQA:Reward()
 								end
 
 								if
-									self.db.profile.achievements[11189] ~= "disabled" and not select(4, GetAchievementInfo(11189)) and exp == 7 and
+									self.db.profile.achievements[11189] ~= TrackingMode.Disabled and not select(4, GetAchievementInfo(11189)) and exp == 7 and
 									mapID ~= 830 and
 									mapID ~= 885 and
 									mapID ~= 882
 								then
-									self:AddRewardToQuest(questID, "ACHIEVEMENT", 11189)
+									self:AddRewardToQuest(questID, RewardType.Achievement, 11189)
 								elseif
-									self.db.profile.achievements[13144] ~= "disabled" and not select(4, GetAchievementInfo(13144)) and exp == 8
+									self.db.profile.achievements[13144] ~= TrackingMode.Disabled and not select(4, GetAchievementInfo(13144)) and exp == 8
 								then
-									self:AddRewardToQuest(questID, "ACHIEVEMENT", 13144)
+									self:AddRewardToQuest(questID, RewardType.Achievement, 13144)
 								elseif
-									self.db.profile.achievements[14758] ~= "disabled" and not select(4, GetAchievementInfo(14758)) and exp == 9
+									self.db.profile.achievements[14758] ~= TrackingMode.Disabled and not select(4, GetAchievementInfo(14758)) and exp == 9
 								then
-									self:AddRewardToQuest(questID, "ACHIEVEMENT", 14758)
+									self:AddRewardToQuest(questID, RewardType.Achievement, 14758)
 								end
 							end
 
@@ -1179,7 +1160,7 @@ function WQA:Reward()
 									not self.db.char[exp].profession[tradeskillLineID].isMaxLevel and
 									self.db.profile.options.reward[exp].profession[tradeskillLineID].skillup
 								then
-									self:AddRewardToQuest(questID, "PROFESSION_SKILLUP", professionName)
+									self:AddRewardToQuest(questID, RewardType.ProfessionSkillup, professionName)
 								end
 							end
 						end
@@ -1426,7 +1407,7 @@ function WQA:CheckReward(questID, isEmissary, rewardIndex)
 
 		-- Benthic armor tokens
 		if benthicArmorToken[itemID] and self.db.profile.options.reward.gear.armorCache then
-			self:AddRewardToQuest(questID, "ITEM", { itemLink = itemLink }, isEmissary)
+			self:AddRewardToQuest(questID, RewardType.Item, { itemLink = itemLink }, isEmissary)
 		end
 
 		-- Dragonflight racing reward containers
@@ -1434,7 +1415,7 @@ function WQA:CheckReward(questID, isEmissary, rewardIndex)
 			racingRewardContainer[itemID]
 			and self.db.profile.options.reward[10].racingRewardContainers
 		then
-			self:AddRewardToQuest(questID, "ITEM", { itemLink = itemLink }, isEmissary)
+			self:AddRewardToQuest(questID, RewardType.Item, { itemLink = itemLink }, isEmissary)
 		end
 
 		-- Ask Pawn if this is an Upgrade
@@ -1450,7 +1431,7 @@ function WQA:CheckReward(questID, isEmissary, rewardIndex)
 						itemLink = itemLink,
 						itemPercentUpgrade = math.floor(UpgradeInfo[1].PercentUpgrade * 100 + .5)
 					}
-					self:AddRewardToQuest(questID, "ITEM", item, isEmissary)
+					self:AddRewardToQuest(questID, RewardType.Item, item, isEmissary)
 				end
 			end
 		end
@@ -1519,7 +1500,7 @@ function WQA:CheckReward(questID, isEmissary, rewardIndex)
 				end
 				if itemPercentUpgrade >= self.db.profile.options.reward.gear.PercentUpgradeMin then
 					local item = { itemLink = itemLink, itemPercentUpgrade = math.floor(itemPercentUpgrade + .5) }
-					self:AddRewardToQuest(questID, "ITEM", item, isEmissary)
+					self:AddRewardToQuest(questID, RewardType.Item, item, isEmissary)
 				end
 			end
 		end
@@ -1563,7 +1544,7 @@ function WQA:CheckReward(questID, isEmissary, rewardIndex)
 				local itemLevelEquipped = math.min(itemLevel1 or 1000, itemLevel2 or 1000)
 				if itemLevel - itemLevelEquipped >= self.db.profile.options.reward.gear.itemLevelUpgradeMin then
 					local item = { itemLink = itemLink, itemLevelUpgrade = itemLevel - itemLevelEquipped }
-					self:AddRewardToQuest(questID, "ITEM", item, isEmissary)
+					self:AddRewardToQuest(questID, RewardType.Item, item, isEmissary)
 				end
 			end
 		end
@@ -1572,7 +1553,7 @@ function WQA:CheckReward(questID, isEmissary, rewardIndex)
 		if itemID == 163857 and self.db.profile.options.reward.gear.AzeriteArmorCache then
 			-- Enabling the option tracks the cache itself.
 			-- Upgrade calculations below are only supplemental metadata.
-			self:AddRewardToQuest(questID, "ITEM", { itemLink = itemLink }, isEmissary)
+			self:AddRewardToQuest(questID, RewardType.Item, { itemLink = itemLink }, isEmissary)
 			itemLevel = GetDetailedItemLevelInfo(itemLink)
 			local AzeriteArmorCacheIsUpgrade = false
 			local AzeriteArmorCache = {}
@@ -1601,7 +1582,7 @@ function WQA:CheckReward(questID, isEmissary, rewardIndex)
 			end
 			if AzeriteArmorCacheIsUpgrade == true then
 				local item = { itemLink = itemLink, AzeriteArmorCache = AzeriteArmorCache }
-				self:AddRewardToQuest(questID, "ITEM", item, isEmissary)
+				self:AddRewardToQuest(questID, RewardType.Item, item, isEmissary)
 			end
 		end
 
@@ -1613,12 +1594,11 @@ function WQA:CheckReward(questID, isEmissary, rewardIndex)
 		then
 			-- Enabling a cache category tracks the cache itself.
 			-- Upgrade calculations below are only supplemental metadata.
-			self:AddRewardToQuest(questID, "ITEM", { itemLink = itemLink }, isEmissary)
+			self:AddRewardToQuest(questID, RewardType.Item, { itemLink = itemLink }, isEmissary)
 			itemLevel = GetDetailedItemLevelInfo(itemLink)
 			local n = 0
 			local upgrade
 			local upgradeMax = 0
-			local upgradeSum = 0
 			local upgradeNum = 0
 
 			if weaponCache[itemID] then
@@ -1636,7 +1616,6 @@ function WQA:CheckReward(questID, isEmissary, rewardIndex)
 										upgradeMax = upgrade
 									end
 								end
-								upgradeSum = upgradeSum + upgrade
 							else
 								retry = true
 							end
@@ -1666,7 +1645,6 @@ function WQA:CheckReward(questID, isEmissary, rewardIndex)
 											upgradeMax = upgrade
 										end
 									end
-									upgradeSum = upgradeSum + upgrade
 								else
 									retry = true
 								end
@@ -1693,7 +1671,6 @@ function WQA:CheckReward(questID, isEmissary, rewardIndex)
 										upgradeMax = upgrade
 									end
 								end
-								upgradeSum = upgradeSum + upgrade
 							else
 								retry = true
 							end
@@ -1709,7 +1686,7 @@ function WQA:CheckReward(questID, isEmissary, rewardIndex)
 					itemLink = itemLink,
 					cache = { upgradeNum = upgradeNum, n = n, upgradeMax = upgradeMax }
 				}
-				self:AddRewardToQuest(questID, "ITEM", item, isEmissary)
+				self:AddRewardToQuest(questID, RewardType.Item, item, isEmissary)
 			end
 		end
 
@@ -1724,7 +1701,7 @@ function WQA:CheckReward(questID, isEmissary, rewardIndex)
 					retry = true
 				elseif transmog then
 					local item = { itemLink = itemLink, transmog = transmog }
-					self:AddRewardToQuest(questID, "ITEM", item, isEmissary)
+					self:AddRewardToQuest(questID, RewardType.Item, item, isEmissary)
 				end
 			end
 		end
@@ -1734,38 +1711,28 @@ function WQA:CheckReward(questID, isEmissary, rewardIndex)
 		if factionID then
 			if self.db.profile.options.reward.reputation[factionID] == true then
 				local reputation = { itemLink = itemLink, factionID = factionID }
-				self:AddRewardToQuest(questID, "REPUTATION", reputation, isEmissary)
+				self:AddRewardToQuest(questID, RewardType.Reputation, reputation, isEmissary)
 			end
 		end
 
-		-- print(expacID,self:GetExpansionByQuestID(questID), itemLink, questID)
 		-- Recipe
 		if itemClassID == 9 then
 			if self.db.profile.options.reward.recipe[expacID] == true then
-				self:AddRewardToQuest(questID, "RECIPE", itemLink, isEmissary)
+				self:AddRewardToQuest(questID, RewardType.Recipe, itemLink, isEmissary)
 			end
 		end
 
-		-- Crafting Reagent
-		--[[
-			if self.db.profile.options.reward.craftingreagent[itemID] == true then
-				if not self.questList[questID] then self.questList[questID] = {} end
-				local l = self.questList[questID]
-				if not l.reward then l.reward = {} end
-				if not l.reward.item then l.reward.item = {} end
-				l.reward.item.itemLink = itemLink
-			end--]]
 		-- Custom itemID
 		if self.db.global.custom.worldQuestReward[itemID] == true then
 			if self.db.profile.custom.worldQuestReward[itemID] == true then
-				self:AddRewardToQuest(questID, "CUSTOM_ITEM", itemLink, isEmissary)
+				self:AddRewardToQuest(questID, RewardType.CustomItem, itemLink, isEmissary)
 			end
 		end
 
 		-- Items
 		if self.itemList[itemID] == true then
 			local item = { itemLink = itemLink }
-			self:AddRewardToQuest(questID, "ITEM", item, isEmissary)
+			self:AddRewardToQuest(questID, RewardType.Item, item, isEmissary)
 		end
 
 		-- Azerite Traits
@@ -1777,8 +1744,8 @@ function WQA:CheckReward(questID, isEmissary, rewardIndex)
 				for _, azeritePowerID in pairs(ring.azeritePowerIDs) do
 					local spellID = C_AzeriteEmpoweredItem.GetPowerInfo(azeritePowerID).spellID
 					if self.azeriteTraitsList[spellID] then
-						self:AddRewardToQuest(questID, "AZERITE_TRAIT", spellID, isEmissary)
-						self:AddRewardToQuest(questID, "ITEM", { itemLink = itemLink }, isEmissary)
+						self:AddRewardToQuest(questID, RewardType.AzeriteTrait, spellID, isEmissary)
+						self:AddRewardToQuest(questID, RewardType.Item, { itemLink = itemLink }, isEmissary)
 					end
 				end
 			end
@@ -1786,7 +1753,7 @@ function WQA:CheckReward(questID, isEmissary, rewardIndex)
 
 		-- Conduit
 		if self.db.profile.options.reward.gear.conduit and C_Soulbinds.IsItemConduitByItemInfo(itemLink) then
-			self:AddRewardToQuest(questID, "ITEM", { itemLink = itemLink }, isEmissary)
+			self:AddRewardToQuest(questID, RewardType.Item, { itemLink = itemLink }, isEmissary)
 		end
 	else
 		retry = true
@@ -1804,7 +1771,7 @@ function WQA:CheckCurrencies(questID, isEmissary)
 
 		if self.db.profile.options.reward.currency[currencyID] then
 			local currency = { currencyID = currencyID, amount = amount }
-			self:AddRewardToQuest(questID, "CURRENCY", currency, isEmissary)
+			self:AddRewardToQuest(questID, RewardType.Currency, currency, isEmissary)
 		end
 
 		-- Reputation Currency
@@ -1817,7 +1784,7 @@ function WQA:CheckCurrencies(questID, isEmissary)
 					amount = amount,
 					factionID = factionID
 				}
-				self:AddRewardToQuest(questID, "REPUTATION", reputation, isEmissary)
+				self:AddRewardToQuest(questID, RewardType.Reputation, reputation, isEmissary)
 			end
 		end
 	end
@@ -1825,7 +1792,7 @@ function WQA:CheckCurrencies(questID, isEmissary)
 	local gold = math.floor(GetQuestLogRewardMoney(questID) / 10000) or 0
 	if gold > 0 then
 		if self.db.profile.options.reward.general.gold and gold >= self.db.profile.options.reward.general.goldMin then
-			self:AddRewardToQuest(questID, "GOLD", gold, isEmissary)
+			self:AddRewardToQuest(questID, RewardType.Gold, gold, isEmissary)
 		end
 	end
 end
@@ -1952,19 +1919,18 @@ local function GetMissionName(missionID)
 end
 
 local function SortByName(a, b)
-	if a.type == "WORLD_QUEST" then
+	if a.type == TaskType.WorldQuest then
 		a = GetQuestName(a.id)
 	else
 		a = GetMissionName(a.id)
 	end
 
-	if b.type == "WORLD_QUEST" then
+	if b.type == TaskType.WorldQuest then
 		b = GetQuestName(b.id)
 	else
 		b = GetMissionName(b.id)
 	end
 
-	--return GetQuestName(a) < GetQuestName(b)
 	return a < b
 end
 
@@ -2005,7 +1971,7 @@ function WQA:EmissaryReward()
 			for _, emissary in ipairs(GetBountiesForMapID(mapID)) do
 				local questID = emissary.questID
 				if self.db.profile.options.emissary[questID] == true then
-					self:AddEmissaryReward(questID, "CUSTOM", nil, true)
+					self:AddEmissaryReward(questID, RewardType.Custom, nil, true)
 				end
 				if HaveQuestData(questID) and HaveQuestRewardData(questID) then
 					retry = (self:CheckItems(questID, true) or retry)
@@ -2061,9 +2027,9 @@ end
 
 function WQA:Special()
 	if
-		(self.db.profile.achievements[11189] ~= "disabled" and not select(4, GetAchievementInfo(11189)) == true) or
-		(self.db.profile.achievements[13144] ~= "disabled" and not select(4, GetAchievementInfo(13144)) == true) or
-		(self.db.profile.achievements[14758] ~= "disabled" and not select(4, GetAchievementInfo(14758)))
+		(self.db.profile.achievements[11189] ~= TrackingMode.Disabled and not select(4, GetAchievementInfo(11189)) == true) or
+		(self.db.profile.achievements[13144] ~= TrackingMode.Disabled and not select(4, GetAchievementInfo(13144)) == true) or
+		(self.db.profile.achievements[14758] ~= TrackingMode.Disabled and not select(4, GetAchievementInfo(14758)))
 	then
 		self.event:RegisterEvent("QUEST_TURNED_IN")
 	end
@@ -2262,7 +2228,7 @@ function WQA:CheckMissions()
 								local amount = reward.quantity
 								if self.db.profile.options.missionTable.reward.currency[currencyID] then
 									local currency = { currencyID = currencyID, amount = amount }
-									self:AddRewardToMission(missionID, "CURRENCY", currency)
+									self:AddRewardToMission(missionID, RewardType.Currency, currency)
 									addMission = true
 								else
 									local factionID = ReputationCurrencyList[currencyID] or nil
@@ -2273,7 +2239,7 @@ function WQA:CheckMissions()
 												amount = amount,
 												factionID = factionID
 											}
-											self:AddRewardToMission(missionID, "REPUTATION", reputation)
+											self:AddRewardToMission(missionID, RewardType.Reputation, reputation)
 										end
 									end
 								end
@@ -2283,7 +2249,7 @@ function WQA:CheckMissions()
 									self.db.profile.options.missionTable.reward.gold and
 									gold >= self.db.profile.options.missionTable.reward.goldMin
 								then
-									self:AddRewardToMission(missionID, "GOLD", gold)
+									self:AddRewardToMission(missionID, RewardType.Gold, gold)
 									addMission = true
 								end
 							end
@@ -2311,7 +2277,7 @@ function WQA:CheckMissions()
 								-- Custom Mission Reward
 								if self.db.global.custom.missionReward[itemID] and self.db.profile.custom.missionReward[itemID] then
 									local item = { itemLink = itemLink }
-									self:AddRewardToMission(missionID, "ITEM", item)
+									self:AddRewardToMission(missionID, RewardType.Item, item)
 									addMission = true
 								end
 
@@ -2320,7 +2286,7 @@ function WQA:CheckMissions()
 								if factionID then
 									if self.db.profile.options.missionTable.reward.reputation[factionID] == true then
 										local reputation = { itemLink = itemLink, factionID = factionID }
-										self:AddRewardToMission(missionID, "REPUTATION", reputation)
+										self:AddRewardToMission(missionID, RewardType.Reputation, reputation)
 										addMission = true
 									end
 								end
@@ -2336,14 +2302,14 @@ function WQA:CheckMissions()
 											retry = true
 										elseif transmog then
 											local item = { itemLink = itemLink, transmog = transmog }
-											self:AddRewardToMission(missionID, "ITEM", item)
+											self:AddRewardToMission(missionID, RewardType.Item, item)
 											addMission = true
 										end
 									end
 								end
 								-- Conduit
 								if self.db.profile.options.reward.gear.conduit and C_Soulbinds.IsItemConduitByItemInfo(itemLink) then
-									self:AddRewardToMission(missionID, "ITEM", { itemLink = itemLink })
+									self:AddRewardToMission(missionID, RewardType.Item, { itemLink = itemLink })
 									addMission = true
 								end
 							end

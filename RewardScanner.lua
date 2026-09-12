@@ -1,5 +1,7 @@
 ---@class WQATurbo
 local WQA = WQATurbo
+local RewardType = WQA.Constants.RewardType
+local TrackingMode = WQA.Constants.TrackingMode
 
 --[[
 WQA Turbo non-blocking reward enrichment
@@ -180,7 +182,7 @@ function WQA:RewardScannerProcessReputations(state, questID)
 
 		if awardsReputation then
 			local factionData = C_Reputation.GetFactionDataByID(factionID)
-			self:AddRewardToQuest(questID, "REPUTATION", {
+			self:AddRewardToQuest(questID, RewardType.Reputation, {
 				direct = true,
 				factionID = factionID,
 				name = factionData and factionData.name or tostring(factionID),
@@ -205,7 +207,7 @@ function WQA:RewardScannerProcessProfession(state, work, questTagInfo, zoneID)
 		not self.db.char[expansion].profession[tradeskillLineID].isMaxLevel
 		and self.db.profile.options.reward[expansion].profession[tradeskillLineID].skillup
 	then
-		self:AddRewardToQuest(work.questID, "PROFESSION_SKILLUP", professionName)
+		self:AddRewardToQuest(work.questID, RewardType.ProfessionSkillup, professionName)
 	end
 end
 
@@ -267,26 +269,26 @@ function WQA:RewardScannerProcessInitialQuest(state, work)
 		local expansion = state.zoneToExpansion[zoneID] or 0
 
 		if
-			self.db.profile.achievements[11189] ~= "disabled"
+			self.db.profile.achievements[11189] ~= TrackingMode.Disabled
 			and not select(4, GetAchievementInfo(11189))
 			and expansion == 7
 			and mapID ~= 830
 			and mapID ~= 885
 			and mapID ~= 882
 		then
-			self:AddRewardToQuest(questID, "ACHIEVEMENT", 11189)
+			self:AddRewardToQuest(questID, RewardType.Achievement, 11189)
 		elseif
-			self.db.profile.achievements[13144] ~= "disabled"
+			self.db.profile.achievements[13144] ~= TrackingMode.Disabled
 			and not select(4, GetAchievementInfo(13144))
 			and expansion == 8
 		then
-			self:AddRewardToQuest(questID, "ACHIEVEMENT", 13144)
+			self:AddRewardToQuest(questID, RewardType.Achievement, 13144)
 		elseif
-			self.db.profile.achievements[14758] ~= "disabled"
+			self.db.profile.achievements[14758] ~= TrackingMode.Disabled
 			and not select(4, GetAchievementInfo(14758))
 			and expansion == 9
 		then
-			self:AddRewardToQuest(questID, "ACHIEVEMENT", 14758)
+			self:AddRewardToQuest(questID, RewardType.Achievement, 14758)
 		end
 	end
 
