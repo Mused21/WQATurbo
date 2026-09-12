@@ -147,8 +147,6 @@ all moved runtime metadata exactly matches its `HEAD` definitions in
 `Options.lua`. The developer reports Step 4 working without bugs so far in
 game. Broader in-game regression coverage and remote CI remain pending.
 
-## Current Step
-
 ### Step 5 — Settings collection performance
 
 Status: IMPLEMENTED LOCALLY; local checks pass.
@@ -170,22 +168,39 @@ journal; Lua 5.1 syntax checks pass for all 31 project Lua files; and
 `git diff --check` passes. The developer reports Step 5 working without bugs
 so far in game. Remote CI and broader regression coverage remain pending.
 
-## Planned Next Steps
+## Current Step
 
 ### Step 6 — Reward classifier decomposition
 
-Keep RewardScanner architecture unchanged.
+Status: IMPLEMENTED LOCALLY; local checks pass.
 
-Split the large CheckReward path into focused classifiers such as:
+- Kept `CheckReward()` as the single active owner in `WQATurbo.lua` and reduced
+  it to authoritative item-link acquisition plus retry orchestration.
+- Extracted focused local classifiers for containers, gear upgrades, equipment
+  caches, transmog, reputation items, recipes, known/custom items and legacy
+  Azerite/conduit behavior.
+- Preserved classifier order, cache eligibility, reward merge calls and retry
+  aggregation. The documented StatWeightScore expression remains unchanged as
+  a separate correctness issue.
+- Preserved `RewardScanner.lua`'s frame budget and per-quest pending model.
+  In-game verification exposed that its initial item/currency/profession pass
+  did not dirty the publication batch, leaving an open popup at its static
+  achievement-only state until reopen. Initial reward inspection and completed
+  item retries now request one coalesced publication at the end of their batch,
+  retaining silent publication mode for Settings-triggered scans.
+- Added `tools/test_reward_classifier.lua` and `tools/test_reward_scanner.lua`,
+  wired them into validation CI and required them in project validation.
+- Updated architecture, performance, development, testing, file-map, CI and
+  version documentation.
 
-- gear upgrades
-- equipment caches
-- containers
-- transmog
-- reputation items
-- recipes
-- known/custom items
-- legacy Azerite/conduit behavior
+Validation: project validation passes with zero errors and warnings; tracking,
+reward-classifier and reward-scanner regression suites pass; the reward suite
+also passes against the committed Step 5 `WQATurbo.lua` baseline; Lua 5.1
+syntax checks pass for all 33 project Lua files; and `git diff --check` passes.
+In-game verification of the popup refresh correction and remote CI remain
+pending.
+
+## Planned Next Steps
 
 ### Step 7 — Tooltip lifecycle centralization
 

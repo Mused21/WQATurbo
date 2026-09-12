@@ -9,12 +9,14 @@ WQA Turbo has two kinds of correctness requirements:
 
 A feature is not finished until both are considered.
 
-## Local tracking regression checks
+## Local regression checks
 
 From the repository root with a Lua 5.1 interpreter:
 
 ```text
 lua5.1 tools/test_tracking_policy.lua
+lua5.1 tools/test_reward_classifier.lua
+lua5.1 tools/test_reward_scanner.lua
 ```
 
 The test loads actual registration and Settings methods with stubbed Blizzard
@@ -25,8 +27,19 @@ owner cleanup, bulk state and one refresh per bulk operation. It also checks
 that repeated registration and Settings completion queries reuse journal
 snapshots.
 
+The reward-classifier test covers authoritative item-link fallback, missing
+data retries, containers, gear upgrades, equipment caches, transmog and retry,
+reputation items, recipes, known/custom items, Azerite traits and conduits. It
+can run the same cases against an optional prior `WQATurbo.lua` path.
+
+The reward-scanner test checks that initial reward inspection and completed
+item retries dirty a publication batch, and that repeated flushes without new
+work do not rebuild the display again. It also verifies that a scanner started
+by a Settings refresh republishes silently while ordinary scans use new-task
+mode.
+
 This is separate from `luac5.1 -p`, which checks syntax without running code.
-Both checks run in GitHub Actions; in-game smoke testing is still required.
+All checks run in GitHub Actions; in-game smoke testing is still required.
 
 ## 2. Baseline smoke test
 

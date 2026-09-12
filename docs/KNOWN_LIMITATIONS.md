@@ -8,6 +8,12 @@ Static achievement relevance is recreated immediately from addon data.
 
 Reward-derived relevance such as transmog depends on Blizzard reward/item data and can take longer to rediscover after an explicit refresh.
 
+An already-open popup is republished after the initial scan pass and after a
+retry batch resolves more reward data. It can show static achievements first,
+but it should fill in the newly filtered reward items without being closed and
+reopened. A Settings-triggered scan retains silent publication mode while doing
+that asynchronous work.
+
 Current behavior does not retain a session-local stale-while-revalidate dynamic reward cache.
 
 Possible future improvement:

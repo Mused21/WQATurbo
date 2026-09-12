@@ -123,7 +123,9 @@ pending quest becomes ready later
     ↓
 classify reward
     ↓
-if quest becomes relevant:
+mark the scan batch dirty
+    ↓
+at the end of the initial pass or retry batch:
     TurboPublishEnrichment()
     ↓
 TurboCheck
@@ -131,7 +133,13 @@ TurboCheck
 refresh open popup / new-task state
 ```
 
-This is why an open persistent popup can gain additional reward-based quests after it was opened.
+Initial reward inspection marks its batch dirty for item, currency, profession
+and reputation classification. An item-only retry marks the batch dirty when it
+finishes. Publication is coalesced at batch boundaries, so an open persistent
+popup gains the resolved reward-based quests without rebuilding once per quest.
+The scanner also retains the refresh mode that created it: Settings-triggered
+enrichment republishes in silent `settings` mode, while ordinary background
+discovery uses `new` mode.
 
 ## 7. Readiness in `TurboCheck.lua`
 
@@ -310,4 +318,14 @@ CheckReward / data tables
     = what a reward means
 ```
 
-The 1.1.0 container changes follow this rule: scanner architecture is unchanged; only reward classification/settings semantics changed.
+`CheckReward()` resolves the authoritative reward link and aggregates retry
+state. Focused local classifiers handle containers, gear upgrades, equipment
+caches, transmog, reputation items, recipes, known/custom items and legacy
+Azerite/conduit behavior. Each classifier publishes through the canonical
+reward merge path.
+
+The classifier split does not change pending-quest state or frame budgets.
+During in-game verification, the scanner's existing batch publication was
+corrected to include initial item/currency/profession inspection and completed
+item retries, so an already-open popup receives those resolved results. The
+scanner retains silent Settings publication semantics across asynchronous work.

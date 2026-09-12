@@ -33,6 +33,12 @@ jobs:
       - name: Test tracking policy
         run: lua5.1 tools/test_tracking_policy.lua
 
+      - name: Test reward classifier
+        run: lua5.1 tools/test_reward_classifier.lua
+
+      - name: Test reward scanner publication
+        run: lua5.1 tools/test_reward_scanner.lua
+
       - name: Build package with externals
         uses: BigWigsMods/packager@v2
         with:

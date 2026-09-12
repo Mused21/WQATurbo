@@ -32,7 +32,7 @@ Large compatibility/core implementation.
 Contains important shared logic such as:
 
 - AceDB defaults/initialization;
-- reward classification;
+- reward-link acquisition/retry orchestration and focused reward classifiers;
 - transmog state helpers;
 - reputation item/currency lookup;
 - mission logic;
@@ -309,7 +309,10 @@ Development tooling/scripts. Excluded from release package.
 
 `validate_project.py` checks structure, startup load order and package hygiene.
 `test_tracking_policy.lua` exercises tracking behavior with stubbed Blizzard APIs
-and runs under Lua 5.1 in the validation workflow.
+and runs under Lua 5.1 in the validation workflow. `test_reward_classifier.lua`
+checks representative reward categories, link fallbacks and retry propagation.
+`test_reward_scanner.lua` checks coalesced publication after initial reward
+inspection and completed item retries, including silent Settings publication.
 
 ### `.gitignore`
 

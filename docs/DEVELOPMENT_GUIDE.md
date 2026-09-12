@@ -181,6 +181,11 @@ Preferred process:
 
 The 1.1.0 racing-purse change is a good example.
 
+Keep reward meaning in the focused classifiers orchestrated by `CheckReward()`.
+Do not move category logic into `RewardScanner.lua`. Run
+`lua5.1 tools/test_reward_classifier.lua` after changing item-link acquisition,
+retry propagation or any reward category.
+
 ## 9. Cache/category semantics
 
 A category toggle should mean what its label says.

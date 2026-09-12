@@ -21,8 +21,9 @@ Turbo separates those concerns:
   * automatic scheduled Show("new", true) still performs a real refresh.
 
 This also provides progressive background publishing. When dynamic reward
-enrichment discovers new information, CheckWQ("new") updates active/new task
-state once, and an already-open popup is rebuilt from that fresh state.
+enrichment discovers new information, CheckWQ updates active/new task state
+once using the originating publication mode, and an already-open popup is
+rebuilt from that fresh state.
 ]]
 
 local OriginalShow = WQA.Show
@@ -49,7 +50,10 @@ end
 ---@param mode string?
 ---@param auto boolean?
 function WQA:Refresh(mode, auto)
-	return OriginalShow(self, mode, auto)
+	local previousMode = self._wqaTurboRefreshMode
+	self._wqaTurboRefreshMode = mode
+	OriginalShow(self, mode, auto)
+	self._wqaTurboRefreshMode = previousMode
 end
 
 ---Compatibility override used by the original minimap/LDB callbacks.
@@ -89,10 +93,10 @@ function WQA:TurboRefreshOpenPopup()
 
 	self:AnnouncePopUp(self.activeTasks or {})
 end
-function WQA:TurboPublishEnrichment()
+function WQA:TurboPublishEnrichment(mode)
 	if not self.questList then
 		return
 	end
 
-	self:CheckWQ("new")
+	self:CheckWQ(mode or "new")
 end

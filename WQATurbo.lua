@@ -1361,404 +1361,415 @@ function WQA:CheckItems(questID, isEmissary)
 	return false
 end
 
-function WQA:CheckReward(questID, isEmissary, rewardIndex)
+local function ClassifyContainerReward(self, questID, isEmissary, itemID, itemLink)
+	-- Benthic armor tokens
+	if benthicArmorToken[itemID] and self.db.profile.options.reward.gear.armorCache then
+		self:AddRewardToQuest(questID, RewardType.Item, { itemLink = itemLink }, isEmissary)
+	end
+
+	-- Dragonflight racing reward containers
+	if
+		racingRewardContainer[itemID]
+		and self.db.profile.options.reward[10].racingRewardContainers
+	then
+		self:AddRewardToQuest(questID, RewardType.Item, { itemLink = itemLink }, isEmissary)
+	end
+end
+
+local function ClassifyGearUpgradeReward(self, questID, isEmissary, itemLink, itemEquipLoc)
 	local retry = false
 
-	local itemName, itemTexture, quantity, quality, isUsable, itemID = GetQuestLogRewardInfo(rewardIndex,
-		questID)
-	if itemID then
-		inspectScantip:SetQuestLogItem("reward", rewardIndex, questID)
-		local itemLink = select(2, inspectScantip:GetItem())
-		if not itemLink then
-			return true
-		elseif string.find(itemLink, "%[]") then
-			return true
-		end
-
-		-- Some reward tooltips (notably profession recipes) contain a link to
-		-- the item the recipe creates. Tooltip scanning can return that embedded
-		-- link instead of the actual quest reward.
-		--
-		-- GetQuestLogRewardInfo() already gave us the authoritative reward itemID.
-		-- Keep the richer scanned link when it refers to that same item (important
-		-- for scaled/bonus gear), otherwise fall back to the actual reward link.
-		local scannedItemID = C_Item.GetItemInfoInstant(itemLink)
-		if scannedItemID ~= itemID then
-			local _, rewardItemLink = C_Item.GetItemInfo(itemID)
-			if not rewardItemLink then
-				return true
-			end
-			itemLink = rewardItemLink
-		end
-
-		local itemName,
-		_,
-		itemRarity,
-		itemLevel,
-		itemMinLevel,
-		itemType,
-		itemSubType,
-		itemStackCount,
-		itemEquipLoc,
-		itemTexture,
-		itemSellPrice,
-		itemClassID,
-		itemSubClassID = GetItemInfo(itemLink)
-		local expacID = self:GetExpansionByQuestID(questID)
-
-		-- Benthic armor tokens
-		if benthicArmorToken[itemID] and self.db.profile.options.reward.gear.armorCache then
-			self:AddRewardToQuest(questID, RewardType.Item, { itemLink = itemLink }, isEmissary)
-		end
-
-		-- Dragonflight racing reward containers
-		if
-			racingRewardContainer[itemID]
-			and self.db.profile.options.reward[10].racingRewardContainers
-		then
-			self:AddRewardToQuest(questID, RewardType.Item, { itemLink = itemLink }, isEmissary)
-		end
-
-		-- Ask Pawn if this is an Upgrade
-		if PawnIsItemAnUpgrade and self.db.profile.options.reward.gear.PawnUpgrade then
-			local Item = PawnGetItemData(itemLink)
-			if Item then
-				local UpgradeInfo, BestItemFor, SecondBestItemFor, NeedsEnhancements = PawnIsItemAnUpgrade(Item)
-				if
-					UpgradeInfo and UpgradeInfo[1].PercentUpgrade * 100 >= self.db.profile.options.reward.gear.PercentUpgradeMin and
-					UpgradeInfo[1].PercentUpgrade < 10
-				then
-					local item = {
-						itemLink = itemLink,
-						itemPercentUpgrade = math.floor(UpgradeInfo[1].PercentUpgrade * 100 + .5)
-					}
-					self:AddRewardToQuest(questID, RewardType.Item, item, isEmissary)
-				end
+	-- Ask Pawn if this is an Upgrade
+	if PawnIsItemAnUpgrade and self.db.profile.options.reward.gear.PawnUpgrade then
+		local Item = PawnGetItemData(itemLink)
+		if Item then
+			local UpgradeInfo, BestItemFor, SecondBestItemFor, NeedsEnhancements = PawnIsItemAnUpgrade(Item)
+			if
+				UpgradeInfo and UpgradeInfo[1].PercentUpgrade * 100 >= self.db.profile.options.reward.gear.PercentUpgradeMin and
+				UpgradeInfo[1].PercentUpgrade < 10
+			then
+				local item = {
+					itemLink = itemLink,
+					itemPercentUpgrade = math.floor(UpgradeInfo[1].PercentUpgrade * 100 + .5)
+				}
+				self:AddRewardToQuest(questID, RewardType.Item, item, isEmissary)
 			end
 		end
+	end
 
-		-- StatWeightScore
-		local StatWeightScore = LibStub("AceAddon-3.0"):GetAddon("StatWeightScore", true)
-		if StatWeightScore and self.db.profile.options.reward.gear.StatWeightScore then
-			local slotID = EquipLocToSlot1[itemEquipLoc]
-			if slotID then
-				local itemPercentUpgrade = 0
-				local ScoreModule = StatWeightScore:GetModule("StatWeightScoreScore")
-				local SpecModule = StatWeightScore:GetModule("StatWeightScoreSpec")
-				local ScanningTooltipModule = StatWeightScore:GetModule("StatWeightScoreScanningTooltip")
-				local specs = SpecModule:GetSpecs()
-				for _, spec in pairs(specs) do
-					if spec.Enabled then
-						local score =
+	-- StatWeightScore
+	local StatWeightScore = LibStub("AceAddon-3.0"):GetAddon("StatWeightScore", true)
+	if StatWeightScore and self.db.profile.options.reward.gear.StatWeightScore then
+		local slotID = EquipLocToSlot1[itemEquipLoc]
+		if slotID then
+			local itemPercentUpgrade = 0
+			local ScoreModule = StatWeightScore:GetModule("StatWeightScoreScore")
+			local SpecModule = StatWeightScore:GetModule("StatWeightScoreSpec")
+			local ScanningTooltipModule = StatWeightScore:GetModule("StatWeightScoreScanningTooltip")
+			local specs = SpecModule:GetSpecs()
+			for _, spec in pairs(specs) do
+				if spec.Enabled then
+					local score =
+						ScoreModule:CalculateItemScore(
+							itemLink,
+							slotID,
+							ScanningTooltipModule:ScanTooltip(itemLink),
+							spec,
+							equippedItemHasUniqueGem
+						).Score
+					local equippedScore
+					local equippedLink = GetInventoryItemLink("player", slotID)
+					if equippedLink then
+						equippedScore =
 							ScoreModule:CalculateItemScore(
-								itemLink,
+								equippedLink,
 								slotID,
-								ScanningTooltipModule:ScanTooltip(itemLink),
+								ScanningTooltipModule:ScanTooltip(equippedLink),
 								spec,
 								equippedItemHasUniqueGem
 							).Score
-						local equippedScore
-						local equippedLink = GetInventoryItemLink("player", slotID)
+					else
+						retry = true
+					end
+
+					local slotID2 = EquipLocToSlot2[itemEquipLoc]
+					if slotID2 then
+						equippedLink = GetInventoryItemLink("player", slotID2)
 						if equippedLink then
-							equippedScore =
+							local equippedScore2 =
 								ScoreModule:CalculateItemScore(
 									equippedLink,
-									slotID,
+									slotID2,
 									ScanningTooltipModule:ScanTooltip(equippedLink),
 									spec,
 									equippedItemHasUniqueGem
 								).Score
+							if equippedScore or 0 > equippedScore2 then
+								equippedScore = equippedScore2
+							end
 						else
 							retry = true
 						end
+					end
 
-						local slotID2 = EquipLocToSlot2[itemEquipLoc]
-						if slotID2 then
-							equippedLink = GetInventoryItemLink("player", slotID2)
-							if equippedLink then
-								local equippedScore2 =
-									ScoreModule:CalculateItemScore(
-										equippedLink,
-										slotID2,
-										ScanningTooltipModule:ScanTooltip(equippedLink),
-										spec,
-										equippedItemHasUniqueGem
-									).Score
-								if equippedScore or 0 > equippedScore2 then
-									equippedScore = equippedScore2
-								end
-							else
-								retry = true
-							end
-						end
-
-						if equippedScore then
-							if (score - equippedScore) / equippedScore * 100 > itemPercentUpgrade then
-								itemPercentUpgrade = (score - equippedScore) / equippedScore * 100
-							end
+					if equippedScore then
+						if (score - equippedScore) / equippedScore * 100 > itemPercentUpgrade then
+							itemPercentUpgrade = (score - equippedScore) / equippedScore * 100
 						end
 					end
 				end
-				if itemPercentUpgrade >= self.db.profile.options.reward.gear.PercentUpgradeMin then
-					local item = { itemLink = itemLink, itemPercentUpgrade = math.floor(itemPercentUpgrade + .5) }
-					self:AddRewardToQuest(questID, RewardType.Item, item, isEmissary)
+			end
+			if itemPercentUpgrade >= self.db.profile.options.reward.gear.PercentUpgradeMin then
+				local item = { itemLink = itemLink, itemPercentUpgrade = math.floor(itemPercentUpgrade + .5) }
+				self:AddRewardToQuest(questID, RewardType.Item, item, isEmissary)
+			end
+		end
+	end
+
+	-- Upgrade by itemLevel
+	if self.db.profile.options.reward.gear.itemLevelUpgrade then
+		local itemLevel1, itemLevel2
+		local slotID = EquipLocToSlot1[itemEquipLoc]
+		if slotID then
+			if GetInventoryItemID("player", slotID) then
+				local itemLink1 = GetInventoryItemLink("player", slotID)
+				if itemLink1 then
+					itemLevel1 = GetDetailedItemLevelInfo(itemLink1)
+					if not itemLevel1 then
+						retry = true
+					end
+				else
+					retry = true
+				end
+			end
+		end
+		if EquipLocToSlot2[itemEquipLoc] then
+			slotID = EquipLocToSlot2[itemEquipLoc]
+			if GetInventoryItemID("player", slotID) then
+				local itemLink2 = GetInventoryItemLink("player", slotID)
+				if itemLink2 then
+					itemLevel2 = GetDetailedItemLevelInfo(itemLink2)
+					if not itemLevel2 then
+						retry = true
+					end
+				else
+					retry = true
 				end
 			end
 		end
 
-		-- Upgrade by itemLevel
-		if self.db.profile.options.reward.gear.itemLevelUpgrade then
-			local itemLevel1, itemLevel2
-			local slotID = EquipLocToSlot1[itemEquipLoc]
-			if slotID then
-				if GetInventoryItemID("player", slotID) then
-					local itemLink1 = GetInventoryItemLink("player", slotID)
-					if itemLink1 then
-						itemLevel1 = GetDetailedItemLevelInfo(itemLink1)
-						if not itemLevel1 then
-							retry = true
-						end
-					else
-						retry = true
-					end
-				end
-			end
-			if EquipLocToSlot2[itemEquipLoc] then
-				slotID = EquipLocToSlot2[itemEquipLoc]
-				if GetInventoryItemID("player", slotID) then
-					local itemLink2 = GetInventoryItemLink("player", slotID)
-					if itemLink2 then
-						itemLevel2 = GetDetailedItemLevelInfo(itemLink2)
-						if not itemLevel2 then
-							retry = true
-						end
-					else
-						retry = true
-					end
-				end
-			end
-
-			itemLevel = GetDetailedItemLevelInfo(itemLink)
-			if not itemLevel then
-				retry = true
-			else
-				local itemLevelEquipped = math.min(itemLevel1 or 1000, itemLevel2 or 1000)
-				if itemLevel - itemLevelEquipped >= self.db.profile.options.reward.gear.itemLevelUpgradeMin then
-					local item = { itemLink = itemLink, itemLevelUpgrade = itemLevel - itemLevelEquipped }
-					self:AddRewardToQuest(questID, RewardType.Item, item, isEmissary)
-				end
+		local itemLevel = GetDetailedItemLevelInfo(itemLink)
+		if not itemLevel then
+			retry = true
+		else
+			local itemLevelEquipped = math.min(itemLevel1 or 1000, itemLevel2 or 1000)
+			if itemLevel - itemLevelEquipped >= self.db.profile.options.reward.gear.itemLevelUpgradeMin then
+				local item = { itemLink = itemLink, itemLevelUpgrade = itemLevel - itemLevelEquipped }
+				self:AddRewardToQuest(questID, RewardType.Item, item, isEmissary)
 			end
 		end
+	end
 
-		-- Azerite Armor Cache
-		if itemID == 163857 and self.db.profile.options.reward.gear.AzeriteArmorCache then
-			-- Enabling the option tracks the cache itself.
-			-- Upgrade calculations below are only supplemental metadata.
-			self:AddRewardToQuest(questID, RewardType.Item, { itemLink = itemLink }, isEmissary)
-			itemLevel = GetDetailedItemLevelInfo(itemLink)
-			local AzeriteArmorCacheIsUpgrade = false
-			local AzeriteArmorCache = {}
-			for i = 1, 5, 2 do
-				if GetInventoryItemID("player", i) then
-					local itemLink1 = GetInventoryItemLink("player", i)
-					if itemLink1 then
-						local itemLevel1 = GetDetailedItemLevelInfo(itemLink1)
-						if itemLevel1 then
-							AzeriteArmorCache[i] = itemLevel - itemLevel1
-							if itemLevel > itemLevel1 and itemLevel - itemLevel1 >= self.db.profile.options.reward.gear.itemLevelUpgradeMin then
-								AzeriteArmorCacheIsUpgrade = true
-							end
-						else
-							retry = true
+	return retry
+end
+
+local function ClassifyEquipmentCacheReward(self, questID, isEmissary, itemID, itemLink)
+	local retry = false
+
+	-- Azerite Armor Cache
+	if itemID == 163857 and self.db.profile.options.reward.gear.AzeriteArmorCache then
+		-- Enabling the option tracks the cache itself.
+		-- Upgrade calculations below are only supplemental metadata.
+		self:AddRewardToQuest(questID, RewardType.Item, { itemLink = itemLink }, isEmissary)
+		local itemLevel = GetDetailedItemLevelInfo(itemLink)
+		local AzeriteArmorCacheIsUpgrade = false
+		local AzeriteArmorCache = {}
+		for i = 1, 5, 2 do
+			if GetInventoryItemID("player", i) then
+				local itemLink1 = GetInventoryItemLink("player", i)
+				if itemLink1 then
+					local itemLevel1 = GetDetailedItemLevelInfo(itemLink1)
+					if itemLevel1 then
+						AzeriteArmorCache[i] = itemLevel - itemLevel1
+						if itemLevel > itemLevel1 and itemLevel - itemLevel1 >= self.db.profile.options.reward.gear.itemLevelUpgradeMin then
+							AzeriteArmorCacheIsUpgrade = true
 						end
 					else
 						retry = true
 					end
 				else
-					AzeriteArmorCache[i] = itemLevel
-					if itemLevel and itemLevel >= self.db.profile.options.reward.gear.itemLevelUpgradeMin then
-						AzeriteArmorCacheIsUpgrade = true
-					end
-				end
-			end
-			if AzeriteArmorCacheIsUpgrade == true then
-				local item = { itemLink = itemLink, AzeriteArmorCache = AzeriteArmorCache }
-				self:AddRewardToQuest(questID, RewardType.Item, item, isEmissary)
-			end
-		end
-
-		-- Equipment Cache
-		if
-			(weaponCache[itemID] and self.db.profile.options.reward.gear.weaponCache) or
-			(armorCache[itemID] and self.db.profile.options.reward.gear.armorCache) or
-			(jewelryCache[itemID] and self.db.profile.options.reward.gear.jewelryCache)
-		then
-			-- Enabling a cache category tracks the cache itself.
-			-- Upgrade calculations below are only supplemental metadata.
-			self:AddRewardToQuest(questID, RewardType.Item, { itemLink = itemLink }, isEmissary)
-			itemLevel = GetDetailedItemLevelInfo(itemLink)
-			local n = 0
-			local upgrade
-			local upgradeMax = 0
-			local upgradeNum = 0
-
-			if weaponCache[itemID] then
-				for i = 16, 17 do
-					if GetInventoryItemID("player", i) then
-						local itemLink1 = GetInventoryItemLink("player", i)
-						if itemLink1 then
-							local itemLevel1 = GetDetailedItemLevelInfo(itemLink1)
-							if itemLevel1 then
-								n = n + 1
-								upgrade = itemLevel - itemLevel1
-								if upgrade >= self.db.profile.options.reward.gear.itemLevelUpgradeMin then
-									upgradeNum = upgradeNum + 1
-									if upgrade > upgradeMax then
-										upgradeMax = upgrade
-									end
-								end
-							else
-								retry = true
-							end
-						else
-							retry = true
-						end
-					end
-				end
-			end
-
-			if armorCache[itemID] then
-				for i = 1, 10 do
-					if i == 4 then
-						i = 15
-					end
-					if i ~= 2 then
-						if GetInventoryItemID("player", i) then
-							local itemLink1 = GetInventoryItemLink("player", i)
-							if itemLink1 then
-								local itemLevel1 = GetDetailedItemLevelInfo(itemLink1)
-								if itemLevel1 then
-									n = n + 1
-									upgrade = itemLevel - itemLevel1
-									if upgrade >= self.db.profile.options.reward.gear.itemLevelUpgradeMin then
-										upgradeNum = upgradeNum + 1
-										if upgrade > upgradeMax then
-											upgradeMax = upgrade
-										end
-									end
-								else
-									retry = true
-								end
-							else
-								retry = true
-							end
-						end
-					end
-				end
-			end
-
-			if jewelryCache[itemID] then
-				for i = 11, 14 do
-					if GetInventoryItemID("player", i) then
-						local itemLink1 = GetInventoryItemLink("player", i)
-						if itemLink1 then
-							local itemLevel1 = GetDetailedItemLevelInfo(itemLink1)
-							if itemLevel1 then
-								n = n + 1
-								upgrade = itemLevel - itemLevel1
-								if upgrade >= self.db.profile.options.reward.gear.itemLevelUpgradeMin then
-									upgradeNum = upgradeNum + 1
-									if upgrade > upgradeMax then
-										upgradeMax = upgrade
-									end
-								end
-							else
-								retry = true
-							end
-						else
-							retry = true
-						end
-					end
-				end
-			end
-
-			if upgradeNum > 0 then
-				local item = {
-					itemLink = itemLink,
-					cache = { upgradeNum = upgradeNum, n = n, upgradeMax = upgradeMax }
-				}
-				self:AddRewardToQuest(questID, RewardType.Item, item, isEmissary)
-			end
-		end
-
-		-- Transmog
-		if
-			(self.db.profile.options.reward.gear.unknownAppearance or self.db.profile.options.reward.gear.unknownSource)
-			and self:IsTransmogable(itemLink)
-		then
-			if itemClassID == 2 or itemClassID == 4 then
-				local transmog, transmogRetry = self:GetTrackedTransmogIcon(itemLink)
-				if transmogRetry then
 					retry = true
-				elseif transmog then
-					local item = { itemLink = itemLink, transmog = transmog }
-					self:AddRewardToQuest(questID, RewardType.Item, item, isEmissary)
+				end
+			else
+				AzeriteArmorCache[i] = itemLevel
+				if itemLevel and itemLevel >= self.db.profile.options.reward.gear.itemLevelUpgradeMin then
+					AzeriteArmorCacheIsUpgrade = true
 				end
 			end
 		end
-
-		-- Reputation Token
-		local factionID = ReputationItemList[itemID] or nil
-		if factionID then
-			if self.db.profile.options.reward.reputation[factionID] == true then
-				local reputation = { itemLink = itemLink, factionID = factionID }
-				self:AddRewardToQuest(questID, RewardType.Reputation, reputation, isEmissary)
-			end
-		end
-
-		-- Recipe
-		if itemClassID == 9 then
-			if self.db.profile.options.reward.recipe[expacID] == true then
-				self:AddRewardToQuest(questID, RewardType.Recipe, itemLink, isEmissary)
-			end
-		end
-
-		-- Custom itemID
-		if self.db.global.custom.worldQuestReward[itemID] == true then
-			if self.db.profile.custom.worldQuestReward[itemID] == true then
-				self:AddRewardToQuest(questID, RewardType.CustomItem, itemLink, isEmissary)
-			end
-		end
-
-		-- Items
-		if self.itemList[itemID] == true then
-			local item = { itemLink = itemLink }
+		if AzeriteArmorCacheIsUpgrade == true then
+			local item = { itemLink = itemLink, AzeriteArmorCache = AzeriteArmorCache }
 			self:AddRewardToQuest(questID, RewardType.Item, item, isEmissary)
 		end
+	end
 
-		-- Azerite Traits
-		if
-			self.db.profile.options.reward.gear.azeriteTraits ~= "" and
-			C_AzeriteEmpoweredItem.IsAzeriteEmpoweredItemByID(itemLink)
-		then
-			for _, ring in pairs(C_AzeriteEmpoweredItem.GetAllTierInfoByItemID(itemLink)) do
-				for _, azeritePowerID in pairs(ring.azeritePowerIDs) do
-					local spellID = C_AzeriteEmpoweredItem.GetPowerInfo(azeritePowerID).spellID
-					if self.azeriteTraitsList[spellID] then
-						self:AddRewardToQuest(questID, RewardType.AzeriteTrait, spellID, isEmissary)
-						self:AddRewardToQuest(questID, RewardType.Item, { itemLink = itemLink }, isEmissary)
+	-- Equipment Cache
+	if
+		(weaponCache[itemID] and self.db.profile.options.reward.gear.weaponCache) or
+		(armorCache[itemID] and self.db.profile.options.reward.gear.armorCache) or
+		(jewelryCache[itemID] and self.db.profile.options.reward.gear.jewelryCache)
+	then
+		-- Enabling a cache category tracks the cache itself.
+		-- Upgrade calculations below are only supplemental metadata.
+		self:AddRewardToQuest(questID, RewardType.Item, { itemLink = itemLink }, isEmissary)
+		local itemLevel = GetDetailedItemLevelInfo(itemLink)
+		local n = 0
+		local upgrade
+		local upgradeMax = 0
+		local upgradeNum = 0
+
+		if weaponCache[itemID] then
+			for i = 16, 17 do
+				if GetInventoryItemID("player", i) then
+					local itemLink1 = GetInventoryItemLink("player", i)
+					if itemLink1 then
+						local itemLevel1 = GetDetailedItemLevelInfo(itemLink1)
+						if itemLevel1 then
+							n = n + 1
+							upgrade = itemLevel - itemLevel1
+							if upgrade >= self.db.profile.options.reward.gear.itemLevelUpgradeMin then
+								upgradeNum = upgradeNum + 1
+								if upgrade > upgradeMax then
+									upgradeMax = upgrade
+								end
+							end
+						else
+							retry = true
+						end
+					else
+						retry = true
 					end
 				end
 			end
 		end
 
-		-- Conduit
-		if self.db.profile.options.reward.gear.conduit and C_Soulbinds.IsItemConduitByItemInfo(itemLink) then
-			self:AddRewardToQuest(questID, RewardType.Item, { itemLink = itemLink }, isEmissary)
+		if armorCache[itemID] then
+			for i = 1, 10 do
+				if i == 4 then
+					i = 15
+				end
+				if i ~= 2 then
+					if GetInventoryItemID("player", i) then
+						local itemLink1 = GetInventoryItemLink("player", i)
+						if itemLink1 then
+							local itemLevel1 = GetDetailedItemLevelInfo(itemLink1)
+							if itemLevel1 then
+								n = n + 1
+								upgrade = itemLevel - itemLevel1
+								if upgrade >= self.db.profile.options.reward.gear.itemLevelUpgradeMin then
+									upgradeNum = upgradeNum + 1
+									if upgrade > upgradeMax then
+										upgradeMax = upgrade
+									end
+								end
+							else
+								retry = true
+							end
+						else
+							retry = true
+						end
+					end
+				end
+			end
 		end
-	else
-		retry = true
+
+		if jewelryCache[itemID] then
+			for i = 11, 14 do
+				if GetInventoryItemID("player", i) then
+					local itemLink1 = GetInventoryItemLink("player", i)
+					if itemLink1 then
+						local itemLevel1 = GetDetailedItemLevelInfo(itemLink1)
+						if itemLevel1 then
+							n = n + 1
+							upgrade = itemLevel - itemLevel1
+							if upgrade >= self.db.profile.options.reward.gear.itemLevelUpgradeMin then
+								upgradeNum = upgradeNum + 1
+								if upgrade > upgradeMax then
+									upgradeMax = upgrade
+								end
+							end
+						else
+							retry = true
+						end
+					else
+						retry = true
+					end
+				end
+			end
+		end
+
+		if upgradeNum > 0 then
+			local item = {
+				itemLink = itemLink,
+				cache = { upgradeNum = upgradeNum, n = n, upgradeMax = upgradeMax }
+			}
+			self:AddRewardToQuest(questID, RewardType.Item, item, isEmissary)
+		end
 	end
+
+	return retry
+end
+
+local function ClassifyTransmogReward(self, questID, isEmissary, itemLink, itemClassID)
+	if
+		(self.db.profile.options.reward.gear.unknownAppearance or self.db.profile.options.reward.gear.unknownSource)
+		and self:IsTransmogable(itemLink)
+		and (itemClassID == 2 or itemClassID == 4)
+	then
+		local transmog, retry = self:GetTrackedTransmogIcon(itemLink)
+		if retry then
+			return true
+		end
+		if transmog then
+			local item = { itemLink = itemLink, transmog = transmog }
+			self:AddRewardToQuest(questID, RewardType.Item, item, isEmissary)
+		end
+	end
+
+	return false
+end
+
+local function ClassifyReputationItemReward(self, questID, isEmissary, itemID, itemLink)
+	local factionID = ReputationItemList[itemID] or nil
+	if factionID and self.db.profile.options.reward.reputation[factionID] == true then
+		local reputation = { itemLink = itemLink, factionID = factionID }
+		self:AddRewardToQuest(questID, RewardType.Reputation, reputation, isEmissary)
+	end
+end
+
+local function ClassifyRecipeReward(self, questID, isEmissary, itemLink, itemClassID, expacID)
+	if itemClassID == 9 and self.db.profile.options.reward.recipe[expacID] == true then
+		self:AddRewardToQuest(questID, RewardType.Recipe, itemLink, isEmissary)
+	end
+end
+
+local function ClassifyKnownItemReward(self, questID, isEmissary, itemID, itemLink)
+	if
+		self.db.global.custom.worldQuestReward[itemID] == true
+		and self.db.profile.custom.worldQuestReward[itemID] == true
+	then
+		self:AddRewardToQuest(questID, RewardType.CustomItem, itemLink, isEmissary)
+	end
+
+	if self.itemList[itemID] == true then
+		local item = { itemLink = itemLink }
+		self:AddRewardToQuest(questID, RewardType.Item, item, isEmissary)
+	end
+end
+
+local function ClassifyLegacyGearReward(self, questID, isEmissary, itemLink)
+	-- Azerite Traits
+	if
+		self.db.profile.options.reward.gear.azeriteTraits ~= ""
+		and C_AzeriteEmpoweredItem.IsAzeriteEmpoweredItemByID(itemLink)
+	then
+		for _, ring in pairs(C_AzeriteEmpoweredItem.GetAllTierInfoByItemID(itemLink)) do
+			for _, azeritePowerID in pairs(ring.azeritePowerIDs) do
+				local spellID = C_AzeriteEmpoweredItem.GetPowerInfo(azeritePowerID).spellID
+				if self.azeriteTraitsList[spellID] then
+					self:AddRewardToQuest(questID, RewardType.AzeriteTrait, spellID, isEmissary)
+					self:AddRewardToQuest(questID, RewardType.Item, { itemLink = itemLink }, isEmissary)
+				end
+			end
+		end
+	end
+
+	-- Conduit
+	if self.db.profile.options.reward.gear.conduit and C_Soulbinds.IsItemConduitByItemInfo(itemLink) then
+		self:AddRewardToQuest(questID, RewardType.Item, { itemLink = itemLink }, isEmissary)
+	end
+end
+
+function WQA:CheckReward(questID, isEmissary, rewardIndex)
+	local _, _, _, _, _, itemID = GetQuestLogRewardInfo(rewardIndex, questID)
+	if not itemID then
+		return true
+	end
+
+	inspectScantip:SetQuestLogItem("reward", rewardIndex, questID)
+	local itemLink = select(2, inspectScantip:GetItem())
+	if not itemLink or string.find(itemLink, "%[]") then
+		return true
+	end
+
+	-- Some reward tooltips (notably profession recipes) contain a link to
+	-- the item the recipe creates. Tooltip scanning can return that embedded
+	-- link instead of the actual quest reward.
+	--
+	-- GetQuestLogRewardInfo() already gave us the authoritative reward itemID.
+	-- Keep the richer scanned link when it refers to that same item (important
+	-- for scaled/bonus gear), otherwise fall back to the actual reward link.
+	local scannedItemID = C_Item.GetItemInfoInstant(itemLink)
+	if scannedItemID ~= itemID then
+		local _, rewardItemLink = C_Item.GetItemInfo(itemID)
+		if not rewardItemLink then
+			return true
+		end
+		itemLink = rewardItemLink
+	end
+
+	local _, _, _, _, _, _, _, _, itemEquipLoc, _, _, itemClassID = GetItemInfo(itemLink)
+	local expacID = self:GetExpansionByQuestID(questID)
+	local retry = false
+
+	ClassifyContainerReward(self, questID, isEmissary, itemID, itemLink)
+	retry = ClassifyGearUpgradeReward(self, questID, isEmissary, itemLink, itemEquipLoc) or retry
+	retry = ClassifyEquipmentCacheReward(self, questID, isEmissary, itemID, itemLink) or retry
+	retry = ClassifyTransmogReward(self, questID, isEmissary, itemLink, itemClassID) or retry
+	ClassifyReputationItemReward(self, questID, isEmissary, itemID, itemLink)
+	ClassifyRecipeReward(self, questID, isEmissary, itemLink, itemClassID, expacID)
+	ClassifyKnownItemReward(self, questID, isEmissary, itemID, itemLink)
+	ClassifyLegacyGearReward(self, questID, isEmissary, itemLink)
 
 	return retry
 end

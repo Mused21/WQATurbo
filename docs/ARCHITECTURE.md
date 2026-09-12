@@ -197,7 +197,8 @@ Responsibilities include:
 - AceDB defaults and initialization;
 - migration handoff before AceDB opens;
 - shared reward classification (`CheckItems`, `CheckReward`);
-- gear/cache/transmog classification;
+- focused local classifiers for containers, gear upgrades, equipment caches,
+  transmog, reputation items, recipes, known/custom items and legacy gear;
 - reputation item/currency mappings;
 - custom task helpers;
 - mission-table logic;
@@ -206,6 +207,10 @@ Responsibilities include:
 - compatibility implementations later superseded by Turbo modules.
 
 Do not assume every major runtime method defined here remains authoritative after all modules load.
+
+`CheckReward()` owns item-link acquisition and retry aggregation. Its focused
+classifiers decide what the resolved reward means and publish through
+`AddRewardToQuest()`. They do not control scanner scheduling.
 
 ### `CollectionCache.lua`
 

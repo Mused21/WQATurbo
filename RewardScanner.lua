@@ -17,8 +17,9 @@ background and immediately marks the reward phase as usable, allowing CheckWQ()
 to display those static results without waiting for HaveQuestRewardData().
 
 Dynamic item/currency/profession rewards are enriched later. When the
-background pass finishes, CheckWQ("new") runs once so a quest that became
-interesting only because of a dynamic reward can be surfaced.
+background pass finishes, current results are republished once so a quest that
+became interesting only because of a dynamic reward can be surfaced. A scan
+started by Settings retains silent publication mode.
 
 This also replaces the aggressive event-driven 0.1s polling prototype. That
 prototype demonstrated that polling harder cannot make Blizzard populate
@@ -189,7 +190,6 @@ function WQA:RewardScannerProcessReputations(state, questID)
 				amount = majorRewardAmounts[factionID]
 			})
 			state.stats.reputationMatches = state.stats.reputationMatches + 1
-			state.enrichmentDirty = true
 		end
 	end
 end
@@ -225,13 +225,10 @@ function WQA:RewardScannerProcessRewardDetails(state, work, questTagInfo, zoneID
 	self:RewardScannerProcessProfession(state, work, questTagInfo, zoneID)
 
 	state.stats.enrichedQuests = state.stats.enrichedQuests + 1
-
-	-- Initial-pass reputation matches are published once the frame-budgeted
-	-- initial pass finishes. Retry-pass enrichment is published as soon as its
-	-- retry batch finishes.
-	if state.phase == "background-retry" then
-		state.enrichmentDirty = true
-	end
+	-- Reward classifiers publish through AddRewardToQuest() but do not report
+	-- whether they changed questList. Mark the batch dirty after inspection so
+	-- the initial pass and resolved reward retries both refresh current output.
+	state.enrichmentDirty = true
 
 	if itemRetry then
 		addPending(state, "item", work)
@@ -354,7 +351,9 @@ function WQA:RewardScannerRetryEntry(state, entry)
 	end
 
 	if entry.kind == "item" then
-		if self:CheckItems(questID) then
+		local itemRetry = self:CheckItems(questID)
+
+		if itemRetry then
 			addPending(
 				state,
 				"item",
@@ -364,6 +363,10 @@ function WQA:RewardScannerRetryEntry(state, entry)
 				entry.lastRequestedAt,
 				entry.reissues
 			)
+		else
+			-- The item payload is now complete. Publish once when this retry batch
+			-- ends so an already-open popup receives the final classification.
+			state.enrichmentDirty = true
 		end
 	end
 end
@@ -378,7 +381,7 @@ function WQA:RewardScannerPublishPendingChanges(state)
 
 	-- Publish current results now. Do not wait for every unrelated pending
 	-- quest in the world to resolve.
-	self:TurboPublishEnrichment()
+	self:TurboPublishEnrichment(state.publishMode)
 end
 
 function WQA:RewardScannerScheduleRetry(state)
@@ -597,6 +600,7 @@ function WQA:Reward()
 		retryIndex = 1,
 		retryTimer = nil,
 		enrichmentDirty = false,
+		publishMode = self._wqaTurboRefreshMode == "settings" and "settings" or "new",
 
 		stats = {
 			finished = false,

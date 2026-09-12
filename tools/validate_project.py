@@ -63,6 +63,8 @@ REQUIRED_PROJECT_FILES = (
     "Rewards/RewardType.lua",
     "Criterias/CriteriaType.lua",
     "Criterias/AreaPoi.lua",
+    "tools/test_reward_classifier.lua",
+    "tools/test_reward_scanner.lua",
 )
 
 REQUIRED_PACKAGE_ITEMS = (
