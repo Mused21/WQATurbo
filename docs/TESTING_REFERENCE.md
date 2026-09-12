@@ -1,0 +1,300 @@
+# Testing Reference
+
+## 1. Philosophy
+
+WQA Turbo has two kinds of correctness requirements:
+
+1. **functional correctness** — the right tasks/rewards appear;
+2. **performance correctness** — they appear without reintroducing synchronous broad scanning or UI stalls.
+
+A feature is not finished until both are considered.
+
+## 2. Baseline smoke test
+
+After any meaningful change:
+
+```text
+/reload
+/wqat
+/wqat popup
+/wqat refresh
+/wqat scan
+/wqat perf
+```
+
+Also test:
+
+- minimap hover;
+- left-click;
+- right-click;
+- Shift+Left-click;
+- popup close/reopen;
+- collapse/expand;
+- scrolling.
+
+## 3. Static achievement test
+
+Pick:
+
+- one incomplete mapped achievement WQ;
+- one completed criterion;
+- one disabled zone.
+
+Verify:
+
+- incomplete active quest appears;
+- completed criterion behaves according to tracking mode;
+- disabled zone suppresses it even though static mapping exists.
+
+## 4. Collection test
+
+For mount/pet/toy mapping:
+
+```text
+unowned + Default     → show
+owned + Default       → hide
+owned + Always        → show
+Don't track           → hide
+exclusive mismatch    → hide
+```
+
+Verify collection cache diagnostics do not show repeated full journal walks.
+
+## 5. Transmog matrix
+
+Use a reward where appearance is collected but exact source is missing.
+
+Expected:
+
+| Unknown appearance | Unknown source | Show |
+|---|---|---|
+| On | On | Yes |
+| On | Off | No |
+| Off | On | Yes |
+| Off | Off | No |
+
+Also test an entirely unknown appearance.
+
+External addon permutations:
+
+- ATT only;
+- CanIMogIt only;
+- both;
+- neither.
+
+The relevance decision must remain the same.
+
+## 6. Reputation test
+
+For a directly rewarding WQ:
+
+- faction enabled + not maxed → show;
+- faction disabled → no rep reason;
+- hide-maxed off + maxed → can match;
+- hide-maxed on + maxed → do not match.
+
+Include at least one friendship reputation when changing max-state logic.
+
+## 7. Recipe test
+
+Use a profession WQ whose tooltip contains a crafted-output hyperlink.
+
+Verify WQA reports the actual recipe reward item, not the crafted result.
+
+## 8. Settings debounce test
+
+Rapidly change several entries or use bulk toggle.
+
+Expected:
+
+- one coalesced refresh;
+- no repeated chat spam;
+- popup only updates automatically if already open.
+
+## 9. Popup lifecycle test
+
+Repeatedly:
+
+```text
+open
+collapse expansion
+expand
+close
+open
+refresh while open
+move popup if position persistence enabled
+```
+
+Expected:
+
+- no stale LibQTip errors;
+- no nil tooltip callback;
+- no duplicate popup;
+- no stuck old rows.
+
+## 10. Zone/type/War Mode test
+
+Verify each final gate independently.
+
+Especially test a statically relevant achievement quest to ensure scanner bypass is impossible.
+
+## 11. 1.1.0 Shift+Left-click test
+
+With popup closed:
+
+```text
+Shift+Left-click
+```
+
+Expected:
+
+1. cached popup appears immediately;
+2. silent refresh begins;
+3. no chat spam;
+4. popup updates when new dynamic results arrive.
+
+With popup already open:
+
+- no duplicate popup;
+- refresh still occurs.
+
+## 12. 1.1.0 Azerite Armor Cache
+
+Precondition:
+
+```text
+Rewards > Gear > Azerite Armor Cache = enabled
+```
+
+Use active BfA WQ rewarding item 163857.
+
+Expected:
+
+- appears even when obsolete item level cannot upgrade current gear.
+
+Disable option:
+
+- disappears unless another reason matches.
+
+## 13. 1.1.0 generic cache semantics
+
+For recognized Armor/Weapon/Jewelry cache:
+
+- option enabled → cache itself makes WQ relevant;
+- upgrade metadata can still appear;
+- option disabled → no cache-category relevance.
+
+## 14. 1.1.0 Benthic tokens
+
+With Armor Cache enabled, test an active Nazjatar WQ rewarding one of IDs 169477–169485.
+
+Expected:
+
+- token appears as reward;
+- no requirement that it upgrade current gear.
+
+## 15. 1.1.0 Dragonflight racing purses
+
+With Racing reward containers enabled:
+
+- active racing WQ with recognized purse → show.
+
+Disable:
+
+- disappear unless another reason matches.
+
+IDs:
+
+```text
+199192
+204359
+205226
+210549
+```
+
+## 16. Scanner performance regression test
+
+After explicit refresh:
+
+```text
+/wqat scan
+/wqat perf
+```
+
+Look for:
+
+- bounded slice max;
+- pending/retry per quest;
+- no repeated global map scan due to one missing item;
+- reasonable publish counts.
+
+## 17. Fresh-login versus warm-cache testing
+
+Blizzard APIs behave differently after a fresh login/reload than after data has already been viewed.
+
+For dynamic reward changes test both:
+
+1. fresh `/reload`, do not open relevant map manually;
+2. warm state after map/item data has loaded.
+
+Do not validate only against a warm cache.
+
+## 18. Migration regression
+
+When migration code changes:
+
+- install original WQAchievements SavedVariables fixture;
+- WQA Turbo DB absent;
+- import path;
+- old addon disabled;
+- old addon temporarily enabled if required;
+- reload;
+- verify profile/options/custom data;
+- verify namespace collision fixes;
+- verify old addon is not left unintentionally active.
+
+## 19. Release validation
+
+Before PR:
+
+```powershell
+git diff --check
+git diff
+git status
+```
+
+Before commit:
+
+```powershell
+git diff --cached --check
+git diff --cached
+```
+
+PR CI must:
+
+- parse all addon Lua with Lua 5.1;
+- package with externals;
+- validate required libraries in ZIP;
+- upload artifact.
+
+## 20. Bug reproduction template
+
+Record:
+
+```text
+Game version:
+Addon branch/commit:
+Other relevant addons:
+Character/faction:
+Zone/map:
+Quest ID:
+Reward item/currency ID:
+Settings path/value:
+Fresh reload or warm cache:
+Expected:
+Actual:
+Commands/API probes:
+Scanner diagnostics:
+```
+
+This makes future bug analysis far faster than screenshots alone.

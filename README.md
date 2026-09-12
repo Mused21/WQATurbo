@@ -52,3 +52,15 @@ WQA Turbo is derived from WQAchievements by Urtgard and its contributors.
 The original project is distributed as Public Domain.
 
 See `CREDITS.md` and `LICENSE.md`.
+
+```markdown
+## Developer documentation
+
+Maintainer and contributor documentation is available under [`docs/`](docs/README.md), including:
+
+- architecture and runtime load order;
+- incremental reward scanning and caching;
+- settings and functional behavior;
+- data models and extension guides;
+- diagnostics, release automation and regression invariants.
+```
