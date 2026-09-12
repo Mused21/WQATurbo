@@ -17,6 +17,8 @@ From the repository root with a Lua 5.1 interpreter:
 lua5.1 tools/test_tracking_policy.lua
 lua5.1 tools/test_reward_classifier.lua
 lua5.1 tools/test_reward_scanner.lua
+lua5.1 tools/test_runtime_lifecycle.lua
+lua5.1 tools/test_task_resolver.lua
 lua5.1 tools/test_tooltip_lifecycle.lua
 ```
 
@@ -37,7 +39,16 @@ The reward-scanner test checks that initial reward inspection and completed
 item retries dirty a publication batch, and that repeated flushes without new
 work do not rebuild the display again. It also verifies that a scanner started
 by a Settings refresh republishes silently while ordinary scans use new-task
-mode.
+mode. Its display checks cover refresh-mode visibility, first-access fallback
+and cache-only popup routing through the canonical `Show()` owner.
+
+The runtime-lifecycle test exercises the canonical `OnEnable()` owner. It
+checks Settings registration, startup-delay capping, recurring refreshes,
+combat recovery, quest completion, War Mode refresh and mission updates.
+
+The task-resolver test exercises the canonical `CheckWQ()` owner. It checks
+per-task readiness, retry coalescing/cancellation, final filtering and
+Settings/popup/LDB publication modes.
 
 The tooltip-lifecycle test checks exact-object ownership, stale `OnHide`
 callbacks, idempotent release, attached-task cleanup and popup/LDB rebuild

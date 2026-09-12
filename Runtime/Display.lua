@@ -5,7 +5,7 @@ local WQA = WQATurbo
 WQA Turbo cached UI
 ===================
 
-Upstream WQATurbo uses WQA:Show() for two different jobs:
+The compatibility core used WQA:Show() for two different jobs:
 
   1. rebuild/refresh the entire data model;
   2. display that model in chat, the minimap popup, or the LDB tooltip.
@@ -25,11 +25,25 @@ once using the originating publication mode, and an already-open popup is
 rebuilt from that fresh state.
 ]]
 
-local OriginalShow = WQA.Show
-
 local function hasUsableCache(self)
 	return type(self.questList) == "table"
 		and type(self.activeTasks) == "table"
+end
+
+---Rebuild the data model using the established refresh sequence.
+---@param self WQATurbo
+---@param mode string?
+---@param auto boolean?
+local function refreshData(self, mode, auto)
+	if auto and self.db.profile.options.delayCombat == true and UnitAffectingCombat("player") then
+		self.event:RegisterEvent("PLAYER_REGEN_ENABLED")
+		return
+	end
+
+	self:Debug("Show", mode)
+	self:CreateQuestList()
+	self:CheckWQ(mode)
+	self.first = true
 end
 
 ---Render the currently available cache without rebuilding questList.
@@ -37,7 +51,7 @@ end
 function WQA:ShowCached(mode)
 	if not hasUsableCache(self) then
 		-- First-ever access before startup initialization completed.
-		return OriginalShow(self, mode)
+		return refreshData(self, mode)
 	end
 
 	self:Debug("ShowCached", mode)
@@ -51,11 +65,11 @@ end
 function WQA:Refresh(mode, auto)
 	local previousMode = self._wqaTurboRefreshMode
 	self._wqaTurboRefreshMode = mode
-	OriginalShow(self, mode, auto)
+	refreshData(self, mode, auto)
 	self._wqaTurboRefreshMode = previousMode
 end
 
----Compatibility override used by the original minimap/LDB callbacks.
+---Compatibility entry point used by the original minimap/LDB callbacks.
 ---
 ---The original file's data broker object is local, so the cleanest way to
 ---make minimap interaction instant is to make display-only modes cache-only.

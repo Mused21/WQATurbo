@@ -125,19 +125,54 @@ assert(WQA._wqaRewardScan.publishMode == "new")
 WQA._wqaRewardScan = nil
 
 -- Refresh exposes its mode while CreateQuestList starts the scanner, and the
--- display publisher passes the retained mode back to CheckWQ.
-local refreshModeDuringShow
-WQA.Show = function(self) refreshModeDuringShow = self._wqaTurboRefreshMode end
+-- display publisher passes the retained mode back to CheckWQ. Cached display
+-- modes do not rebuild once startup has supplied usable task state.
+local refreshModeDuringCreate
+local createCount = 0
+local checkMode
+WQA.CreateQuestList = function(self)
+	createCount = createCount + 1
+	refreshModeDuringCreate = self._wqaTurboRefreshMode
+end
+WQA.CheckWQ = function(_, mode) checkMode = mode end
+local deferredEvent
+local inCombat = false
+WQA.event = {
+	RegisterEvent = function(_, event) deferredEvent = event end
+}
+UnitAffectingCombat = function() return inCombat end
 LibStub = function() return { Release = noop } end
 dofile("Runtime/Display.lua")
 WQA:Refresh("settings", true)
-assert(refreshModeDuringShow == "settings")
+assert(refreshModeDuringCreate == "settings")
+assert(WQA._wqaTurboRefreshMode == nil)
+assert(createCount == 1 and checkMode == "settings")
+
+WQA.questList = nil
+WQA.activeTasks = nil
+refreshModeDuringCreate = "not-called"
+WQA:ShowCached("popup")
+assert(createCount == 2 and checkMode == "popup")
+assert(refreshModeDuringCreate == nil)
+
+WQA.questList = {}
+WQA.activeTasks = {}
+WQA:Show("popup")
+assert(createCount == 2 and checkMode == "popup")
+
+WQA:Show("new", true)
+assert(createCount == 3 and checkMode == "new")
+assert(refreshModeDuringCreate == "new")
 assert(WQA._wqaTurboRefreshMode == nil)
 
-local checkMode
-WQA.questList = {}
-WQA.CheckWQ = function(_, mode) checkMode = mode end
+inCombat = true
+WQA.db.profile.options.delayCombat = true
+WQA:Refresh("new", true)
+assert(createCount == 3 and deferredEvent == "PLAYER_REGEN_ENABLED")
+assert(WQA._wqaTurboRefreshMode == nil)
+inCombat = false
+
 WQA:TurboPublishEnrichment("settings")
 assert(checkMode == "settings")
 
-print("Reward scanner regression checks passed (initial publication, coalescing, completed item retries and silent Settings mode).")
+print("Reward scanner regression checks passed (publication, retries, Settings mode and display routing).")

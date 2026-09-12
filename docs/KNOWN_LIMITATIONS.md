@@ -100,13 +100,14 @@ Older expansion item-level comparisons may be meaningless to a modern character.
 
 1.1.0 fixes category eligibility for caches, but the old metadata/scoring code remains.
 
-## 8. Main module retains legacy implementations
+## 8. Main module retains a legacy reward implementation
 
-`WQATurbo.lua` contains runtime methods that later specialized modules supersede.
+`WQATurbo.lua` still contains the legacy `Reward()` implementation that
+`Scanning/RewardScanner.lua` supersedes at runtime.
 
 This increases cognitive load and creates a risk of patching an inactive implementation.
 
-Long-term cleanup could separate:
+The remaining Step 8 cleanup can separate:
 
 ```text
 shared classifier/helpers

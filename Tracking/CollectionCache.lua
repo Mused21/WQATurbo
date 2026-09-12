@@ -135,7 +135,7 @@ function WQA:IsPetOwnedByCreatureID(companionID)
 	return cache.petOwned[companionID] == true
 end
 
----Optimized replacement for upstream AddMounts().
+---Register mapped mount sources using the shared collection snapshot.
 ---@param mounts table
 function WQA:AddMounts(mounts)
 	local cache = self.collectionCache
@@ -168,7 +168,7 @@ function WQA:AddMounts(mounts)
 	end
 end
 
----Optimized replacement for upstream AddPets().
+---Register mapped pet sources using the shared collection snapshot.
 ---@param pets table
 function WQA:AddPets(pets)
 	local cache = self.collectionCache

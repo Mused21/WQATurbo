@@ -125,8 +125,8 @@ Full in-game regression coverage and remote CI remain pending.
 
 ### Step 4 — Move runtime data out of UI/Options.lua
 
-Status: IMPLEMENTED; local checks pass and in-game smoke testing reports the
-reorganized addon working correctly.
+Status: IMPLEMENTED; local checks pass and in-game smoke testing reports no
+bugs so far.
 
 - Added `Data/RuntimeData.lua` as the source of truth for stable currency,
   reputation, emissary and World Quest type lookup metadata.
@@ -150,7 +150,8 @@ game. Broader in-game regression coverage and remote CI remain pending.
 
 ### Step 5 — Settings collection performance
 
-Status: IMPLEMENTED LOCALLY; local checks pass.
+Status: IMPLEMENTED; local checks pass and in-game testing reports no bugs so
+far.
 
 - Added cache-backed mount and pet ownership query helpers to
   `Tracking/CollectionCache.lua`.
@@ -224,11 +225,10 @@ Lua 5.1 syntax checks pass for all 34 project Lua files; and `git diff --check`
 passes. The developer reports Step 7 working in game. Remote CI remains
 pending.
 
-## Current Step
-
 ### Repository organization before Step 8
 
-Status: IMPLEMENTED LOCALLY; local checks pass.
+Status: IMPLEMENTED; local checks pass and in-game smoke testing reports the
+reorganized addon working correctly.
 
 - Grouped stable lookup and expansion content under `Data/`, tracking policy
   and collection/achievement registration under `Tracking/`, reward discovery
@@ -249,15 +249,59 @@ checks for all 34 project Lua files and `git diff --check` pass. The developer
 reports the reorganized addon working nicely in game. Remote CI remains
 pending.
 
-## Planned Next Steps
+## Current Step
 
 ### Step 8 — Runtime override consolidation
 
-Gradually remove inherited/overridden duplicate implementations.
+Status: IN PROGRESS; `Show()`, `OnEnable()`, `AddMounts()`, `AddPets()` and
+`CheckWQ()` passed local and in-game smoke testing.
 
-Target: one authoritative implementation of major runtime methods.
+- Moved the established data-refresh sequence from the compatibility-core
+  `Show()` into a private helper in `Runtime/Display.lua`.
+- Kept cache-first popup/LDB display, first-access fallback, combat deferral,
+  refresh-mode propagation and performance wrapping unchanged.
+- Removed the earlier `WQATurbo.lua` definition. `Runtime/Display.lua` is now
+  the only `Show()` owner.
+- Expanded the reward-scanner/display regression test and added a validator
+  guard that rejects zero or multiple `Show()` owners.
+- Removed the compatibility-core `OnEnable()` implementation, including its
+  obsolete global reward preload and whole-scan retry branches.
+- Kept `Runtime/Runtime.lua` as the sole lifecycle owner and preserved Settings
+  registration, migration scheduling, startup timing, combat recovery, quest
+  completion, War Mode refresh, mission updates and the `/wqa` compatibility
+  registration.
+- Added `tools/test_runtime_lifecycle.lua`, CI coverage and a validator guard
+  enforcing the single `OnEnable()` owner.
+- Removed the compatibility-core `AddMounts()` implementation.
+  `Tracking/CollectionCache.lua` is now the sole owner and retains the existing
+  one-snapshot-per-refresh optimization and tracking semantics.
+- Kept optional comparisons with older checkout baselines in the tracking test
+  while making current-source coverage independent of the removed method.
+- Added a validator guard enforcing the single `AddMounts()` owner.
+- Removed the compatibility-core `AddPets()` implementation.
+  `Tracking/CollectionCache.lua` is now the sole owner and retains the existing
+  one-snapshot-per-refresh optimization, duplicate companion handling and
+  tracking semantics.
+- Added a current-source regression assertion and validator guard enforcing the
+  single `AddPets()` owner.
+- Removed the compatibility-core `CheckWQ()` implementation and its now-unused
+  cached `C_TaskQuest.IsActive` reference. `Runtime/TaskResolver.lua` is now the
+  sole owner; its progressive per-task readiness and coalesced retry behavior
+  remain unchanged.
+- Added `tools/test_task_resolver.lua`, CI coverage, a current-source assertion
+  and a validator guard enforcing the single `CheckWQ()` owner.
+- Separately fixed the confirmed empty Mission Table reputation-page case by
+  exposing the existing shared hide-maxed control there. World Quest and
+  Mission Table reputation pages now update the same profile setting.
 
-Do this one function at a time with behavior checks.
+Validation: project validation, all six Lua regression suites, Lua 5.1 syntax
+checks for all 36 project Lua files and `git diff --check` pass. The developer
+reports the consolidated runtime paths and shared Mission Table reputation
+control working in game. Remote CI remains pending.
+
+Remaining direct override: `Reward()`.
+`CreateQuestList()` is a deliberate wrapper and requires separate treatment
+rather than simple deletion.
 
 ## Separate Correctness Issues
 

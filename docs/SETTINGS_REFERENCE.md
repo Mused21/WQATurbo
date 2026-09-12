@@ -256,7 +256,9 @@ Optional behavior:
 
 > Hide Exalted / max Renown reputations
 
-When enabled, maxed factions should disappear from settings and be ignored for dynamic matching.
+The same control appears on World Quest and Mission Table reputation pages and
+updates one shared profile setting. When enabled, maxed factions should
+disappear from settings and be ignored for dynamic matching.
 
 Max-state detection must cover classic, Renown and friendship systems.
 

@@ -68,6 +68,8 @@ REQUIRED_PROJECT_FILES = (
     "Criterias/AreaPoi.lua",
     "tools/test_reward_classifier.lua",
     "tools/test_reward_scanner.lua",
+    "tools/test_runtime_lifecycle.lua",
+    "tools/test_task_resolver.lua",
     "tools/test_tooltip_lifecycle.lua",
 )
 
@@ -112,6 +114,14 @@ FORBIDDEN_REPOSITORY_SUFFIXES = (
 
 CRITERIA_RE = re.compile(r'\bcriteriaType\s*=\s*"([^"]+)"')
 FACTION_RE = re.compile(r'\bfaction\s*=\s*"([^"]+)"')
+
+CONSOLIDATED_RUNTIME_METHOD_OWNERS = {
+    "AddMounts": "Tracking/CollectionCache.lua",
+    "AddPets": "Tracking/CollectionCache.lua",
+    "CheckWQ": "Runtime/TaskResolver.lua",
+    "OnEnable": "Runtime/Runtime.lua",
+    "Show": "Runtime/Display.lua",
+}
 
 
 class Validation:
@@ -373,6 +383,31 @@ def validate_namespace_identity(validation: Validation) -> None:
         )
 
 
+def validate_runtime_method_owners(validation: Validation) -> None:
+    """Consolidated runtime methods must have exactly one source owner."""
+    toc_sources = parse_toc_sources(read_text(TOC, validation))
+
+    for method, expected_owner in CONSOLIDATED_RUNTIME_METHOD_OWNERS.items():
+        pattern = re.compile(
+            rf"(?:\bfunction\s+(?:WQA|WQATurbo):{re.escape(method)}\s*\("
+            rf"|\b(?:WQA|WQATurbo)\.{re.escape(method)}\s*=\s*function\s*\()"
+        )
+        owners: list[str] = []
+
+        for source in toc_sources:
+            if not source.endswith(".lua") or source.startswith("Libs/"):
+                continue
+
+            text = read_text(ROOT / source, validation)
+            owners.extend(source for _ in pattern.finditer(text))
+
+        if owners != [expected_owner]:
+            validation.error(
+                f"WQA:{method} must have one canonical owner in "
+                f"{expected_owner}; found: {owners or 'none'}."
+            )
+
+
 def validate_qtip_lifecycle(validation: Validation) -> None:
     """All addon-owned LibQTip releases must use UI/Tooltip.lua's helper."""
     toc_sources = parse_toc_sources(read_text(TOC, validation))
@@ -484,6 +519,7 @@ def main() -> int:
     validate_repository_hygiene(validation)
     validate_static_data(validation)
     validate_namespace_identity(validation)
+    validate_runtime_method_owners(validation)
     validate_qtip_lifecycle(validation)
 
     if args.package:

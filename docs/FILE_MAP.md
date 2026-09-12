@@ -54,7 +54,7 @@ Contains important shared logic such as:
 - mission logic;
 - minimap data object;
 - custom tracking helpers;
-- compatibility implementations of runtime methods.
+- the remaining compatibility implementation of `Reward()`.
 
 Important: several methods are overridden by later specialized modules.
 
@@ -64,6 +64,7 @@ Always search the repo before assuming the definition here is active.
 
 Optimized mount/pet collection snapshot and ownership lookup logic shared by
 runtime registration and Settings completion grouping.
+Owns the canonical `AddMounts()` and `AddPets()` implementations.
 
 Change when:
 
@@ -86,7 +87,7 @@ Runtime/startup orchestration and modern command handling.
 
 Responsibilities include:
 
-- optimized `OnEnable`;
+- sole ownership of the optimized `OnEnable()`;
 - startup scheduling;
 - event orchestration;
 - `/wqat` command dispatch;
@@ -98,6 +99,8 @@ Cache-first display behavior and explicit refresh separation.
 
 Responsibilities include:
 
+- sole ownership of `Show()`;
+- the canonical data refresh sequence used by `Refresh()`;
 - cached display;
 - explicit refresh;
 - progressive open-popup rebuild;
@@ -106,6 +109,7 @@ Responsibilities include:
 ### `Runtime/TaskResolver.lua`
 
 Final task eligibility/readiness/publication.
+Owns the canonical `CheckWQ()` implementation.
 
 Responsibilities include:
 
@@ -330,6 +334,10 @@ and runs under Lua 5.1 in the validation workflow. `test_reward_classifier.lua`
 checks representative reward categories, link fallbacks and retry propagation.
 `test_reward_scanner.lua` checks coalesced publication after initial reward
 inspection and completed item retries, including silent Settings publication.
+`test_runtime_lifecycle.lua` checks Settings registration, startup timing,
+event dispatch, combat recovery, War Mode refresh and mission updates.
+`test_task_resolver.lua` checks progressive readiness, retry ownership, final
+filtering and display-mode routing.
 `test_tooltip_lifecycle.lua` checks exact ownership, stale callbacks,
 idempotent cleanup and popup/LDB rebuild ordering.
 

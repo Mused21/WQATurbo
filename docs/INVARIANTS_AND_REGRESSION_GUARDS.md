@@ -188,6 +188,14 @@ Upgrade calculations are display metadata.
 
 Do not claim WQA knows whether every possible manuscript inside the container is already owned unless a reliable Blizzard API is implemented.
 
+### 31. Consolidated runtime methods have one owner
+
+Once Step 8 consolidates a method, do not restore a compatibility copy earlier
+in the TOC. `Show()` is owned only by `Runtime/Display.lua`, and `OnEnable()`
+is owned only by `Runtime/Runtime.lua`. `AddMounts()` and `AddPets()` are owned
+only by `Tracking/CollectionCache.lua`, and `CheckWQ()` is owned only by
+`Runtime/TaskResolver.lua`. The validator enforces this ownership.
+
 ## Review technique
 
 For every significant PR, ask:

@@ -1,0 +1,203 @@
+-- Run from the repository root with Lua 5.1:
+-- lua5.1 tools/test_task_resolver.lua
+local function noop() end
+
+local activeQuests = {}
+local timers = {}
+
+C_TaskQuest = {
+	IsActive = function(questID)
+		return activeQuests[questID] == true
+	end
+}
+
+C_Timer = {
+	NewTimer = function(delay, callback)
+		local timer = {
+			delay = delay,
+			callback = callback,
+			cancelled = false
+		}
+
+		function timer:Cancel()
+			self.cancelled = true
+		end
+
+		timers[#timers + 1] = timer
+		return timer
+	end
+}
+
+WQATurbo = {
+	Constants = {
+		TaskType = {
+			WorldQuest = "WORLD_QUEST",
+			Mission = "MISSION",
+			AreaPoi = "AREA_POI"
+		}
+	}
+}
+
+local WQA = WQATurbo
+dofile("Runtime/TaskResolver.lua")
+
+local rewardLinksReady = false
+local chatPublications = {}
+local popupPublications = {}
+local ldbPublications = {}
+local openPopupRefreshes = 0
+local ldbUpdates = 0
+
+WQA.db = {
+	profile = {
+		options = {
+			PopUp = false
+		}
+	}
+}
+WQA.first = false
+WQA.rewards = false
+WQA.emissaryRewards = true
+WQA.questList = {
+	[101] = { reward = { gold = 100 } },
+	[102] = { reward = { item = {} } },
+	[103] = { reward = { gold = 100 } },
+	[104] = { reward = { gold = 100 } }
+}
+WQA.missionList = {
+	[201] = { reward = { gold = 100 } },
+	[202] = { reward = { item = {} } }
+}
+WQA.watched = {}
+WQA.watchedMissions = {}
+WQA.Criterias = {
+	AreaPoi = {
+		watched = {},
+		Check = function()
+			local new = {}
+
+			if not (WQA.Criterias.AreaPoi.watched[301] or {})[401] then
+				new[301] = { [401] = true }
+			end
+
+			return {
+				active = { [301] = { [401] = true } },
+				new = new,
+				retry = false
+			}
+		end
+	}
+}
+
+activeQuests[101] = true
+activeQuests[102] = true
+activeQuests[103] = true
+
+WQA.Debug = noop
+WQA.ShouldIncludeWorldQuestForCurrentMode = function(_, questID)
+	return questID ~= 103
+end
+WQA.EmissaryIsActive = function() return false end
+WQA.isQuestPinActive = function() return false end
+WQA.IsQuestFlaggedCompleted = function() return false end
+WQA.GetTaskLink = function() return "quest-link" end
+WQA.GetRewardLinkByID = function(_, questID)
+	if questID == 102 and not rewardLinksReady then
+		return nil
+	end
+
+	return "quest-reward-link"
+end
+WQA.SetRewardLinkByID = noop
+WQA.CheckMissions = function()
+	return { [201] = true, [202] = true }
+end
+WQA.GetRewardLinkByMissionID = function(_, missionID)
+	if missionID == 202 and not rewardLinksReady then
+		return nil
+	end
+
+	return "mission-reward-link"
+end
+WQA.SetRewardLinkByMissionID = noop
+WQA.SortQuestList = function(_, tasks) return tasks end
+WQA.AnnounceChat = function(_, tasks)
+	chatPublications[#chatPublications + 1] = tasks
+end
+WQA.AnnouncePopUp = function(_, tasks)
+	popupPublications[#popupPublications + 1] = tasks
+end
+WQA.AnnounceLDB = function(_, tasks)
+	ldbPublications[#ldbPublications + 1] = tasks
+end
+WQA.UpdateLDBText = function()
+	ldbUpdates = ldbUpdates + 1
+end
+WQA.TurboRefreshOpenPopup = function()
+	openPopupRefreshes = openPopupRefreshes + 1
+end
+
+local function taskKeys(tasks)
+	local keys = {}
+
+	for _, task in ipairs(tasks) do
+		keys[task.type .. ":" .. tostring(task.id)] = true
+	end
+
+	return keys
+end
+
+-- Ready quests, missions and POIs publish even while unrelated reward links
+-- remain pending. A Settings refresh stays silent and creates one retry timer.
+WQA:CheckWQ("settings")
+local active = taskKeys(WQA.activeTasks)
+assert(active["WORLD_QUEST:101"])
+assert(active["MISSION:201"])
+assert(active["AREA_POI:301"])
+assert(not active["WORLD_QUEST:102"])
+assert(not active["WORLD_QUEST:103"])
+assert(not active["WORLD_QUEST:104"])
+assert(not active["MISSION:202"])
+assert(#WQA.newTasks == 3)
+assert(#chatPublications == 0 and #popupPublications == 0 and #ldbPublications == 0)
+assert(#timers == 1 and timers[1].delay == 0.50)
+assert(ldbUpdates == 1 and openPopupRefreshes == 1)
+
+-- Repeated unresolved publication coalesces behind the existing timer.
+WQA:CheckWQ("settings")
+assert(#timers == 1)
+
+-- A normal successful pass cancels an outstanding retry.
+rewardLinksReady = true
+WQA:CheckWQ("settings")
+assert(timers[1].cancelled == true)
+assert(WQA._wqaTurboCheckRetryTimer == nil)
+
+-- The retry callback uses new-task mode, so a newly ready quest and mission
+-- are announced once without re-announcing already watched tasks.
+rewardLinksReady = false
+WQA.watched[102] = nil
+WQA.watchedMissions[202] = nil
+WQA:CheckWQ("settings")
+assert(#timers == 2)
+rewardLinksReady = true
+timers[2].callback()
+assert(WQA._wqaTurboCheckRetryTimer == nil)
+assert(#chatPublications == 1)
+local announced = taskKeys(chatPublications[1])
+assert(announced["WORLD_QUEST:102"])
+assert(announced["MISSION:202"])
+assert(not announced["WORLD_QUEST:101"])
+assert(not announced["MISSION:201"])
+assert(not announced["AREA_POI:301"])
+
+-- Explicit popup and LDB display modes route the complete ready-task set to
+-- the requested output without recursively refreshing an already-open popup.
+local refreshesBeforePopup = openPopupRefreshes
+WQA:CheckWQ("popup")
+assert(#popupPublications == 1)
+assert(openPopupRefreshes == refreshesBeforePopup)
+WQA:CheckWQ("LDB")
+assert(#ldbPublications == 1)
+
+print("Task resolver regression checks passed (progressive readiness, retries, filtering and display modes).")

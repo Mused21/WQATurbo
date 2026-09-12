@@ -39,6 +39,12 @@ jobs:
       - name: Test reward scanner publication
         run: lua5.1 tools/test_reward_scanner.lua
 
+      - name: Test runtime lifecycle
+        run: lua5.1 tools/test_runtime_lifecycle.lua
+
+      - name: Test task resolver
+        run: lua5.1 tools/test_task_resolver.lua
+
       - name: Test tooltip lifecycle
         run: lua5.1 tools/test_tooltip_lifecycle.lua
 

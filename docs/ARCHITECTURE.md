@@ -54,7 +54,9 @@ The exact TOC is the authority.
 
 ### Why load order matters
 
-Lua method assignment is mutable. If `WQA:CheckWQ()` is defined in `WQATurbo.lua` and then defined again in `Runtime/TaskResolver.lua`, the later implementation is the one used at runtime.
+Lua method assignment is mutable. Step 8 removes inactive earlier definitions
+one at a time, after confirming the later specialized implementation and its
+load order.
 
 The same principle applies to optimized reward scanning, runtime startup, display and collection behavior.
 
@@ -220,6 +222,7 @@ Instead of repeatedly asking the mount/pet journals while walking each
 expansion's data, collection state is indexed once per refresh and reused.
 Settings completion grouping reads the same ownership indexes, so constructing
 one row per tracked mount or pet does not rescan the corresponding journal.
+The module is the sole owner of `AddMounts()` and `AddPets()`.
 
 ### `Scanning/RewardScanner.lua`
 
@@ -236,12 +239,15 @@ Key design principles:
 ### `Runtime/Runtime.lua`
 
 Owns optimized runtime orchestration.
+It is the sole owner of `OnEnable()` and its startup/event schedule.
 
 It avoids the old startup behavior that synchronously preloaded/scanned every map and provides the modern `/wqat` command flow.
 
 ### `Runtime/Display.lua`
 
 Separates **display cached results** from **explicit refresh**.
+It is the sole owner of `Show()` and contains the canonical refresh sequence
+used by `Refresh()` and the first-access cache fallback.
 
 This is central to WQA Turbo's responsiveness:
 
@@ -251,7 +257,8 @@ This is central to WQA Turbo's responsiveness:
 
 ### `Runtime/TaskResolver.lua`
 
-Owns optimized readiness and final task publication.
+Owns optimized readiness and final task publication, including the sole
+`CheckWQ()` implementation.
 
 It converts `questList` relevance into ready `activeTasks`/`newTasks`, while:
 

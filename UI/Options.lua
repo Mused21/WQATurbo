@@ -55,6 +55,24 @@ local function GetSortedExpansionIDs(expansionList, minID, maxID)
 	return ids
 end
 
+local function CreateHideMaxedReputationsOption()
+	return {
+		order = 1,
+		type = "toggle",
+		name = "Hide Exalted / max Renown reputations",
+		desc = "Hide finished reputations from these lists and ignore them when matching reputation rewards. This includes classic Exalted reputations and Major Factions at maximum Renown.",
+		width = "full",
+		get = function()
+			return WQA.db.profile.options.hideExaltedReputations
+		end,
+		set = function(_, value)
+			WQA.db.profile.options.hideExaltedReputations = value
+			LibStub("AceConfigRegistry-3.0"):NotifyChange("WQATurbo")
+			WQA:ScheduleOptionsRefresh()
+		end
+	}
+end
+
 function WQA:UpdateOptions()
 	------------------
 	-- 	Options Table
@@ -974,21 +992,7 @@ WorldQuestTracker = {
 						desc = "Track World Quests that award reputation with the selected factions.",
 						type = "group",
 						args = {
-							hideMaxed = {
-								order = 1,
-								type = "toggle",
-								name = "Hide Exalted / max Renown reputations",
-								desc = "Hide finished reputations from these lists and ignore them when matching reputation rewards. This includes classic Exalted reputations and Major Factions at maximum Renown.",
-								width = "full",
-								get = function()
-									return WQA.db.profile.options.hideExaltedReputations
-								end,
-								set = function(_, value)
-									WQA.db.profile.options.hideExaltedReputations = value
-									LibStub("AceConfigRegistry-3.0"):NotifyChange("WQATurbo")
-									WQA:ScheduleOptionsRefresh()
-								end
-							}
+							hideMaxed = CreateHideMaxedReputationsOption()
 						}
 					}
 					for _, factionGroup in ipairs({ "Neutral", UnitFactionGroup("player") }) do
@@ -1213,7 +1217,9 @@ WorldQuestTracker = {
 						order = 20,
 						name = L["Reputation"],
 						type = "group",
-						args = {}
+						args = {
+							hideMaxed = CreateHideMaxedReputationsOption()
+						}
 					}
 					for _, factionGroup in ipairs({ "Neutral", UnitFactionGroup("player") }) do
 						if FactionIDList[i][factionGroup] then

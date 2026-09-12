@@ -29,9 +29,9 @@ AceDB opens WQATurboDB
 
 ### `WQA:OnEnable()`
 
-A compatibility implementation exists in the core module, while optimized startup/runtime behavior is owned by `Runtime/Runtime.lua`.
-
-Always inspect the later-loaded implementation when debugging startup.
+Owned only by `Runtime/Runtime.lua`. It registers Settings, creates the event
+frame, schedules startup and recurring refreshes, offers migration and loads
+the garrison UI dependency.
 
 ## Quest-list construction
 
@@ -73,13 +73,13 @@ Mission equivalent.
 
 ### `WQA:AddMounts(mounts)`
 
-Registers relevant mapped mount sources.
-
-The optimized collection-cache layer may replace/augment this implementation.
+Owned only by `Tracking/CollectionCache.lua`. Registers relevant mapped mount
+sources using one shared Mount Journal snapshot per refresh.
 
 ### `WQA:AddPets(pets)`
 
-Registers relevant mapped pet sources.
+Owned only by `Tracking/CollectionCache.lua`. Registers relevant mapped pet
+sources using one shared Pet Journal snapshot per refresh.
 
 ### `WQA:AddToys(toys)`
 
@@ -226,9 +226,7 @@ Supports configured currencies/reputation, custom items, transmog and legacy rew
 
 ### `WQA:CheckWQ(mode, ...)`
 
-A compatibility implementation exists in `WQATurbo.lua`.
-
-The optimized runtime owner is `Runtime/TaskResolver.lua`.
+Owned only by `Runtime/TaskResolver.lua`.
 
 The Turbo implementation:
 
@@ -240,19 +238,19 @@ The Turbo implementation:
 
 ### `WQA:Show(...)`
 
-Core display/refresh behavior is augmented/overridden by specialized modules.
-
-Do not assume a call named `Show` always performs a scan; Turbo display intentionally separates cached display from explicit refresh.
+Owned only by `Runtime/Display.lua`. Popup and LDB modes use `ShowCached()`;
+other modes use `Refresh()`. A call named `Show` therefore does not always
+perform a scan.
 
 ### `WQA:Refresh(...)`
 
-Turbo explicit refresh entry point.
+Explicit refresh entry point owned by `Runtime/Display.lua`.
 
 Used by commands/settings/minimap Shift+Left-click.
 
 ### `WQA:ShowCached(...)`
 
-Turbo cache-first display helper.
+Cache-first display helper owned by `Runtime/Display.lua`.
 
 ### `WQA:TurboPublishEnrichment(mode)`
 

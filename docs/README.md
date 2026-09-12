@@ -25,10 +25,10 @@ Therefore:
 Examples:
 
 - `WQATurbo.lua` contains the legacy reward scan, while `Scanning/RewardScanner.lua` supplies the optimized incremental runtime scanner.
-- `WQATurbo.lua` contains a `CheckWQ()` implementation, while `Runtime/TaskResolver.lua` supplies the optimized readiness/publication path.
-- `WQATurbo.lua` contains display behavior, while `Runtime/Display.lua` adds the cache-first display/refresh split.
-- `Tracking/CollectionCache.lua` optimizes collectible collection-state access.
-- `Runtime/Runtime.lua` replaces startup/runtime orchestration and command handling.
+- `Runtime/TaskResolver.lua` owns readiness and final task publication.
+- `Runtime/Display.lua` owns the cache-first display/refresh split.
+- `Tracking/CollectionCache.lua` owns collectible collection-state access.
+- `Runtime/Runtime.lua` owns startup/runtime orchestration and command handling.
 
 This rule should be the first thing checked when debugging a function that appears to behave differently from its implementation in `WQATurbo.lua`.
 

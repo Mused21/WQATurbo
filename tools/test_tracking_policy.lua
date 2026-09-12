@@ -71,7 +71,12 @@ loadSource("Rewards/RewardType.lua")
 assert(WQA.Criterias == criteriaNamespace and WQA.Criterias.sentinel)
 assert(WQA.Rewards == rewardsNamespace and WQA.Rewards.sentinel)
 loadSource("WQATurbo.lua")
-local legacyMounts, legacyPets = WQA.AddMounts, WQA.AddPets
+local legacyMounts, legacyPets, legacyCheckWQ = WQA.AddMounts, WQA.AddPets, WQA.CheckWQ
+if not arg[1] then
+    assert(legacyMounts == nil, "The compatibility core must not define AddMounts")
+    assert(legacyPets == nil, "The compatibility core must not define AddPets")
+    assert(legacyCheckWQ == nil, "The compatibility core must not define CheckWQ")
+end
 loadSource("Tracking/CollectionCache.lua")
 loadSource("Tracking/Achievements.lua")
 loadSource("UI/Options.lua")
@@ -108,10 +113,14 @@ end
 local collectors = {
     { group = "mounts", run = WQA.AddMounts, data = { { spellID = 100, itemID = 200, quest = { { wqID = 300, trackingID = 400 } } } } },
     { group = "pets", run = WQA.AddPets, data = { { creatureID = 100, itemID = 200, quest = { { wqID = 300, trackingID = 400 } } } } },
-    { group = "toys", run = WQA.AddToys, data = { { itemID = 100, quest = { { wqID = 300, trackingID = 400 } } } } },
-    { group = "mounts", run = legacyMounts, data = { { spellID = 100, itemID = 200, quest = { { wqID = 300, trackingID = 400 } } } } },
-    { group = "pets", run = legacyPets, data = { { creatureID = 100, itemID = 200, quest = { { wqID = 300, trackingID = 400 } } } } }
+    { group = "toys", run = WQA.AddToys, data = { { itemID = 100, quest = { { wqID = 300, trackingID = 400 } } } } }
 }
+if legacyMounts then
+    collectors[#collectors + 1] = { group = "mounts", run = legacyMounts, data = { { spellID = 100, itemID = 200, quest = { { wqID = 300, trackingID = 400 } } } } }
+end
+if legacyPets then
+    collectors[#collectors + 1] = { group = "pets", run = legacyPets, data = { { creatureID = 100, itemID = 200, quest = { { wqID = 300, trackingID = 400 } } } } }
+end
 for _, collector in ipairs(collectors) do
     for _, case in ipairs(modes) do
         for _, isOwned in ipairs({ false, true }) do

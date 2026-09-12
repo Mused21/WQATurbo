@@ -203,6 +203,9 @@ The "Hide Exalted / max Renown reputations" behavior handles:
 2. Major Factions — maximum Renown;
 3. friendship reputations — maximum friendship rank.
 
+World Quest and Mission Table reputation pages both expose the same profile
+setting so every reputation list can be restored when all entries are hidden.
+
 Friendship factions such as Captain Tokka must not be treated as ordinary classic reputation.
 
 ## 10. Currency
