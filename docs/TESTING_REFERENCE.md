@@ -17,6 +17,7 @@ From the repository root with a Lua 5.1 interpreter:
 lua5.1 tools/test_tracking_policy.lua
 lua5.1 tools/test_reward_classifier.lua
 lua5.1 tools/test_reward_scanner.lua
+lua5.1 tools/test_tooltip_lifecycle.lua
 ```
 
 The test loads actual registration and Settings methods with stubbed Blizzard
@@ -37,6 +38,10 @@ item retries dirty a publication batch, and that repeated flushes without new
 work do not rebuild the display again. It also verifies that a scanner started
 by a Settings refresh republishes silently while ordinary scans use new-task
 mode.
+
+The tooltip-lifecycle test checks exact-object ownership, stale `OnHide`
+callbacks, idempotent release, attached-task cleanup and popup/LDB rebuild
+ordering against the actual lifecycle helpers.
 
 This is separate from `luac5.1 -p`, which checks syntax without running code.
 All checks run in GitHub Actions; in-game smoke testing is still required.
@@ -162,7 +167,8 @@ Expected:
 - no stale LibQTip errors;
 - no nil tooltip callback;
 - no duplicate popup;
-- no stuck old rows.
+- no stuck old rows;
+- delayed old tooltip callbacks do not close or release the current popup.
 
 ## 10. Zone/type/War Mode test
 

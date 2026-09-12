@@ -185,18 +185,22 @@ Eligibility and upgrade usefulness are separate.
 ```text
 enrichment/settings causes popup refresh
     ↓
-capture old tooltip
+RebuildQTip captures old tooltip
     ↓
-detach WQA.tooltip reference
+ReleaseQTip verifies exact ownership
     ↓
-clear old attached quests/missions/pois
+detach WQA.tooltip and matching popup reference
+    ↓
+clear attached quests/missions/pois
     ↓
 LibQTip:Release(old)
     ↓
 acquire/rebuild popup
 ```
 
-Any delayed old callback verifies it still owns the same tooltip before releasing.
+Popup hide, LDB auto-hide, collapse and progressive enrichment all converge on
+this lifecycle. Any delayed old callback verifies it still owns the same
+tooltip before releasing or hiding the popup.
 
 ## Flow J: migration
 

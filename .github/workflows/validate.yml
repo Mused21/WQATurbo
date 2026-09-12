@@ -39,6 +39,9 @@ jobs:
       - name: Test reward scanner publication
         run: lua5.1 tools/test_reward_scanner.lua
 
+      - name: Test tooltip lifecycle
+        run: lua5.1 tools/test_tooltip_lifecycle.lua
+
       - name: Build package with externals
         uses: BigWigsMods/packager@v2
         with:

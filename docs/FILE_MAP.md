@@ -112,7 +112,8 @@ Responsibilities include:
 - expansion collapse;
 - popup position;
 - sort/display helpers;
-- safe release/rebuild.
+- exact-object, idempotent release through `ReleaseQTip()`;
+- canonical popup/LDB replacement through `RebuildQTip()`.
 
 ### `Options.lua`
 
@@ -313,6 +314,8 @@ and runs under Lua 5.1 in the validation workflow. `test_reward_classifier.lua`
 checks representative reward categories, link fallbacks and retry propagation.
 `test_reward_scanner.lua` checks coalesced publication after initial reward
 inspection and completed item retries, including silent Settings publication.
+`test_tooltip_lifecycle.lua` checks exact ownership, stale callbacks,
+idempotent cleanup and popup/LDB rebuild ordering.
 
 ### `.gitignore`
 

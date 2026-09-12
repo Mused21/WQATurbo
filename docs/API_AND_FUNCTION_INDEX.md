@@ -254,21 +254,32 @@ Used by commands/settings/minimap Shift+Left-click.
 
 Turbo cache-first display helper.
 
-### `WQA:TurboPublishEnrichment()`
+### `WQA:TurboPublishEnrichment(mode)`
 
 Called when background dynamic scanning discovers useful additional relevance.
 
-Triggers readiness/publication without restarting the global scan.
+Triggers readiness/publication without restarting the global scan, retaining
+silent `settings` mode when that refresh started the scanner.
 
 ### `WQA:TurboRefreshOpenPopup()`
 
-Rebuilds the persistent popup from current ready state while preserving safe tooltip lifecycle.
+Delegates persistent-popup replacement to the canonical `RebuildQTip()` path.
 
 ## Popup / tooltip
 
 ### `WQA:CreateQTip()`
 
 Creates/acquires a LibQTip instance.
+
+### `WQA:ReleaseQTip(tooltip)`
+
+Releases only the exact tooltip still owned by WQA. It detaches shared state
+before LibQTip callbacks run, clears attached tasks and safely ignores stale or
+repeated calls.
+
+### `WQA:RebuildQTip(mode, tasks)`
+
+Canonical release/rebuild path for persistent popup and transient LDB output.
 
 ### `WQA:UpdateQTip(tasks)`
 
@@ -280,7 +291,7 @@ Applies height cap and scrolling behavior.
 
 ### `WQA:RefreshVisibleQTip()`
 
-Rebuild helper used by collapse/display changes.
+Routes expansion-collapse refreshes through `RebuildQTip()`.
 
 ### `WQA:AnnouncePopUp(...)`
 

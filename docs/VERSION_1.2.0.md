@@ -168,11 +168,10 @@ journal; Lua 5.1 syntax checks pass for all 31 project Lua files; and
 `git diff --check` passes. The developer reports Step 5 working without bugs
 so far in game. Remote CI and broader regression coverage remain pending.
 
-## Current Step
-
 ### Step 6 — Reward classifier decomposition
 
-Status: IMPLEMENTED LOCALLY; local checks pass.
+Status: IMPLEMENTED; local checks pass and in-game testing reports the
+classifier and popup-enrichment behavior working correctly.
 
 - Kept `CheckReward()` as the single active owner in `WQATurbo.lua` and reduced
   it to authoritative item-link acquisition plus retry orchestration.
@@ -197,14 +196,36 @@ Validation: project validation passes with zero errors and warnings; tracking,
 reward-classifier and reward-scanner regression suites pass; the reward suite
 also passes against the committed Step 5 `WQATurbo.lua` baseline; Lua 5.1
 syntax checks pass for all 33 project Lua files; and `git diff --check` passes.
-In-game verification of the popup refresh correction and remote CI remain
-pending.
+Remote CI remains pending.
 
-## Planned Next Steps
+## Current Step
 
 ### Step 7 — Tooltip lifecycle centralization
 
-Create one canonical safe QTip release/rebuild path.
+Status: IMPLEMENTED; local checks pass and in-game testing reports the popup
+lifecycle working correctly.
+
+- Added `ReleaseQTip()` in `Tooltip.lua` as the only direct LibQTip release and
+  `WQA.tooltip` detachment owner.
+- Required exact tooltip identity, detached shared state before release,
+  cleared attached quests/missions/POIs and made repeated/stale release calls
+  safe.
+- Added `RebuildQTip()` for popup and LDB replacement. Expansion collapse,
+  progressive popup refresh and transient LDB rebuilding now share it.
+- Routed popup `OnHide` and delayed LDB auto-hide through `ReleaseQTip()`.
+  Tooltip `OnHide` ignores stale instances before hiding the popup.
+- Stored the popup's exact tooltip reference so a delayed hide cannot release a
+  newer instance.
+- Added `tools/test_tooltip_lifecycle.lua`, validation guards enforcing the
+  canonical owner, CI coverage and lifecycle documentation.
+
+Validation: project validation passes with zero errors and warnings; tracking,
+reward-classifier, reward-scanner and tooltip-lifecycle regression suites pass;
+Lua 5.1 syntax checks pass for all 34 project Lua files; and `git diff --check`
+passes. The developer reports Step 7 working in game. Remote CI remains
+pending.
+
+## Planned Next Steps
 
 ### Step 8 — Runtime override consolidation
 

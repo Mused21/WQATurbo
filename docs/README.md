@@ -99,7 +99,7 @@ When debugging or extending the addon:
 ## Current release direction
 
 Current work is the incremental **1.2.0** refactor on `refactor/1.2.0`.
-Steps 2 and 3 are implemented and have passed local checks and initial in-game
+Steps 2 through 7 are implemented and have passed local checks and in-game
 smoke testing. See
 [VERSION_1.2.0.md](VERSION_1.2.0.md) for validation status and the next steps.
 

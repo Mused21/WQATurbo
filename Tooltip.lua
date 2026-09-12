@@ -5,6 +5,53 @@ local TaskType = WQA.Constants.TaskType
 local L = WQA.L
 local LibQTip = LibStub("LibQTip-1.0")
 
+---Release the exact LibQTip instance currently owned by WQA.
+---@param tooltip table?
+---@return boolean released
+function WQA:ReleaseQTip(tooltip)
+    if not tooltip or self.tooltip ~= tooltip then
+        return false
+    end
+
+    -- Detach shared references before Release(), which may synchronously run
+    -- the tooltip's OnHide script or other UI callbacks.
+    self.tooltip = nil
+
+    if self.PopUp and self.PopUp.tooltip == tooltip then
+        self.PopUp.tooltip = nil
+    end
+
+    tooltip.quests = nil
+    tooltip.missions = nil
+    tooltip.pois = nil
+    LibQTip:Release(tooltip)
+    return true
+end
+
+---Release the current owned QTip and rebuild the requested display.
+---@param mode string
+---@param tasks table?
+---@return boolean rebuilt
+function WQA:RebuildQTip(mode, tasks)
+    if mode ~= "popup" and mode ~= "LDB" then
+        return false
+    end
+
+    local tooltip = self.tooltip
+
+    if tooltip and not self:ReleaseQTip(tooltip) then
+        return false
+    end
+
+    if mode == "popup" then
+        self:AnnouncePopUp(tasks or self.activeTasks or {})
+    else
+        self:Show("LDB")
+    end
+
+    return true
+end
+
 
 function WQA:CreateQTip()
     if not LibQTip:IsAcquired("WQATurbo") and not self.tooltip then
@@ -12,6 +59,10 @@ function WQA:CreateQTip()
         self.tooltip = tooltip
 
         tooltip:SetScript("OnHide", function()
+            if WQA.tooltip ~= tooltip then
+                return
+            end
+
             if WQA.PopUp then
                 WQA.PopUp:Hide()
             end
@@ -62,25 +113,10 @@ end
 -- Expansion headers use this after changing their collapsed state.
 function WQA:RefreshVisibleQTip()
     if self.PopUp and self.PopUp.shown then
-        if self.TurboRefreshOpenPopup then
-            self:TurboRefreshOpenPopup()
-        end
-        return
+        return self:RebuildQTip("popup", self.activeTasks or {})
     end
 
-    -- Minimap/LDB hover tooltips are transient. Release the current LibQTip
-    -- instance and let the normal LDB path recreate it against the existing
-    -- minimap anchor.
-    local tooltip = self.tooltip
-    if tooltip then
-        self.tooltip = nil
-        tooltip.quests = nil
-        tooltip.missions = nil
-        tooltip.pois = nil
-        LibQTip:Release(tooltip)
-    end
-
-    self:Show("LDB")
+    return self:RebuildQTip("LDB")
 end
 
 function WQA:UpdateQTip(tasks)
@@ -487,17 +523,9 @@ function WQA:AnnouncePopUp(quests, silent)
         PopUp:SetScript(
             "OnHide",
             function()
-                if WQA.tooltip ~= nil then
-					local tooltip = WQA.tooltip
-
-					-- Detach the shared reference before Release(). This makes
-					-- cleanup safe against delayed/recursive UI callbacks.
-					WQA.tooltip = nil
-					tooltip.quests = nil
-					tooltip.missions = nil
-					tooltip.pois = nil
-					LibQTip:Release(tooltip)
-				end
+                local tooltip = PopUp.tooltip
+                PopUp.tooltip = nil
+                WQA:ReleaseQTip(tooltip)
 
                 PopUp.shown = false
             end
@@ -510,20 +538,22 @@ function WQA:AnnouncePopUp(quests, silent)
     PopUp:Show()
     PopUp.shown = true
     self:CreateQTip()
-    self.tooltip:SetAutoHideDelay()
-    self.tooltip:ClearAllPoints()
-    self.tooltip:SetPoint("TOP", PopUp, "TOP", 2, -27)
+    local tooltip = self.tooltip
+    PopUp.tooltip = tooltip
+    tooltip:SetAutoHideDelay()
+    tooltip:ClearAllPoints()
+    tooltip:SetPoint("TOP", PopUp, "TOP", 2, -27)
     self:UpdateQTip(quests)
 
-    self:ApplyQTipScrolling(self.tooltip)
+    self:ApplyQTipScrolling(tooltip)
 
-    PopUp:SetWidth(self.tooltip:GetWidth() + 8.5)
-    PopUp:SetHeight(self.tooltip:GetHeight() + 32)
-    PopUp:SetScale(self.tooltip:GetScale())
-    if (PopUp:GetEffectiveScale() ~= self.tooltip:GetEffectiveScale()) then
-        PopUp:SetScale(PopUp:GetScale() * self.tooltip:GetEffectiveScale() / PopUp:GetEffectiveScale())
+    PopUp:SetWidth(tooltip:GetWidth() + 8.5)
+    PopUp:SetHeight(tooltip:GetHeight() + 32)
+    PopUp:SetScale(tooltip:GetScale())
+    if (PopUp:GetEffectiveScale() ~= tooltip:GetEffectiveScale()) then
+        PopUp:SetScale(PopUp:GetScale() * tooltip:GetEffectiveScale() / PopUp:GetEffectiveScale())
     end
-    PopUp:SetFrameLevel(self.tooltip:GetFrameLevel())
+    PopUp:SetFrameLevel(tooltip:GetFrameLevel())
 
     if self.db.profile.options.popupRememberPosition then
         PopUp:ClearAllPoints()

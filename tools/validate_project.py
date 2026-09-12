@@ -65,6 +65,7 @@ REQUIRED_PROJECT_FILES = (
     "Criterias/AreaPoi.lua",
     "tools/test_reward_classifier.lua",
     "tools/test_reward_scanner.lua",
+    "tools/test_tooltip_lifecycle.lua",
 )
 
 REQUIRED_PACKAGE_ITEMS = (
@@ -360,6 +361,38 @@ def validate_namespace_identity(validation: Validation) -> None:
         )
 
 
+def validate_qtip_lifecycle(validation: Validation) -> None:
+    """All addon-owned LibQTip releases must use Tooltip.lua's helper."""
+    toc_sources = parse_toc_sources(read_text(TOC, validation))
+    release_owners: list[str] = []
+    detach_owners: list[str] = []
+
+    for source in toc_sources:
+        if not source.endswith(".lua") or source.startswith("Libs/"):
+            continue
+
+        text = read_text(ROOT / source, validation)
+        release_owners.extend(
+            source for _ in re.finditer(r"\bLibQTip:Release\s*\(", text)
+        )
+        detach_owners.extend(
+            source
+            for _ in re.finditer(r"\b(?:self|WQA)\.tooltip\s*=\s*nil", text)
+        )
+
+    if release_owners != ["Tooltip.lua"]:
+        validation.error(
+            "LibQTip release must have one canonical owner in Tooltip.lua; "
+            f"found: {release_owners or 'none'}."
+        )
+
+    if detach_owners != ["Tooltip.lua"]:
+        validation.error(
+            "WQA tooltip detachment must have one canonical owner in "
+            f"Tooltip.lua; found: {detach_owners or 'none'}."
+        )
+
+
 def find_release_zip() -> Path | None:
     release_dir = ROOT / ".release"
     candidates = [
@@ -439,6 +472,7 @@ def main() -> int:
     validate_repository_hygiene(validation)
     validate_static_data(validation)
     validate_namespace_identity(validation)
+    validate_qtip_lifecycle(validation)
 
     if args.package:
         package = (

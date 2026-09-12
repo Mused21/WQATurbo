@@ -61,9 +61,16 @@ clear attached task references
 release
 ```
 
+All addon-owned release paths must call `WQA:ReleaseQTip(capturedTooltip)`.
+Direct `LibQTip:Release()` and direct `WQA.tooltip = nil` ownership remain in
+that canonical helper only.
+
 ### 11. Cleanup must be idempotent
 
 Multiple hide/rebuild paths must not crash when state was already cleared.
+
+Use `WQA:RebuildQTip()` for popup or LDB replacement rather than duplicating
+release/acquire sequences.
 
 ## World Quest eligibility
 

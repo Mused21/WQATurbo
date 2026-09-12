@@ -1,6 +1,5 @@
 ---@class WQATurbo
 local WQA = WQATurbo
-local LibQTip = LibStub("LibQTip-1.0")
 
 --[[
 WQA Turbo cached UI
@@ -79,19 +78,7 @@ function WQA:TurboRefreshOpenPopup()
 		return
 	end
 
-	if self.tooltip then
-		local tooltip = self.tooltip
-
-		-- Detach first so delayed LibQTip/OnHide callbacks cannot operate on
-		-- a replacement tooltip created by the progressive refresh.
-		self.tooltip = nil
-		tooltip.quests = nil
-		tooltip.missions = nil
-		tooltip.pois = nil
-		LibQTip:Release(tooltip)
-	end
-
-	self:AnnouncePopUp(self.activeTasks or {})
+	self:RebuildQTip("popup", self.activeTasks or {})
 end
 function WQA:TurboPublishEnrichment(mode)
 	if not self.questList then

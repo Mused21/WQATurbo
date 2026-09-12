@@ -262,7 +262,11 @@ It converts `questList` relevance into ready `activeTasks`/`newTasks`, while:
 
 ### `Tooltip.lua`
 
-Owns LibQTip creation, layout, scrolling, expansion collapsing and safe popup release/rebuild.
+Owns LibQTip creation, layout, scrolling, expansion collapsing and the canonical
+release/rebuild lifecycle. `ReleaseQTip()` accepts only the exact currently
+owned tooltip, detaches shared references before calling LibQTip and is
+idempotent. `RebuildQTip()` is shared by popup enrichment, expansion collapse
+and transient LDB rebuilding.
 
 ### `Options.lua`
 

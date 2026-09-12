@@ -7,8 +7,6 @@ local TrackingMode = WQA.Constants.TrackingMode
 local TrackingPolicy = WQA.TrackingPolicy
 local EmissaryQuestIDList = WQA.RuntimeData.EmissaryQuestIDsByExpansion
 
-local LibQTip = LibStub("LibQTip-1.0")
-
 -- AllTheThings exposes SearchForLink before its search module has necessarily
 -- finished OnLoad initialization. Protect the integration from that startup
 -- race and avoid hammering ATT repeatedly while it is still becoming ready.
@@ -2122,13 +2120,7 @@ function WQA:AnnounceLDB(quests)
 				return
 			end
 
-			-- Detach first. LibQTip:Release() can trigger other UI callbacks,
-			-- so nothing after Release should dereference WQA.tooltip.
-			WQA.tooltip = nil
-			tooltip.quests = nil
-			tooltip.missions = nil
-			tooltip.pois = nil
-			LibQTip:Release(tooltip)
+			WQA:ReleaseQTip(tooltip)
 		end
 	)
 

@@ -304,6 +304,11 @@ Respect LibQTip lifecycle safety.
 
 Never release a tooltip from a stale delayed callback.
 
+Capture the tooltip object and call `WQA:ReleaseQTip(capturedTooltip)`. Use
+`WQA:RebuildQTip("popup", tasks)` or `WQA:RebuildQTip("LDB")` when replacing a
+display. Do not add another direct `LibQTip:Release()` or `WQA.tooltip = nil`
+path.
+
 When rebuilding:
 
 ```text
