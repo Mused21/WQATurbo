@@ -1211,6 +1211,31 @@ WorldQuestTracker = {
 					end
 				end
 
+				-- Dragonflight racing reward containers
+				if i == 10 then
+					rewardArgs.containers = {
+						order = 35,
+						name = "Containers",
+						type = "group",
+						args = {
+							racingRewardContainers = {
+								type = "toggle",
+								name = "Racing reward containers",
+								desc = "Track Dragonflight racing World Quests that reward Dragon Racer's Purse, Reach Racer's Purse, Cavern Racer's Purse, or Dream Racer's Purse. These containers can contain Drakewatcher's Manuscripts.",
+								width = "full",
+								get = function()
+									return WQA.db.profile.options.reward[10].racingRewardContainers
+								end,
+								set = function(_, value)
+									WQA.db.profile.options.reward[10].racingRewardContainers = value
+									WQA:ScheduleOptionsRefresh()
+								end,
+								order = 1
+							}
+						}
+					}
+				end
+
 				-- Emissary
 				if self.EmissaryQuestIDList[i] then
 					rewardArgs.emissary = {
