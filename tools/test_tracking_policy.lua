@@ -133,6 +133,20 @@ WQA:AddMounts({ { spellID = 999, quest = { { wqID = 300 } } } })
 WQA:AddPets({ { creatureID = 999, questID = 300 } })
 assert(publications == 0, "Missing journal entries must not become unowned matches")
 
+-- Settings completion checks reuse the same snapshots instead of scanning a
+-- whole journal for every tracked mount or pet.
+owned = true
+WQA:InvalidateCollectionCache()
+mountsBefore, petsBefore = WQA.collectionCache.mountBuilds, WQA.collectionCache.petBuilds
+assert(WQA:IsTrackedObjectCompleted("mounts", 100) == true)
+assert(WQA:IsTrackedObjectCompleted("mounts", 100) == true)
+assert(WQA:IsTrackedObjectCompleted("mounts", 999) == false)
+assert(WQA:IsTrackedObjectCompleted("pets", 100) == true)
+assert(WQA:IsTrackedObjectCompleted("pets", 100) == true)
+assert(WQA:IsTrackedObjectCompleted("pets", 999) == false)
+assert(WQA.collectionCache.mountBuilds == mountsBefore + 1)
+assert(WQA.collectionCache.petBuilds == petsBefore + 1)
+
 local completed, earned = false, false
 GetAchievementInfo = function()
     return nil, nil, nil, completed, nil, nil, nil, nil, nil, nil, nil, nil, earned
@@ -202,4 +216,4 @@ assert(rows["100"].get() == "other")
 WQA.db.profile.toys.exclusive[100] = nil
 assert(rows["100"].get() == "exclusive", "A missing owner keeps the existing UI value")
 
-print("Tracking regression checks passed (collectibles, achievements, ownership, bulk refreshes, journal caching).")
+print("Tracking regression checks passed (collectibles, achievements, ownership, bulk refreshes, journal caching, Settings cache reuse).")

@@ -46,7 +46,8 @@ Always search the repo before assuming the definition here is active.
 
 ### `CollectionCache.lua`
 
-Optimized mount/pet collection snapshot logic.
+Optimized mount/pet collection snapshot and ownership lookup logic shared by
+runtime registration and Settings completion grouping.
 
 Change when:
 

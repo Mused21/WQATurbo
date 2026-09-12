@@ -99,6 +99,10 @@ Do not expose exclusive/character-only modes as bulk values.
 
 Completed entries remain hoverable.
 
+Mount and pet completion grouping uses the shared `CollectionCache.lua`
+ownership indexes. Building the Settings tree does not perform one complete
+journal walk per collectible row.
+
 Achievement tooltips use achievement hyperlinks.
 
 Mount/pet/toy tooltips use item/spell links as available.

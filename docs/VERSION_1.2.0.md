@@ -123,8 +123,6 @@ regression checks pass against both the saved Step 2 registration/Settings sourc
 and Step 3. The developer reports Step 3 working without bugs so far in game.
 Full in-game regression coverage and remote CI remain pending.
 
-## Current Step
-
 ### Step 4 — Move runtime data out of Options.lua
 
 Status: IMPLEMENTED LOCALLY; local checks pass.
@@ -149,12 +147,30 @@ all moved runtime metadata exactly matches its `HEAD` definitions in
 `Options.lua`. The developer reports Step 4 working without bugs so far in
 game. Broader in-game regression coverage and remote CI remain pending.
 
-## Planned Next Steps
+## Current Step
 
 ### Step 5 — Settings collection performance
 
-Replace repeated mount/pet journal scans from Settings construction with
-shared indexed collection state.
+Status: IMPLEMENTED LOCALLY; local checks pass.
+
+- Added cache-backed mount and pet ownership query helpers to
+  `CollectionCache.lua`.
+- Replaced the full Mount Journal and Pet Journal loops in
+  `IsTrackedObjectCompleted()` with constant-time shared-cache lookups.
+- Preserved the existing cache lifecycle: snapshots remain ephemeral and are
+  rebuilt on a `CreateQuestList()` refresh.
+- Added regression coverage proving repeated Settings ownership checks build
+  each journal snapshot only once.
+- Updated architecture, performance, data-model, Settings, file-map and test
+  documentation.
+
+Validation: project validation passes with zero errors and warnings; the Lua
+5.1 regression test confirms Settings ownership queries reuse one snapshot per
+journal; Lua 5.1 syntax checks pass for all 31 project Lua files; and
+`git diff --check` passes. The developer reports Step 5 working without bugs
+so far in game. Remote CI and broader regression coverage remain pending.
+
+## Planned Next Steps
 
 ### Step 6 — Reward classifier decomposition
 

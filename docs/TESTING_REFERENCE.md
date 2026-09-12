@@ -22,7 +22,8 @@ APIs. It covers default/disabled/always/exclusive/character-only modes, missing
 owners, unknown values, owned/unowned collections, completed tracking quests,
 unknown journal entries, achievement completion and inherited forcing, exclusive
 owner cleanup, bulk state and one refresh per bulk operation. It also checks
-that repeated registration reuses journal snapshots.
+that repeated registration and Settings completion queries reuse journal
+snapshots.
 
 This is separate from `luac5.1 -p`, which checks syntax without running code.
 Both checks run in GitHub Actions; in-game smoke testing is still required.

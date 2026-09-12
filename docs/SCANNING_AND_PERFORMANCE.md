@@ -155,7 +155,10 @@ The readiness retry is coalesced through a timer rather than spawning uncontroll
 
 Mount and pet journal scans are relatively expensive when repeated.
 
-`CollectionCache.lua` builds collection indexes once per refresh and lets static registration reuse them.
+`CollectionCache.lua` builds collection indexes once per refresh and lets static
+registration and Settings completion grouping reuse them. Settings queries use
+constant-time spell-ID/creature-ID lookups instead of walking a whole journal
+for every displayed mount or pet.
 
 The conceptual flow is:
 
@@ -177,6 +180,9 @@ This avoids:
 for each expansion:
     for each mapped pet/mount:
         rescan entire Blizzard collection journal
+
+for each Settings row:
+    rescan the corresponding collection journal
 ```
 
 ## 9. What is cached and what is not

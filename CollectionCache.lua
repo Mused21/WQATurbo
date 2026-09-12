@@ -109,6 +109,32 @@ function WQA:BuildPetCollectionCache()
 	cache.petValid = true
 end
 
+---Return cached Mount Journal ownership for a mount spell ID.
+---@param spellID number
+---@return boolean
+function WQA:IsMountCollectedBySpellID(spellID)
+	local cache = self.collectionCache
+
+	if not cache.mountValid then
+		self:BuildMountCollectionCache()
+	end
+
+	return cache.mountCollected[spellID] == true
+end
+
+---Return cached Pet Journal ownership for a companion/creature ID.
+---@param companionID number
+---@return boolean
+function WQA:IsPetOwnedByCreatureID(companionID)
+	local cache = self.collectionCache
+
+	if not cache.petValid then
+		self:BuildPetCollectionCache()
+	end
+
+	return cache.petOwned[companionID] == true
+end
+
 ---Optimized replacement for upstream AddMounts().
 ---@param mounts table
 function WQA:AddMounts(mounts)

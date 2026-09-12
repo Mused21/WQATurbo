@@ -1564,20 +1564,9 @@ function WQA:IsTrackedObjectCompleted(groupName, id)
 	if groupName == "achievements" then
 		return select(4, GetAchievementInfo(id)) or false
 	elseif groupName == "mounts" then
-		for _, mountID in pairs(C_MountJournal.GetMountIDs()) do
-			local _, spellID, _, _, _, _, _, _, _, _, isCollected = C_MountJournal.GetMountInfoByID(mountID)
-			if spellID == id then
-				return isCollected or false
-			end
-		end
+		return self:IsMountCollectedBySpellID(id)
 	elseif groupName == "pets" then
-		local total = C_PetJournal.GetNumPets()
-		for i = 1, total do
-			local _, _, owned, _, _, _, _, _, _, _, companionID = C_PetJournal.GetPetInfoByIndex(i)
-			if companionID == id then
-				return owned or false
-			end
-		end
+		return self:IsPetOwnedByCreatureID(id)
 	elseif groupName == "toys" then
 		return PlayerHasToy(id) or false
 	end

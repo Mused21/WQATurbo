@@ -211,7 +211,10 @@ Do not assume every major runtime method defined here remains authoritative afte
 
 Optimizes collection access.
 
-Instead of repeatedly asking the mount/pet journals while walking each expansion's data, collection state is indexed once per refresh and reused.
+Instead of repeatedly asking the mount/pet journals while walking each
+expansion's data, collection state is indexed once per refresh and reused.
+Settings completion grouping reads the same ownership indexes, so constructing
+one row per tracked mount or pet does not rescan the corresponding journal.
 
 ### `RewardScanner.lua`
 

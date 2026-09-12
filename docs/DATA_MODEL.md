@@ -412,7 +412,9 @@ Achievement criteria are dispatched by `Achievements.lua` using these constants.
 
 Collection caches are ephemeral runtime indexes, not SavedVariables.
 
-Their purpose is performance, not persistence.
+Their purpose is performance, not persistence. Runtime collectible registration
+and Settings completion grouping share the same spell-ID/creature-ID ownership
+indexes.
 
 If collection state changes, a refresh should rebuild/re-evaluate it.
 
