@@ -1234,6 +1234,25 @@ local jewelryCache = {
 	[165785] = true -- Tortollan Trader's Stock
 }
 
+local benthicArmorToken = {
+	[169477] = true, -- Benthic Girdle
+	[169478] = true, -- Benthic Bracers
+	[169479] = true, -- Benthic Helm
+	[169480] = true, -- Benthic Chestguard
+	[169481] = true, -- Benthic Cloak
+	[169482] = true, -- Benthic Leggings
+	[169483] = true, -- Benthic Treads
+	[169484] = true, -- Benthic Spaulders
+	[169485] = true -- Benthic Gauntlets
+}
+
+local racingRewardContainer = {
+	[199192] = true, -- Dragon Racer's Purse
+	[204359] = true, -- Reach Racer's Purse
+	[205226] = true, -- Cavern Racer's Purse
+	[210549] = true -- Dream Racer's Purse
+}
+
 -- Transmog tracking.
 --
 -- Blizzard exposes both the account-wide appearance state and the exact item
@@ -1405,6 +1424,19 @@ function WQA:CheckReward(questID, isEmissary, rewardIndex)
 		itemSubClassID = GetItemInfo(itemLink)
 		local expacID = self:GetExpansionByQuestID(questID)
 
+		-- Benthic armor tokens
+		if benthicArmorToken[itemID] and self.db.profile.options.reward.gear.armorCache then
+			self:AddRewardToQuest(questID, "ITEM", { itemLink = itemLink }, isEmissary)
+		end
+
+		-- Dragonflight racing reward containers
+		if
+			racingRewardContainer[itemID]
+			and self.db.profile.options.reward[10].racingRewardContainers
+		then
+			self:AddRewardToQuest(questID, "ITEM", { itemLink = itemLink }, isEmissary)
+		end
+
 		-- Ask Pawn if this is an Upgrade
 		if PawnIsItemAnUpgrade and self.db.profile.options.reward.gear.PawnUpgrade then
 			local Item = PawnGetItemData(itemLink)
@@ -1538,6 +1570,9 @@ function WQA:CheckReward(questID, isEmissary, rewardIndex)
 
 		-- Azerite Armor Cache
 		if itemID == 163857 and self.db.profile.options.reward.gear.AzeriteArmorCache then
+			-- Enabling the option tracks the cache itself.
+			-- Upgrade calculations below are only supplemental metadata.
+			self:AddRewardToQuest(questID, "ITEM", { itemLink = itemLink }, isEmissary)
 			itemLevel = GetDetailedItemLevelInfo(itemLink)
 			local AzeriteArmorCacheIsUpgrade = false
 			local AzeriteArmorCache = {}
@@ -1576,6 +1611,9 @@ function WQA:CheckReward(questID, isEmissary, rewardIndex)
 			(armorCache[itemID] and self.db.profile.options.reward.gear.armorCache) or
 			(jewelryCache[itemID] and self.db.profile.options.reward.gear.jewelryCache)
 		then
+			-- Enabling a cache category tracks the cache itself.
+			-- Upgrade calculations below are only supplemental metadata.
+			self:AddRewardToQuest(questID, "ITEM", { itemLink = itemLink }, isEmissary)
 			itemLevel = GetDetailedItemLevelInfo(itemLink)
 			local n = 0
 			local upgrade
@@ -2063,8 +2101,10 @@ function dataobj:OnClick(button)
 	GameTooltip:Hide()
 
 	if button == "LeftButton" and IsShiftKeyDown() then
-		-- Silent manual rescan. If the persistent popup is already open, the
-		-- settings refresh path rebuilds it once the scan completes.
+		-- Open the cached popup immediately, then start the silent full refresh.
+		-- Because the popup is already open, the existing progressive refresh
+		-- path rebuilds it as fresh scan results arrive.
+		WQA:Show("popup")
 		WQA:Refresh("settings", true)
 	elseif button == "LeftButton" then
 		WQA:Show("popup")

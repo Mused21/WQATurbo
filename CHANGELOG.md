@@ -1,5 +1,18 @@
 # WQA Turbo Changelog
 
+## 1.1.0
+
+### Added
+- Added tracking for Dragonflight racing reward containers, including Dragon Racer's Purse, Reach Racer's Purse, Cavern Racer's Purse, and Dream Racer's Purse.
+- Added a new Dragonflight `World Quests > Containers > Racing reward containers` setting.
+- Added Armor Cache support for Nazjatar Benthic gear tokens.
+
+### Fixed
+- Fixed Azerite Armor Cache tracking so enabled caches are shown even when their contents are not an item-level upgrade for the current character.
+- Fixed older Armor, Weapon, and Jewelry Cache tracking so the corresponding filter tracks the cache itself instead of only showing it when it is considered an upgrade.
+- Shift+Left-clicking the minimap button now opens the World Quest popup while performing the silent refresh.
+- Updated the minimap tooltip to reflect the new Shift+Left-click behavior.
+
 ## 1.0.1
 
 ### Improvements
