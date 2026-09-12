@@ -16,6 +16,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Validate project structure
+        run: python tools/validate_project.py
+
       - name: Check Lua syntax
         shell: bash
         run: |
@@ -32,39 +35,8 @@ jobs:
         with:
           args: -d
 
-      - name: Validate embedded libraries
-        shell: python
-        run: |
-          from pathlib import Path
-          import zipfile
-
-          zips = [p for p in Path(".release").glob("WQATurbo-*.zip") if "nolib" not in p.name.lower()]
-          if not zips:
-              raise SystemExit("No WQATurbo ZIP was produced.")
-
-          package = max(zips, key=lambda p: p.stat().st_mtime)
-          with zipfile.ZipFile(package) as zf:
-              names = set(zf.namelist())
-
-          required = (
-              "WQATurbo/WQATurbo.toc",
-              "WQATurbo/Libs/AceAddon-3.0/",
-              "WQATurbo/Libs/AceConfig-3.0/",
-              "WQATurbo/Libs/AceDB-3.0/",
-              "WQATurbo/Libs/LibDBIcon-1.0/",
-              "WQATurbo/Libs/LibQTip-1.0/",
-              "WQATurbo/Libs/LibStub/",
-          )
-
-          for item in required:
-              if item.endswith("/"):
-                  ok = any(name.startswith(item) for name in names)
-              else:
-                  ok = item in names
-              if not ok:
-                  raise SystemExit(f"Missing from package: {item}")
-
-          print(f"Validated {package}")
+      - name: Validate packaged addon
+        run: python tools/validate_project.py --package
 
       - name: Upload PR test build
         uses: actions/upload-artifact@v4
