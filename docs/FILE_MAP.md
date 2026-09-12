@@ -2,7 +2,23 @@
 
 This document explains the responsibility of each significant repository file/directory.
 
-## Root runtime files
+The source tree is grouped by responsibility while the compatibility core and
+cross-cutting support modules remain at the repository root:
+
+```text
+Core.lua, Constants.lua, WQATurbo.lua
+Data/                  stable lookup and expansion content
+Tracking/              policy, achievements and collection state
+Scanning/              dynamic reward discovery
+Runtime/               orchestration, display and task publication
+UI/                    tooltip and Settings UI
+Criterias/, Rewards/, Items/
+Migration.lua, Performance.lua, Utilities.lua, Locales.lua
+```
+
+The detailed entries below follow approximate TOC load order.
+
+## Core and feature modules
 
 ### `Core.lua`
 
@@ -20,7 +36,7 @@ Avoid putting feature-specific logic here.
 Canonical reward, criteria, task and tracking-mode strings under `WQA.Constants`.
 Loaded immediately after `Core.lua`; content and SavedVariables values stay stable.
 
-### `TrackingPolicy.lua`
+### `Tracking/TrackingPolicy.lua`
 
 Shared tracking-mode flags, bulk-mode eligibility and exclusive-owner updates.
 No collection API calls, scanning or refresh scheduling.
@@ -40,11 +56,11 @@ Contains important shared logic such as:
 - custom tracking helpers;
 - compatibility implementations of runtime methods.
 
-Important: several methods are overridden by later Turbo modules.
+Important: several methods are overridden by later specialized modules.
 
 Always search the repo before assuming the definition here is active.
 
-### `CollectionCache.lua`
+### `Tracking/CollectionCache.lua`
 
 Optimized mount/pet collection snapshot and ownership lookup logic shared by
 runtime registration and Settings completion grouping.
@@ -56,7 +72,7 @@ Change when:
 
 Do not turn it into persistent SavedVariables.
 
-### `RewardScanner.lua`
+### `Scanning/RewardScanner.lua`
 
 Incremental frame-budgeted dynamic reward scanner.
 
@@ -64,7 +80,7 @@ Change only for scanner/discovery/readiness behavior.
 
 Do not add ordinary item-ID classification rules here.
 
-### `TurboRuntime.lua`
+### `Runtime/Runtime.lua`
 
 Runtime/startup orchestration and modern command handling.
 
@@ -76,7 +92,7 @@ Responsibilities include:
 - `/wqat` command dispatch;
 - avoiding legacy broad preload behavior.
 
-### `TurboDisplay.lua`
+### `Runtime/Display.lua`
 
 Cache-first display behavior and explicit refresh separation.
 
@@ -87,7 +103,7 @@ Responsibilities include:
 - progressive open-popup rebuild;
 - enrichment publication hooks.
 
-### `TurboCheck.lua`
+### `Runtime/TaskResolver.lua`
 
 Final task eligibility/readiness/publication.
 
@@ -101,7 +117,7 @@ Responsibilities include:
 - display-mode publication;
 - coalesced retries.
 
-### `Tooltip.lua`
+### `UI/Tooltip.lua`
 
 LibQTip popup rendering and lifecycle.
 
@@ -115,7 +131,7 @@ Responsibilities include:
 - exact-object, idempotent release through `ReleaseQTip()`;
 - canonical popup/LDB replacement through `RebuildQTip()`.
 
-### `Options.lua`
+### `UI/Options.lua`
 
 AceConfig settings UI.
 
@@ -141,7 +157,7 @@ Responsibilities include:
 - temporary original-addon enable/reload flow;
 - migration prompt/state.
 
-### `Achievements.lua`
+### `Tracking/Achievements.lua`
 
 Interprets declarative achievement data and registers relevant quest/POI/mission rewards.
 
@@ -181,14 +197,14 @@ Preserve WQAchievements/Urtgard attribution.
 
 Licensing information.
 
-## DB
+## Data
 
-### `DB/Data/Legion.lua`
-### `DB/Data/BattleForAzeroth.lua`
-### `DB/Data/Shadowlands.lua`
-### `DB/Data/Dragonflight.lua`
-### `DB/Data/WarWithin.lua`
-### `DB/Data/Midnight.lua`
+### `Data/Expansions/Legion.lua`
+### `Data/Expansions/BattleForAzeroth.lua`
+### `Data/Expansions/Shadowlands.lua`
+### `Data/Expansions/Dragonflight.lua`
+### `Data/Expansions/WarWithin.lua`
+### `Data/Expansions/Midnight.lua`
 
 Expansion-specific declarative content mappings.
 
@@ -202,17 +218,17 @@ Data can include:
 
 Do not put scanner loops or UI architecture here.
 
-### `DB/Expansions.lua`
+### `Data/Expansions.lua`
 
 Expansion-index/name map.
 
-### `DB/Zones.lua`
+### `Data/Zones.lua`
 
 Expansion-index/map-ID scan list.
 
 Adding a zone affects standard scanner coverage and Settings zone pages.
 
-### `DB/RuntimeData.lua`
+### `Data/RuntimeData.lua`
 
 Stable shared lookup tables for currency IDs, reputation faction IDs,
 emissary quest IDs and localized World Quest type labels. Loaded before all
@@ -329,13 +345,13 @@ validator rejects reintroducing this obsolete configuration.
 ## File ownership rule of thumb
 
 ```text
-stable game-ID mapping          → DB/Data, DB/Zones, DB/RuntimeData
+stable game-ID mapping          → Data/Expansions, Data/Zones, Data/RuntimeData
 reward meaning/classification   → WQATurbo shared classifier / Rewards
 scanner timing/readiness        → RewardScanner
-task publication/readiness      → TurboCheck
-display/cache opening           → TurboDisplay
+task publication/readiness      → TaskResolver
+display/cache opening           → Display
 popup layout/lifecycle          → Tooltip
 settings                         → Options
-runtime scheduling/commands     → TurboRuntime
+runtime scheduling/commands     → Runtime
 collection API optimization     → CollectionCache
 ```

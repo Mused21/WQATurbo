@@ -32,7 +32,7 @@ git status
 
 ## 2. Trace the runtime owner first
 
-Because later-loaded Turbo modules override core methods, never patch based only on the first function definition you find.
+Because later-loaded specialized modules override core methods, never patch based only on the first function definition you find.
 
 Use:
 
@@ -63,9 +63,9 @@ writes. Do not move collection API calls or refresh scheduling into this module.
 Run `lua5.1 tools/test_tracking_policy.lua` after changing tracking rules.
 
 Stable currency, reputation, emissary and World Quest type lookup metadata
-belongs in `DB/RuntimeData.lua`. Keep `Options.lua` focused on AceConfig tree
+belongs in `Data/RuntimeData.lua`. Keep `UI/Options.lua` focused on AceConfig tree
 construction and UI-only ordering/label metadata. When adding a runtime-data
-consumer, keep `DB/RuntimeData.lua` earlier in TOC load order.
+consumer, keep `Data/RuntimeData.lua` earlier in TOC load order.
 
 ## 3. Adding a new achievement mapping
 
@@ -144,7 +144,7 @@ Do not assume every old daily/weekly quest system behaves like Mechagon.
 ## 6. Adding a zone
 
 1. Verify actual Blizzard map ID.
-2. Add to correct expansion in `DB/Zones.lua`.
+2. Add to correct expansion in `Data/Zones.lua`.
 3. Decide whether any quest-zone fallback mapping is needed.
 4. Verify Settings > Zones.
 5. Verify scanner map count.
@@ -182,7 +182,7 @@ Preferred process:
 The 1.1.0 racing-purse change is a good example.
 
 Keep reward meaning in the focused classifiers orchestrated by `CheckReward()`.
-Do not move category logic into `RewardScanner.lua`. Run
+Do not move category logic into `Scanning/RewardScanner.lua`. Run
 `lua5.1 tools/test_reward_classifier.lua` after changing item-link acquisition,
 retry propagation or any reward category.
 

@@ -13,10 +13,10 @@ Custom
 Options
 ```
 
-Settings are built dynamically in `Options.lua`.
+Settings are built dynamically in `UI/Options.lua`.
 
 Stable currency, reputation, emissary and World Quest type lookup metadata is
-owned by `DB/RuntimeData.lua`. `Options.lua` reads those tables while building
+owned by `Data/RuntimeData.lua`. `UI/Options.lua` reads those tables while building
 the UI; loading Settings is not required to initialize runtime metadata.
 
 Most setters call a debounced refresh scheduler so that configuration changes become visible without requiring `/reload`.
@@ -66,9 +66,9 @@ Ordinary values:
 Character-specific/exclusive modes can also exist on individual entries.
 
 In 1.2 Step 3, mode keys come from `WQA.Constants.TrackingMode` and common rules
-live in `TrackingPolicy.lua`. `GetState` returns enabled, always and character-only
+live in `Tracking/TrackingPolicy.lua`. `GetState` returns enabled, always and character-only
 flags; `IsBulkMode` accepts only disabled/default/always; `SetValue` updates the
-mode and exclusive owner together. `Options.lua` still schedules refreshes.
+mode and exclusive owner together. `UI/Options.lua` still schedules refreshes.
 
 Existing behavior is preserved: only achievements consume the character-only
 flag, and their inherited `forcedByMe` reset remains a separate correctness issue.
@@ -99,7 +99,7 @@ Do not expose exclusive/character-only modes as bulk values.
 
 Completed entries remain hoverable.
 
-Mount and pet completion grouping uses the shared `CollectionCache.lua`
+Mount and pet completion grouping uses the shared `Tracking/CollectionCache.lua`
 ownership indexes. Building the Settings tree does not perform one complete
 journal walk per collectible row.
 
@@ -167,7 +167,7 @@ General behavior includes concepts such as:
 - minimum gold;
 - World Quest type filtering.
 
-The actual Settings label structure should be verified in `Options.lua`.
+The actual Settings label structure should be verified in `UI/Options.lua`.
 
 ## 5. World Quest types
 

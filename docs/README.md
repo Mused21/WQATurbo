@@ -16,7 +16,7 @@ The documentation is deliberately written for maintainers. It explains not only 
 
 WQA Turbo is not a clean-sheet rewrite of WQAchievements.
 
-The repository still contains a large compatibility/core implementation in `WQATurbo.lua`, and several later-loaded Turbo modules replace or augment important methods with optimized implementations.
+The repository still contains a large compatibility/core implementation in `WQATurbo.lua`, and several later-loaded specialized modules replace or augment important methods with optimized implementations.
 
 Therefore:
 
@@ -24,11 +24,11 @@ Therefore:
 
 Examples:
 
-- `WQATurbo.lua` contains the legacy reward scan, while `RewardScanner.lua` supplies the optimized incremental runtime scanner.
-- `WQATurbo.lua` contains a `CheckWQ()` implementation, while `TurboCheck.lua` supplies the optimized readiness/publication path.
-- `WQATurbo.lua` contains display behavior, while `TurboDisplay.lua` adds the cache-first display/refresh split.
-- `CollectionCache.lua` optimizes collectible collection-state access.
-- `TurboRuntime.lua` replaces startup/runtime orchestration and command handling.
+- `WQATurbo.lua` contains the legacy reward scan, while `Scanning/RewardScanner.lua` supplies the optimized incremental runtime scanner.
+- `WQATurbo.lua` contains a `CheckWQ()` implementation, while `Runtime/TaskResolver.lua` supplies the optimized readiness/publication path.
+- `WQATurbo.lua` contains display behavior, while `Runtime/Display.lua` adds the cache-first display/refresh split.
+- `Tracking/CollectionCache.lua` optimizes collectible collection-state access.
+- `Runtime/Runtime.lua` replaces startup/runtime orchestration and command handling.
 
 This rule should be the first thing checked when debugging a function that appears to behave differently from its implementation in `WQATurbo.lua`.
 
@@ -69,10 +69,10 @@ flowchart TD
     D --> C
     E -->|progressive enrichment| F
 
-    F --> G[TurboCheck readiness + eligibility]
+    F --> G[TaskResolver readiness + eligibility]
     G --> H[activeTasks / newTasks]
 
-    H --> I[TurboDisplay cached output]
+    H --> I[Display cached output]
     I --> J[Chat]
     I --> K[Persistent popup]
     I --> L[Minimap/LDB]

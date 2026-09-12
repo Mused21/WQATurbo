@@ -2,8 +2,22 @@
 -- lua5.1 tools/test_tracking_policy.lua
 -- An optional source directory allows the same cases to check a prior baseline.
 local sourceRoot = arg[1] or "."
+local legacyPaths = {
+    ["Tracking/TrackingPolicy.lua"] = "TrackingPolicy.lua",
+    ["Data/RuntimeData.lua"] = "DB/RuntimeData.lua",
+    ["Tracking/CollectionCache.lua"] = "CollectionCache.lua",
+    ["Tracking/Achievements.lua"] = "Achievements.lua",
+    ["UI/Options.lua"] = "Options.lua"
+}
 local function loadSource(name)
-    dofile(sourceRoot .. "/" .. name)
+    local path = sourceRoot .. "/" .. name
+    local file = io.open(path, "r")
+    if file then
+        file:close()
+    elseif legacyPaths[name] then
+        path = sourceRoot .. "/" .. legacyPaths[name]
+    end
+    dofile(path)
 end
 
 local function noop() end
@@ -45,8 +59,8 @@ WQATurbo = {
 }
 local WQA = WQATurbo
 loadSource("Constants.lua")
-loadSource("TrackingPolicy.lua")
-loadSource("DB/RuntimeData.lua")
+loadSource("Tracking/TrackingPolicy.lua")
+loadSource("Data/RuntimeData.lua")
 assert(WQA.EmissaryQuestIDList == WQA.RuntimeData.EmissaryQuestIDsByExpansion)
 assert(WQA.RuntimeData.CurrencyIDsByExpansion[12][1] == 3316)
 assert(WQA.RuntimeData.WorldQuestTypesByLabel.LE_QUEST_TAG_TYPE_PVP == 1)
@@ -58,9 +72,9 @@ assert(WQA.Criterias == criteriaNamespace and WQA.Criterias.sentinel)
 assert(WQA.Rewards == rewardsNamespace and WQA.Rewards.sentinel)
 loadSource("WQATurbo.lua")
 local legacyMounts, legacyPets = WQA.AddMounts, WQA.AddPets
-loadSource("CollectionCache.lua")
-loadSource("Achievements.lua")
-loadSource("Options.lua")
+loadSource("Tracking/CollectionCache.lua")
+loadSource("Tracking/Achievements.lua")
+loadSource("UI/Options.lua")
 
 local publications, refreshes = 0, 0
 WQA.AddRewardToQuest = function(_, _, kind)

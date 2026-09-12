@@ -29,7 +29,7 @@ AceDB opens WQATurboDB
 
 ### `WQA:OnEnable()`
 
-A compatibility implementation exists in the core module, while optimized startup/runtime behavior is owned by `TurboRuntime.lua`.
+A compatibility implementation exists in the core module, while optimized startup/runtime behavior is owned by `Runtime/Runtime.lua`.
 
 Always inspect the later-loaded implementation when debugging startup.
 
@@ -113,7 +113,7 @@ Evaluates current POI availability/readiness and returns active/new/retry inform
 
 A compatibility implementation exists in `WQATurbo.lua`.
 
-The optimized active runtime implementation is supplied by `RewardScanner.lua`.
+The optimized active runtime implementation is supplied by `Scanning/RewardScanner.lua`.
 
 Do not patch the legacy broad scanner expecting runtime behavior to change unless the optimized override intentionally calls that helper.
 
@@ -228,7 +228,7 @@ Supports configured currencies/reputation, custom items, transmog and legacy rew
 
 A compatibility implementation exists in `WQATurbo.lua`.
 
-The optimized runtime owner is `TurboCheck.lua`.
+The optimized runtime owner is `Runtime/TaskResolver.lua`.
 
 The Turbo implementation:
 
@@ -240,7 +240,7 @@ The Turbo implementation:
 
 ### `WQA:Show(...)`
 
-Core display/refresh behavior is augmented/overridden by Turbo modules.
+Core display/refresh behavior is augmented/overridden by specialized modules.
 
 Do not assume a call named `Show` always performs a scan; Turbo display intentionally separates cached display from explicit refresh.
 
@@ -404,7 +404,7 @@ Use `/wqat perf`, `/wqat scan`, `/wqat cache` rather than adding permanent print
 
 ## Command dispatch
 
-Modern command handling lives in `TurboRuntime.lua`.
+Modern command handling lives in `Runtime/Runtime.lua`.
 
 Supported commands documented by the project:
 

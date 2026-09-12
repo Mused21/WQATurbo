@@ -43,7 +43,7 @@ Always inspect that file before continuing refactor work.
 ## Critical Architecture Rule
 
 WQA Turbo currently contains inherited implementations in `WQATurbo.lua`
-that are overridden by later-loaded Turbo modules.
+that are overridden by later-loaded specialized modules.
 
 Before modifying any WQA method:
 
@@ -69,7 +69,7 @@ In particular:
   repeatedly scanned.
 - `/wqat` and normal minimap left-click are cache-first.
 - Settings bulk changes should coalesce into one debounced refresh.
-- Do not redesign `RewardScanner.lua` unless a demonstrated bug requires it.
+- Do not redesign `Scanning/RewardScanner.lua` unless a demonstrated bug requires it.
 
 ## Popup / Tooltip Invariants
 
@@ -107,7 +107,7 @@ Prefer:
 `RewardScanner = when/how to inspect`
 `reward classifier = what a reward means`
 
-Do not put ordinary item-ID/category special cases into `RewardScanner.lua`.
+Do not put ordinary item-ID/category special cases into `Scanning/RewardScanner.lua`.
 
 Use `AddRewardToQuest()` / canonical reward merge behavior instead of
 manually constructing parallel quest reward structures.

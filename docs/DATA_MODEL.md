@@ -49,7 +49,7 @@ wasEarnedByMe
 
 Exclusive ownership metadata is stored separately under `.exclusive`.
 `Constants.lua` defines these stable values in `WQA.Constants.TrackingMode`;
-`TrackingPolicy.lua` reads/writes the existing schema without migration.
+`Tracking/TrackingPolicy.lua` reads/writes the existing schema without migration.
 `wasEarnedByMe` retains the legacy achievement-specific behavior; collectibles
 handle it like Default.
 
@@ -84,7 +84,7 @@ Not every expansion defines every collection.
 
 ### `WQA.RuntimeData`
 
-Stable, read-only lookup metadata loaded from `DB/RuntimeData.lua` before its
+Stable, read-only lookup metadata loaded from `Data/RuntimeData.lua` before its
 runtime and Settings consumers:
 
 ```lua
@@ -406,7 +406,7 @@ as `WQA.Criterias.CriteriaType`. Declarative data retains its existing strings.
 - active/new results;
 - link readiness/retry state.
 
-Achievement criteria are dispatched by `Achievements.lua` using these constants.
+Achievement criteria are dispatched by `Tracking/Achievements.lua` using these constants.
 
 ## 11. Collection caches
 
@@ -455,7 +455,7 @@ Use this decision:
 
 ```text
 Is this a stable mapping between game IDs?
-    → DB/Data, DB/Zones or DB/RuntimeData
+    → Data/Expansions, Data/Zones or Data/RuntimeData
 
 Is this user preference?
     → AceDB profile/char/global as appropriate

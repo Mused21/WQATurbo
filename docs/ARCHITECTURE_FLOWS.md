@@ -7,9 +7,9 @@ This companion document contains end-to-end flow traces for common behaviors.
 ```text
 user: /wqat
     ↓
-TurboRuntime command dispatch
+Runtime command dispatch
     ↓
-TurboDisplay cache-first path
+Display cache-first path
     ↓
 current activeTasks / questList
     ↓
@@ -42,7 +42,7 @@ per-quest pending/retry
          ↓
 TurboPublishEnrichment when useful results appear
          ↓
-TurboCheck
+TaskResolver
          ↓
 activeTasks/newTasks
 ```
@@ -101,7 +101,7 @@ AddRewardToQuest(wqID, ACHIEVEMENT, ...)
     ↓
 questList populated immediately
     ↓
-TurboCheck final activity/type/zone filter
+TaskResolver final activity/type/zone filter
     ↓
 ready task appears
 ```

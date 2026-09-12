@@ -22,7 +22,7 @@ WQA Turbo changes the unit of retry from **the whole world scan** to **the indiv
 
 ## 2. Scanner responsibilities
 
-`RewardScanner.lua` is responsible for dynamic reward enrichment.
+`Scanning/RewardScanner.lua` is responsible for dynamic reward enrichment.
 
 It does not replace the static achievement/collectible mapping system.
 
@@ -51,7 +51,7 @@ MAX_PRELOAD_REISSUES            2
 MAX_PENDING_AGE_SECONDS         30 s
 ```
 
-Always verify the constants in `RewardScanner.lua` before relying on exact values.
+Always verify the constants in `Scanning/RewardScanner.lua` before relying on exact values.
 
 ### Why a frame budget is preferable to a quest-count budget
 
@@ -128,7 +128,7 @@ mark the scan batch dirty
 at the end of the initial pass or retry batch:
     TurboPublishEnrichment()
     ↓
-TurboCheck
+TaskResolver
     ↓
 refresh open popup / new-task state
 ```
@@ -141,7 +141,7 @@ The scanner also retains the refresh mode that created it: Settings-triggered
 enrichment republishes in silent `settings` mode, while ordinary background
 discovery uses `new` mode.
 
-## 7. Readiness in `TurboCheck.lua`
+## 7. Readiness in `Runtime/TaskResolver.lua`
 
 Reward scanning and task display have separate readiness concerns.
 
@@ -153,7 +153,7 @@ Even after relevance exists, WQA may still need:
 - currency link;
 - mission link/reward text.
 
-`TurboCheck` prepares each task individually.
+`TaskResolver` prepares each task individually.
 
 A task that is ready can be published even if another task needs a link retry.
 
@@ -163,7 +163,7 @@ The readiness retry is coalesced through a timer rather than spawning uncontroll
 
 Mount and pet journal scans are relatively expensive when repeated.
 
-`CollectionCache.lua` builds collection indexes once per refresh and lets static
+`Tracking/CollectionCache.lua` builds collection indexes once per refresh and lets static
 registration and Settings completion grouping reuse them. Settings queries use
 constant-time spell-ID/creature-ID lookups instead of walking a whole journal
 for every displayed mount or pet.
@@ -306,7 +306,7 @@ This separates scanner bugs from classification bugs and publication bugs.
 
 ## 14. Reward classification versus scanner ownership
 
-Do not put item IDs and one-off category rules into `RewardScanner.lua` unless discovery itself requires scanner-specific behavior.
+Do not put item IDs and one-off category rules into `Scanning/RewardScanner.lua` unless discovery itself requires scanner-specific behavior.
 
 Preferred ownership:
 

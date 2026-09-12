@@ -757,7 +757,7 @@ function WQA:UpdateOptions()
 						end,
 						order = newOrder()
 					},
-					
+
 WorldQuestTracker = {
 						type = "toggle",
 						name = L["Use World Quest Tracker"],

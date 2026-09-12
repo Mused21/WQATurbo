@@ -25,17 +25,17 @@ Any PR that changes one of the following must update docs in the same PR:
 
 | Changed area | Required docs |
 |---|---|
-| `RewardScanner.lua` | `ARCHITECTURE.md`, `SCANNING_AND_PERFORMANCE.md`, invariants if needed |
-| `TurboCheck.lua` | `ARCHITECTURE.md`, `SCANNING_AND_PERFORMANCE.md` |
-| `TurboDisplay.lua` | `ARCHITECTURE.md`, `FUNCTIONAL_REFERENCE.md` |
-| `TurboRuntime.lua` | `ARCHITECTURE.md`, `COMMANDS_AND_DIAGNOSTICS.md` |
-| `CollectionCache.lua` | `SCANNING_AND_PERFORMANCE.md`, `DATA_MODEL.md` |
-| `Tooltip.lua` | `FUNCTIONAL_REFERENCE.md`, invariants |
-| `Options.lua` | `SETTINGS_REFERENCE.md`, `FUNCTIONAL_REFERENCE.md` |
+| `Scanning/RewardScanner.lua` | `ARCHITECTURE.md`, `SCANNING_AND_PERFORMANCE.md`, invariants if needed |
+| `Runtime/TaskResolver.lua` | `ARCHITECTURE.md`, `SCANNING_AND_PERFORMANCE.md` |
+| `Runtime/Display.lua` | `ARCHITECTURE.md`, `FUNCTIONAL_REFERENCE.md` |
+| `Runtime/Runtime.lua` | `ARCHITECTURE.md`, `COMMANDS_AND_DIAGNOSTICS.md` |
+| `Tracking/CollectionCache.lua` | `SCANNING_AND_PERFORMANCE.md`, `DATA_MODEL.md` |
+| `UI/Tooltip.lua` | `FUNCTIONAL_REFERENCE.md`, invariants |
+| `UI/Options.lua` | `SETTINGS_REFERENCE.md`, `FUNCTIONAL_REFERENCE.md` |
 | `Migration.lua` | `ARCHITECTURE.md`, `FUNCTIONAL_REFERENCE.md` |
 | `Rewards/*` | `DATA_MODEL.md`; functional docs if semantics changed |
 | `Criterias/*` | `DATA_MODEL.md`, `DEVELOPMENT_GUIDE.md` |
-| `DB/*` shape | `DATA_MODEL.md`, `DEVELOPMENT_GUIDE.md` |
+| `Data/*` shape | `DATA_MODEL.md`, `DEVELOPMENT_GUIDE.md` |
 | new user command | `COMMANDS_AND_DIAGNOSTICS.md`, `FUNCTIONAL_REFERENCE.md` |
 | release workflow | `RELEASE_AND_CI.md`, invariants if relevant |
 | new major/minor release | `VERSION_X.Y.Z.md` or update current version file |
@@ -74,7 +74,7 @@ over vague prose.
 
 Good:
 
-> `TurboCheck.lua` owns final task readiness and publication.
+> `Runtime/TaskResolver.lua` owns final task readiness and publication.
 
 Weak:
 
@@ -122,9 +122,9 @@ For a major/minor release, review these files even if they were not directly cha
 1. `WQATurbo.toc` — load order;
 2. `Core.lua`;
 3. `WQATurbo.lua`;
-4. Turbo modules;
-5. `Options.lua`;
-6. new DB/data files;
+4. specialized modules;
+5. `UI/Options.lua`;
+6. new Data/expansion files;
 7. workflows.
 
 Then verify docs still describe actual runtime ownership.

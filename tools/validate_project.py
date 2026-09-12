@@ -48,17 +48,20 @@ REQUIRED_PROJECT_FILES = (
     ".pkgmeta",
     "Core.lua",
     "Constants.lua",
-    "TrackingPolicy.lua",
-    "DB/RuntimeData.lua",
+    "Tracking/TrackingPolicy.lua",
+    "Tracking/Achievements.lua",
+    "Tracking/CollectionCache.lua",
+    "Data/Expansions/Legion.lua",
+    "Data/RuntimeData.lua",
     "Utilities.lua",
     "WQATurbo.lua",
-    "CollectionCache.lua",
-    "RewardScanner.lua",
-    "TurboRuntime.lua",
-    "TurboDisplay.lua",
-    "TurboCheck.lua",
+    "Scanning/RewardScanner.lua",
+    "Runtime/Runtime.lua",
+    "Runtime/Display.lua",
+    "Runtime/TaskResolver.lua",
     "Performance.lua",
-    "Options.lua",
+    "UI/Tooltip.lua",
+    "UI/Options.lua",
     "Rewards/Reward.lua",
     "Rewards/RewardType.lua",
     "Criterias/CriteriaType.lua",
@@ -71,8 +74,11 @@ REQUIRED_PROJECT_FILES = (
 REQUIRED_PACKAGE_ITEMS = (
     "WQATurbo/WQATurbo.toc",
     "WQATurbo/Constants.lua",
-    "WQATurbo/TrackingPolicy.lua",
-    "WQATurbo/DB/RuntimeData.lua",
+    "WQATurbo/Tracking/TrackingPolicy.lua",
+    "WQATurbo/Data/RuntimeData.lua",
+    "WQATurbo/Scanning/RewardScanner.lua",
+    "WQATurbo/Runtime/Runtime.lua",
+    "WQATurbo/UI/Options.lua",
 )
 
 REQUIRED_PACKAGE_PREFIXES = (
@@ -192,20 +198,26 @@ def validate_toc(validation: Validation) -> None:
     seen: set[str] = set()
 
     # Constants and tracking policy must exist before their runtime consumers.
-    startup = ("Core.lua", "Constants.lua", "TrackingPolicy.lua")
+    startup = ("Core.lua", "Constants.lua", "Tracking/TrackingPolicy.lua")
     for source in startup:
         if source not in sources:
             validation.error(f"TOC must load {source}.")
     if all(source in sources for source in startup):
         positions = [sources.index(source) for source in startup]
         if positions != sorted(positions):
-            validation.error("TOC must load Core, Constants, then TrackingPolicy.")
+            validation.error(
+                "TOC must load Core, Constants, then "
+                "Tracking/TrackingPolicy.lua."
+            )
         for source in sources[:positions[-1]]:
             if source.endswith(".lua") and not source.startswith("Libs/") and source not in startup:
-                validation.error(f"TOC must load TrackingPolicy before {source}.")
+                validation.error(
+                    "TOC must load Tracking/TrackingPolicy.lua before "
+                    f"{source}."
+                )
 
-    runtime_data = "DB/RuntimeData.lua"
-    runtime_consumers = ("Utilities.lua", "WQATurbo.lua", "Options.lua")
+    runtime_data = "Data/RuntimeData.lua"
+    runtime_consumers = ("Utilities.lua", "WQATurbo.lua", "UI/Options.lua")
     for source in (runtime_data, *runtime_consumers):
         if source not in sources:
             validation.error(f"TOC must load {source}.")
@@ -314,14 +326,14 @@ def validate_repository_hygiene(validation: Validation) -> None:
 
 
 def validate_static_data(validation: Validation) -> None:
-    data_dir = ROOT / "DB" / "Data"
+    data_dir = ROOT / "Data" / "Expansions"
     if not data_dir.is_dir():
-        validation.error("Missing DB/Data directory.")
+        validation.error("Missing Data/Expansions directory.")
         return
 
     lua_files = sorted(data_dir.glob("*.lua"))
     if not lua_files:
-        validation.error("No expansion data files found under DB/Data.")
+        validation.error("No expansion data files found under Data/Expansions.")
         return
 
     for path in lua_files:
@@ -362,7 +374,7 @@ def validate_namespace_identity(validation: Validation) -> None:
 
 
 def validate_qtip_lifecycle(validation: Validation) -> None:
-    """All addon-owned LibQTip releases must use Tooltip.lua's helper."""
+    """All addon-owned LibQTip releases must use UI/Tooltip.lua's helper."""
     toc_sources = parse_toc_sources(read_text(TOC, validation))
     release_owners: list[str] = []
     detach_owners: list[str] = []
@@ -380,16 +392,16 @@ def validate_qtip_lifecycle(validation: Validation) -> None:
             for _ in re.finditer(r"\b(?:self|WQA)\.tooltip\s*=\s*nil", text)
         )
 
-    if release_owners != ["Tooltip.lua"]:
+    if release_owners != ["UI/Tooltip.lua"]:
         validation.error(
-            "LibQTip release must have one canonical owner in Tooltip.lua; "
+            "LibQTip release must have one canonical owner in UI/Tooltip.lua; "
             f"found: {release_owners or 'none'}."
         )
 
-    if detach_owners != ["Tooltip.lua"]:
+    if detach_owners != ["UI/Tooltip.lua"]:
         validation.error(
             "WQA tooltip detachment must have one canonical owner in "
-            f"Tooltip.lua; found: {detach_owners or 'none'}."
+            f"UI/Tooltip.lua; found: {detach_owners or 'none'}."
         )
 
 

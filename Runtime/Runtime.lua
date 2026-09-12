@@ -94,7 +94,7 @@ function WQA:OnEnable()
 		elseif eventName == "WAR_MODE_STATUS_UPDATE" then
 			self:Show("new", true)
 
-		
+
 elseif eventName == "GARRISON_MISSION_LIST_UPDATE" then
 			self:CheckMissions()
 		end

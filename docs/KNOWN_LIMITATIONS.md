@@ -102,7 +102,7 @@ Older expansion item-level comparisons may be meaningless to a modern character.
 
 ## 8. Main module retains legacy implementations
 
-`WQATurbo.lua` contains runtime methods that later Turbo modules supersede.
+`WQATurbo.lua` contains runtime methods that later specialized modules supersede.
 
 This increases cognitive load and creates a risk of patching an inactive implementation.
 

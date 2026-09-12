@@ -73,7 +73,7 @@ WQA.ZoneIDList = {
         2413, -- Harrandar
         2437, -- Zul'Aman
         2405, -- Voidstorm
-        2393, -- Silvermoon City 
+        2393, -- Silvermoon City
         2424, -- Isle of Quel'Danas
         2541, -- The Arcantina
         2444, -- Slayer's Rise

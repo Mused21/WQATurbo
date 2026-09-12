@@ -32,7 +32,7 @@ WQATurbo = {
     RegisterChatCommand = noop
 }
 local WQA = WQATurbo
-dofile("RewardScanner.lua")
+dofile("Scanning/RewardScanner.lua")
 
 local publications = 0
 local publishedMode
@@ -129,7 +129,7 @@ WQA._wqaRewardScan = nil
 local refreshModeDuringShow
 WQA.Show = function(self) refreshModeDuringShow = self._wqaTurboRefreshMode end
 LibStub = function() return { Release = noop } end
-dofile("TurboDisplay.lua")
+dofile("Runtime/Display.lua")
 WQA:Refresh("settings", true)
 assert(refreshModeDuringShow == "settings")
 assert(WQA._wqaTurboRefreshMode == nil)

@@ -66,7 +66,7 @@ WQATurbo = {
     }
 }
 local WQA = WQATurbo
-dofile("Tooltip.lua")
+dofile("UI/Tooltip.lua")
 
 local popupHideCount = 0
 WQA.PopUp = {

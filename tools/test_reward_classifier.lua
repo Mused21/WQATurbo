@@ -72,8 +72,8 @@ WQATurbo = {
 }
 local WQA = WQATurbo
 dofile("Constants.lua")
-dofile("TrackingPolicy.lua")
-dofile("DB/RuntimeData.lua")
+dofile("Tracking/TrackingPolicy.lua")
+dofile("Data/RuntimeData.lua")
 dofile(arg[1] or "WQATurbo.lua")
 
 local function NewOptions()

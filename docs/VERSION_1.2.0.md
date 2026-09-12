@@ -65,7 +65,7 @@ Applied behavior-preserving cleanup:
   the empty `data.miscellaneous` conditional around the disabled call;
 - removed the unused `upgradeSum` accumulator declaration and all three
   accumulation statements, preserving cache eligibility and upgrade metadata;
-- removed the unreferenced `CraftingReagentIDList` table in `Options.lua` and
+- removed the unreferenced `CraftingReagentIDList` table in `UI/Options.lua` and
   disabled crafting-reagent classifier block in `WQATurbo.lua`, retaining the
   `craftingreagent` SavedVariables default;
 - promoted enum namespace-replacement warnings to validation errors, rejected
@@ -107,7 +107,7 @@ Status: IMPLEMENTED; local checks pass and in-game smoke testing reports no erro
   CriteriaType values, TaskType and TrackingMode under `WQA.Constants`.
 - Retained existing reward/criteria enum modules as namespace-preserving aliases.
   SavedVariables values and declarative data strings remain unchanged.
-- Added `TrackingPolicy.lua` for mode eligibility/force flags, bulk eligibility
+- Added `Tracking/TrackingPolicy.lua` for mode eligibility/force flags, bulk eligibility
   and exclusive-owner writes. Registration paths and Settings share these rules;
   completion checks and refresh scheduling remain in their existing owners.
 - Replaced runtime reward/task/criteria/mode literals with constants. Scanner,
@@ -123,18 +123,19 @@ regression checks pass against both the saved Step 2 registration/Settings sourc
 and Step 3. The developer reports Step 3 working without bugs so far in game.
 Full in-game regression coverage and remote CI remain pending.
 
-### Step 4 — Move runtime data out of Options.lua
+### Step 4 — Move runtime data out of UI/Options.lua
 
-Status: IMPLEMENTED LOCALLY; local checks pass.
+Status: IMPLEMENTED; local checks pass and in-game smoke testing reports the
+reorganized addon working correctly.
 
-- Added `DB/RuntimeData.lua` as the source of truth for stable currency,
+- Added `Data/RuntimeData.lua` as the source of truth for stable currency,
   reputation, emissary and World Quest type lookup metadata.
-- Loaded the module before `Utilities.lua`, `WQATurbo.lua` and `Options.lua`.
-  These consumers no longer depend on `Options.lua` creating runtime data.
+- Loaded the module before `Utilities.lua`, `WQATurbo.lua` and `UI/Options.lua`.
+  These consumers no longer depend on `UI/Options.lua` creating runtime data.
 - Preserved `WQA.EmissaryQuestIDList` as an alias to the canonical emissary
   table for compatibility.
 - Kept Settings-only hierarchy, ordering and bulk-label metadata in
-  `Options.lua`.
+  `UI/Options.lua`.
 - Added validator guards for the required module, package content and load
   order, plus Lua regression assertions for the new namespace and alias.
 - Updated architecture, file ownership, data-model, Settings and development
@@ -144,7 +145,7 @@ Validation: project validation passes with zero errors and warnings; the Lua
 5.1 regression test passes; Lua 5.1 syntax checks pass for all 31 project Lua
 files; `git diff --check` passes. A recursive table comparison confirmed that
 all moved runtime metadata exactly matches its `HEAD` definitions in
-`Options.lua`. The developer reports Step 4 working without bugs so far in
+`UI/Options.lua`. The developer reports Step 4 working without bugs so far in
 game. Broader in-game regression coverage and remote CI remain pending.
 
 ### Step 5 — Settings collection performance
@@ -152,7 +153,7 @@ game. Broader in-game regression coverage and remote CI remain pending.
 Status: IMPLEMENTED LOCALLY; local checks pass.
 
 - Added cache-backed mount and pet ownership query helpers to
-  `CollectionCache.lua`.
+  `Tracking/CollectionCache.lua`.
 - Replaced the full Mount Journal and Pet Journal loops in
   `IsTrackedObjectCompleted()` with constant-time shared-cache lookups.
 - Preserved the existing cache lifecycle: snapshots remain ephemeral and are
@@ -181,7 +182,7 @@ classifier and popup-enrichment behavior working correctly.
 - Preserved classifier order, cache eligibility, reward merge calls and retry
   aggregation. The documented StatWeightScore expression remains unchanged as
   a separate correctness issue.
-- Preserved `RewardScanner.lua`'s frame budget and per-quest pending model.
+- Preserved `Scanning/RewardScanner.lua`'s frame budget and per-quest pending model.
   In-game verification exposed that its initial item/currency/profession pass
   did not dirty the publication batch, leaving an open popup at its static
   achievement-only state until reopen. Initial reward inspection and completed
@@ -198,14 +199,12 @@ also passes against the committed Step 5 `WQATurbo.lua` baseline; Lua 5.1
 syntax checks pass for all 33 project Lua files; and `git diff --check` passes.
 Remote CI remains pending.
 
-## Current Step
-
 ### Step 7 — Tooltip lifecycle centralization
 
 Status: IMPLEMENTED; local checks pass and in-game testing reports the popup
 lifecycle working correctly.
 
-- Added `ReleaseQTip()` in `Tooltip.lua` as the only direct LibQTip release and
+- Added `ReleaseQTip()` in `UI/Tooltip.lua` as the only direct LibQTip release and
   `WQA.tooltip` detachment owner.
 - Required exact tooltip identity, detached shared state before release,
   cleared attached quests/missions/POIs and made repeated/stale release calls
@@ -223,6 +222,31 @@ Validation: project validation passes with zero errors and warnings; tracking,
 reward-classifier, reward-scanner and tooltip-lifecycle regression suites pass;
 Lua 5.1 syntax checks pass for all 34 project Lua files; and `git diff --check`
 passes. The developer reports Step 7 working in game. Remote CI remains
+pending.
+
+## Current Step
+
+### Repository organization before Step 8
+
+Status: IMPLEMENTED LOCALLY; local checks pass.
+
+- Grouped stable lookup and expansion content under `Data/`, tracking policy
+  and collection/achievement registration under `Tracking/`, reward discovery
+  under `Scanning/`, runtime overrides under `Runtime/`, and user-interface
+  modules under `UI/`.
+- Renamed the three Turbo override filenames to their actual responsibilities:
+  `Runtime/Runtime.lua`, `Runtime/Display.lua` and
+  `Runtime/TaskResolver.lua`.
+- Preserved every Lua implementation and retained the exact TOC load order;
+  the only source edits remove three pre-existing trailing-whitespace fragments.
+- Updated the TOC, local tests, structural/package validation and maintainer
+  documentation for the new paths.
+- Removed the unused hard-coded `0.1.0-beta` conversion builder; current CI and
+  releases already use the BigWigs packager.
+
+Validation: project validation, all four Lua regression suites, Lua 5.1 syntax
+checks for all 34 project Lua files and `git diff --check` pass. The developer
+reports the reorganized addon working nicely in game. Remote CI remains
 pending.
 
 ## Planned Next Steps
