@@ -62,6 +62,11 @@ Use `WQA.TrackingPolicy` for shared mode flags, bulk eligibility and ownership
 writes. Do not move collection API calls or refresh scheduling into this module.
 Run `lua5.1 tools/test_tracking_policy.lua` after changing tracking rules.
 
+Stable currency, reputation, emissary and World Quest type lookup metadata
+belongs in `DB/RuntimeData.lua`. Keep `Options.lua` focused on AceConfig tree
+construction and UI-only ordering/label metadata. When adding a runtime-data
+consumer, keep `DB/RuntimeData.lua` earlier in TOC load order.
+
 ## 3. Adding a new achievement mapping
 
 1. Identify the expansion data file.

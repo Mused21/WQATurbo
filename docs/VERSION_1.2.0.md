@@ -99,8 +99,6 @@ foreach ($luaFile in (rg --files --hidden -g '*.lua' -g '!Libs/**' -g '!.git/**'
 }
 ```
 
-## Current Step
-
 ### Step 3 — Constants and tracking policy
 
 Status: IMPLEMENTED; local checks pass and in-game smoke testing reports no errors so far.
@@ -125,17 +123,33 @@ regression checks pass against both the saved Step 2 registration/Settings sourc
 and Step 3. The developer reports Step 3 working without bugs so far in game.
 Full in-game regression coverage and remote CI remain pending.
 
-## Planned Next Steps
+## Current Step
 
 ### Step 4 — Move runtime data out of Options.lua
 
-Separate stable content/runtime metadata from Settings UI construction.
+Status: IMPLEMENTED LOCALLY; local checks pass.
 
-Likely candidates:
+- Added `DB/RuntimeData.lua` as the source of truth for stable currency,
+  reputation, emissary and World Quest type lookup metadata.
+- Loaded the module before `Utilities.lua`, `WQATurbo.lua` and `Options.lua`.
+  These consumers no longer depend on `Options.lua` creating runtime data.
+- Preserved `WQA.EmissaryQuestIDList` as an alias to the canonical emissary
+  table for compatibility.
+- Kept Settings-only hierarchy, ordering and bulk-label metadata in
+  `Options.lua`.
+- Added validator guards for the required module, package content and load
+  order, plus Lua regression assertions for the new namespace and alias.
+- Updated architecture, file ownership, data-model, Settings and development
+  documentation.
 
-- emissary data
-- reputation data
-- reward/category metadata
+Validation: project validation passes with zero errors and warnings; the Lua
+5.1 regression test passes; Lua 5.1 syntax checks pass for all 31 project Lua
+files; `git diff --check` passes. A recursive table comparison confirmed that
+all moved runtime metadata exactly matches its `HEAD` definitions in
+`Options.lua`. The developer reports Step 4 working without bugs so far in
+game. Broader in-game regression coverage and remote CI remain pending.
+
+## Planned Next Steps
 
 ### Step 5 — Settings collection performance
 

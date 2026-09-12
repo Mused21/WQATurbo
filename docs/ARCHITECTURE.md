@@ -26,6 +26,7 @@ TrackingPolicy.lua
 DB/Data/*
 DB/Expansions.lua
 DB/Zones.lua
+DB/RuntimeData.lua
 
 Criterias/*
 Rewards/*
@@ -143,6 +144,19 @@ Maps expansion index to the map IDs scanned for World Quests.
 
 This is a major scanner input: enabled maps are derived from this data plus profile zone settings.
 
+### `DB/RuntimeData.lua`
+
+Owns stable lookup metadata shared by runtime and Settings code:
+
+- currency IDs by expansion;
+- reputation faction IDs by expansion and player faction;
+- emissary quest IDs by expansion and player faction;
+- localized World Quest type labels mapped to Blizzard enum values.
+
+It loads before `Utilities.lua`, `WQATurbo.lua` and `Options.lua` so none of
+those consumers depends on Settings initialization. `WQA.EmissaryQuestIDList`
+remains an alias to the canonical emissary table for compatibility.
+
 ### `Achievements.lua`
 
 Converts declarative achievement definitions into actual tracked relevance.
@@ -252,7 +266,9 @@ Settings are largely generated dynamically from:
 - zone lists;
 - collection definitions;
 - reward lists;
-- profession/reputation/currency mappings.
+- profession mappings;
+- reputation, currency, emissary and World Quest type metadata from
+  `WQA.RuntimeData`.
 
 ### `Migration.lua`
 

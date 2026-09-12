@@ -11,7 +11,10 @@ local owned, blocked = false, {}
 C_QuestLog = { IsQuestFlaggedCompleted = function(id) return blocked[id] end }
 C_TaskQuest = {}
 C_CurrencyInfo = {}
-Enum = { QuestTagType = {}, GarrisonType = {} }
+Enum = {
+    QuestTagType = { PvP = 1, PetBattle = 2, Profession = 3, Dungeon = 4 },
+    GarrisonType = {}
+}
 CreateFrame = function() return { SetOwner = noop } end
 UnitFullName = function() return "Tester", "Realm" end
 PlayerHasToy = function() return owned end
@@ -43,6 +46,10 @@ WQATurbo = {
 local WQA = WQATurbo
 loadSource("Constants.lua")
 loadSource("TrackingPolicy.lua")
+loadSource("DB/RuntimeData.lua")
+assert(WQA.EmissaryQuestIDList == WQA.RuntimeData.EmissaryQuestIDsByExpansion)
+assert(WQA.RuntimeData.CurrencyIDsByExpansion[12][1] == 3316)
+assert(WQA.RuntimeData.WorldQuestTypesByLabel.LE_QUEST_TAG_TYPE_PVP == 1)
 local criteriaNamespace, rewardsNamespace = WQA.Criterias, WQA.Rewards
 WQA.Criterias.sentinel, WQA.Rewards.sentinel = true, true
 loadSource("Criterias/CriteriaType.lua")

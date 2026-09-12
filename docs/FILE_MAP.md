@@ -210,6 +210,13 @@ Expansion-index/map-ID scan list.
 
 Adding a zone affects standard scanner coverage and Settings zone pages.
 
+### `DB/RuntimeData.lua`
+
+Stable shared lookup tables for currency IDs, reputation faction IDs,
+emissary quest IDs and localized World Quest type labels. Loaded before all
+runtime and Settings consumers. Preserves `WQA.EmissaryQuestIDList` as an alias
+to the canonical emissary table.
+
 ## Criterias
 
 ### `Criterias/CriteriaType.lua`
@@ -315,7 +322,7 @@ validator rejects reintroducing this obsolete configuration.
 ## File ownership rule of thumb
 
 ```text
-stable game-ID mapping          → DB/Data, DB/Zones, lookup table
+stable game-ID mapping          → DB/Data, DB/Zones, DB/RuntimeData
 reward meaning/classification   → WQATurbo shared classifier / Rewards
 scanner timing/readiness        → RewardScanner
 task publication/readiness      → TurboCheck

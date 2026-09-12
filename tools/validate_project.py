@@ -49,6 +49,8 @@ REQUIRED_PROJECT_FILES = (
     "Core.lua",
     "Constants.lua",
     "TrackingPolicy.lua",
+    "DB/RuntimeData.lua",
+    "Utilities.lua",
     "WQATurbo.lua",
     "CollectionCache.lua",
     "RewardScanner.lua",
@@ -67,6 +69,7 @@ REQUIRED_PACKAGE_ITEMS = (
     "WQATurbo/WQATurbo.toc",
     "WQATurbo/Constants.lua",
     "WQATurbo/TrackingPolicy.lua",
+    "WQATurbo/DB/RuntimeData.lua",
 )
 
 REQUIRED_PACKAGE_PREFIXES = (
@@ -197,6 +200,19 @@ def validate_toc(validation: Validation) -> None:
         for source in sources[:positions[-1]]:
             if source.endswith(".lua") and not source.startswith("Libs/") and source not in startup:
                 validation.error(f"TOC must load TrackingPolicy before {source}.")
+
+    runtime_data = "DB/RuntimeData.lua"
+    runtime_consumers = ("Utilities.lua", "WQATurbo.lua", "Options.lua")
+    for source in (runtime_data, *runtime_consumers):
+        if source not in sources:
+            validation.error(f"TOC must load {source}.")
+    if runtime_data in sources:
+        data_position = sources.index(runtime_data)
+        for consumer in runtime_consumers:
+            if consumer in sources and data_position > sources.index(consumer):
+                validation.error(
+                    f"TOC must load {runtime_data} before {consumer}."
+                )
 
     for source in sources:
         key = source.lower()

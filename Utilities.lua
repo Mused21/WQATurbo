@@ -1,6 +1,7 @@
 ---@class WQATurbo
 local WQA = WQATurbo
 local TaskType = WQA.Constants.TaskType
+local EmissaryQuestIDList = WQA.RuntimeData.EmissaryQuestIDsByExpansion
 
 local GetTitleForQuestID = C_QuestLog.GetTitleForQuestID
 
@@ -143,7 +144,7 @@ function WQA:GetExpansionByQuestID(questID)
         return expansionId
     end
 
-    for expansion, v in pairs(WQA.EmissaryQuestIDList) do
+    for expansion, v in pairs(EmissaryQuestIDList) do
         for _, id in pairs(v) do
             if type(id) == "table" then
                 id = id.id

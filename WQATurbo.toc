@@ -25,6 +25,7 @@ DB\Data\Midnight.lua
 
 DB\Expansions.lua
 DB\Zones.lua
+DB\RuntimeData.lua
 Criterias\CriteriaType.lua
 Criterias\AreaPoi.lua
 

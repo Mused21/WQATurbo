@@ -15,6 +15,10 @@ Options
 
 Settings are built dynamically in `Options.lua`.
 
+Stable currency, reputation, emissary and World Quest type lookup metadata is
+owned by `DB/RuntimeData.lua`. `Options.lua` reads those tables while building
+the UI; loading Settings is not required to initialize runtime metadata.
+
 Most setters call a debounced refresh scheduler so that configuration changes become visible without requiring `/reload`.
 
 ## 2. Tracking

@@ -5,6 +5,7 @@ local CriteriaType = WQA.Constants.CriteriaType
 local TaskType = WQA.Constants.TaskType
 local TrackingMode = WQA.Constants.TrackingMode
 local TrackingPolicy = WQA.TrackingPolicy
+local EmissaryQuestIDList = WQA.RuntimeData.EmissaryQuestIDsByExpansion
 
 local LibQTip = LibStub("LibQTip-1.0")
 
@@ -1999,7 +2000,7 @@ end
 
 function WQA:EmissaryIsActive(questID)
 	local emissary = {}
-	for _, v in pairs(self.EmissaryQuestIDList) do
+	for _, v in pairs(EmissaryQuestIDList) do
 		for _, id in pairs(v) do
 			if type(id) == "table" then
 				id = id.id

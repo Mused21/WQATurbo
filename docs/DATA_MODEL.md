@@ -82,6 +82,22 @@ Each expansion can contain:
 
 Not every expansion defines every collection.
 
+### `WQA.RuntimeData`
+
+Stable, read-only lookup metadata loaded from `DB/RuntimeData.lua` before its
+runtime and Settings consumers:
+
+```lua
+WQA.RuntimeData.CurrencyIDsByExpansion
+WQA.RuntimeData.FactionIDsByExpansion
+WQA.RuntimeData.EmissaryQuestIDsByExpansion
+WQA.RuntimeData.WorldQuestTypesByLabel
+```
+
+Faction-restricted entries keep the existing `{ id = ..., faction = ... }`
+shape. `WQA.EmissaryQuestIDList` aliases the canonical emissary table so
+existing integrations retain the same access path.
+
 ### `WQA.questList`
 
 Current relevance model keyed by quest ID.
@@ -437,7 +453,7 @@ Use this decision:
 
 ```text
 Is this a stable mapping between game IDs?
-    → DB/Data, DB/Zones, static lookup table
+    → DB/Data, DB/Zones or DB/RuntimeData
 
 Is this user preference?
     → AceDB profile/char/global as appropriate
