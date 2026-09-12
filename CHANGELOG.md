@@ -13,6 +13,10 @@
 ### Fixed
 - Fixed an open World Quest popup sometimes remaining at achievement-only results after settings-triggered reward filtering completed.
 - Added the shared Hide Exalted/maximum Renown control to Mission Table reputation settings.
+- Fixed character-only tracking on a parent achievement failing to propagate to nested achievement criteria.
+- Fixed one missing `QUEST_PIN` criterion quest ID preventing valid later criteria from being registered.
+- Fixed StatWeightScore dual-slot comparisons selecting the second slot instead of the lower equipped score.
+- Fixed minimap right-click navigation failing to retain the numeric Blizzard Settings category ID returned by AceConfigDialog.
 
 ## 1.1.0
 

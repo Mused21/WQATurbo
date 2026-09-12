@@ -114,7 +114,8 @@ Status: IMPLEMENTED; local checks pass and in-game smoke testing reports no erro
   publication, tooltip and utility changes are equivalent constant substitutions.
 - Preserved special quest-count achievement behavior (disabled-only mode gate),
   the existing inherited `forcedByMe` reset and collectible character-only-mode
-  behavior. Correctness changes remain deferred.
+  behavior during Step 3. The inherited reset was corrected in the later
+  pre-release cleanup.
 - Added `tools/test_tracking_policy.lua` and wired it into validation CI.
   Added validator guards for startup order and required new package modules.
 
@@ -181,8 +182,8 @@ classifier and popup-enrichment behavior working correctly.
   caches, transmog, reputation items, recipes, known/custom items and legacy
   Azerite/conduit behavior.
 - Preserved classifier order, cache eligibility, reward merge calls and retry
-  aggregation. The documented StatWeightScore expression remains unchanged as
-  a separate correctness issue.
+  aggregation. The documented StatWeightScore expression remained unchanged
+  during Step 6 and was corrected in the later pre-release cleanup.
 - Preserved `Scanning/RewardScanner.lua`'s frame budget and per-quest pending model.
   In-game verification exposed that its initial item/currency/profession pass
   did not dirty the publication batch, leaving an open popup at its static
@@ -309,11 +310,10 @@ in-game smoke testing.
 - Added regression and validator guards enforcing `WQATurbo.lua` as the sole
   `CreateQuestList()` owner and exactly one cache invalidation per rebuild.
 
-Validation for the current tree: project validation, Lua 5.1 syntax checks for
-all 36 project Lua files and `git diff --check` pass. All six Lua regression
-suite sources compile; executing them requires the Lua interpreter used by CI,
-which is not installed in the current local shell. The developer reports the
-complete Step 8 path working in game. Remote CI remains pending.
+Validation at the completed Step 8 checkpoint: project validation, all six Lua
+regression suites, Lua 5.1 syntax checks for all 36 project Lua files and
+`git diff --check` pass. The developer reports the complete Step 8 path working
+in game. Remote CI remains pending.
 
 Step 8 now has one source owner for every consolidated runtime method; no
 load-order method wrapper remains.
@@ -322,21 +322,34 @@ load-order method wrapper remains.
 
 The planned 1.2.0 refactor steps are complete. Remaining work is release
 preparation: run remote CI and its executable Lua suites, complete a broad
-in-game regression pass, verify the packaged ZIP, and resolve or explicitly
-defer the separate correctness issues below.
+in-game regression pass, and verify the packaged ZIP.
 
-## Separate Correctness Issues
+## Pre-release Correctness Cleanup
 
-Do not silently fix these during refactoring.
+Status: COMPLETED; focused local regression checks and in-game testing pass.
 
-Investigate separately with dedicated reproduction/tests:
+- Corrected StatWeightScore's dual-slot comparison so it uses the lower
+  equipped score when calculating a reward's percentage upgrade.
+- Preserved inherited character-only forcing while registering nested
+  achievement criteria.
+- Changed `QUEST_PIN` registration to skip a criterion with no quest ID while
+  continuing through valid later criteria.
+- Stored the numeric Blizzard Settings category ID returned by
+  `AceConfigDialog:AddToBlizOptions()` so minimap right-click uses the intended
+  `Settings.OpenToCategory()` path.
+- Expanded the tracking, reward-classifier and runtime-lifecycle regression
+  suites for these cases.
+- Built the Lua 5.1.5 interpreter from the official source archive after
+  verifying SHA-256
+  `2640fc56a795f29d28ef15e13c34a47e223960b0240e8cb0a82d9b0738695333`,
+  and installed it beside the existing compiler under
+  `%LOCALAPPDATA%\Programs\Lua\5.1.5`.
 
-- StatWeightScore operator-precedence behavior;
-- achievement `forcedByMe` propagation;
-- `QUEST_PIN` early return on missing criterion quest ID;
-- any remaining numeric Blizzard Settings category ID issue needs a specific
-  reproduction: minimap right-click already calls
-  `Settings.OpenToCategory(WQA.optionsCategoryID)` in the local baseline.
+Validation: project validation, all six Lua regression suites, Lua 5.1 syntax
+checks for all 36 project Lua files and `git diff --check` pass. The tracking
+and reward-classifier suites also pass in comparison mode against the
+pre-cleanup `bb51a8c` source, confirming the intended behavior differences.
+The developer reports all four corrections working in game.
 
 ## Non-goals for 1.2 Refactor
 

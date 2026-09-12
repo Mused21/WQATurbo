@@ -28,8 +28,8 @@ function WQA:OnEnable()
 	local name, server = UnitFullName("player")
 	self.playerName = name .. "-" .. server
 
-	-- Keep the original option-table identifiers for now so existing option
-	-- code and Settings.OpenToCategory("WQATurbo") continue to work.
+	-- Keep the established AceConfig application name for option registration
+	-- and profile-page parenting.
 	LibStub("AceConfig-3.0"):RegisterOptionsTable(
 		"WQATurbo",
 		function()
@@ -37,7 +37,7 @@ function WQA:OnEnable()
 		end
 	)
 
-	self.optionsFrame =
+	self.optionsFrame, self.optionsCategoryID =
 		LibStub("AceConfigDialog-3.0"):AddToBlizOptions(
 			"WQATurbo",
 			"WQA Turbo"

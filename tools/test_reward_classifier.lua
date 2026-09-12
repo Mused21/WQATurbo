@@ -11,6 +11,7 @@ local itemClassID
 local itemEquipLoc
 local rewardItemLevel
 local inventoryLevels = {}
+local installedAddons = {}
 
 C_QuestLog = { IsQuestFlaggedCompleted = noop }
 C_TaskQuest = {}
@@ -38,7 +39,11 @@ local scanTooltip = {
 CreateFrame = function() return scanTooltip end
 
 local broker = { NewDataObject = function() return {} end }
-local aceAddon = { GetAddon = function() return nil end }
+local aceAddon = {
+    GetAddon = function(_, name)
+        return installedAddons[name]
+    end
+}
 LibStub = setmetatable({ GetLibrary = function() return broker end }, {
     __call = function(_, name)
         if name == "AceAddon-3.0" then return aceAddon end
@@ -121,6 +126,7 @@ local function Reset(itemID)
     itemEquipLoc = nil
     rewardItemLevel = 120
     inventoryLevels = {}
+    installedAddons = {}
     PawnIsItemAnUpgrade = nil
     PawnGetItemData = nil
     C_AzeriteEmpoweredItem.IsAzeriteEmpoweredItemByID = function() return false end
@@ -214,6 +220,40 @@ PawnIsItemAnUpgrade = function() return { { PercentUpgrade = 0.10 } } end
 assert(WQA:CheckReward(1000, false, 1) == false)
 assert(AssertReward(1, WQA.Constants.RewardType.Item).itemPercentUpgrade == 10)
 
+Reset(200000)
+itemEquipLoc = "INVTYPE_FINGER"
+inventoryLevels[11] = 80
+inventoryLevels[12] = 100
+WQA.db.profile.options.reward.gear.StatWeightScore = true
+local statWeightScores = {
+    ["item:200000"] = 120,
+    ["equipped:11"] = 80,
+    ["equipped:12"] = 100
+}
+local statWeightModules = {
+    StatWeightScoreScore = {
+        CalculateItemScore = function(_, link)
+            return { Score = assert(statWeightScores[link]) }
+        end
+    },
+    StatWeightScoreSpec = {
+        GetSpecs = function()
+            return { { Enabled = true } }
+        end
+    },
+    StatWeightScoreScanningTooltip = {
+        ScanTooltip = function() return {} end
+    }
+}
+installedAddons.StatWeightScore = {
+    GetModule = function(_, name)
+        return assert(statWeightModules[name])
+    end
+}
+assert(WQA:CheckReward(1000, false, 1) == false)
+local expectedStatWeightUpgrade = arg[1] and 20 or 50
+assert(AssertReward(1, WQA.Constants.RewardType.Item).itemPercentUpgrade == expectedStatWeightUpgrade)
+
 Reset(163857)
 WQA.db.profile.options.reward.gear.AzeriteArmorCache = true
 assert(WQA:CheckReward(1000, false, 1) == false)
@@ -243,4 +283,4 @@ assert(WQA:CheckReward(1000, false, 1) == false)
 assert(AssertReward(1, WQA.Constants.RewardType.AzeriteTrait) == 123)
 AssertReward(2, WQA.Constants.RewardType.Item)
 
-print("Reward classifier regression checks passed (links, retries, containers, upgrades, transmog, reputation, recipes, custom and legacy rewards).")
+print("Reward classifier regression checks passed (links, retries, containers, dual-slot upgrades, transmog, reputation, recipes, custom and legacy rewards).")

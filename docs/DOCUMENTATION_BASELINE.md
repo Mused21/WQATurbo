@@ -13,7 +13,9 @@ Current 1.2.0 work included:
 - centralized tooltip lifecycle;
 - module organization and single-owner runtime entry points;
 - shared Hide Exalted/maximum Renown control on World Quest and Mission Table
-  reputation pages.
+  reputation pages;
+- pre-release correctness fixes for nested achievement forcing, quest-pin
+  criteria, dual-slot StatWeightScore comparisons and Settings navigation.
 
 Explicitly excluded from current architecture:
 - experimental Abomination Stitchyard tracking (research only, reverted).

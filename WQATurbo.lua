@@ -978,7 +978,7 @@ local function ClassifyGearUpgradeReward(self, questID, isEmissary, itemLink, it
 									spec,
 									equippedItemHasUniqueGem
 								).Score
-							if equippedScore or 0 > equippedScore2 then
+							if (equippedScore or 0) > equippedScore2 then
 								equippedScore = equippedScore2
 							end
 						else

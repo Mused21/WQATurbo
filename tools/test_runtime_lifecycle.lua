@@ -60,7 +60,7 @@ local libraries = {
 		AddToBlizOptions = function(_, name, title, parent)
 			local page = { name = name, title = title, parent = parent }
 			settingsPages[#settingsPages + 1] = page
-			return page
+			return page, 1000 + #settingsPages
 		end
 	},
 	["AceDBOptions-3.0"] = {
@@ -128,6 +128,7 @@ assert(type(optionTables[1].options) == "function")
 assert(optionTables[2].name == "WQATurboProfiles")
 assert(#settingsPages == 2)
 assert(WQA.optionsFrame == settingsPages[1])
+assert(WQA.optionsCategoryID == 1001)
 assert(WQA.optionsFrame.Profiles == settingsPages[2])
 assert(eventFrame.registered.PLAYER_ENTERING_WORLD)
 assert(eventFrame.registered.GARRISON_MISSION_LIST_UPDATE)
@@ -168,4 +169,4 @@ assert(#shown == 3 and shown[3].mode == "new" and shown[3].auto == true)
 eventFrame.onEvent(eventFrame, "GARRISON_MISSION_LIST_UPDATE")
 assert(missionChecks == 1)
 
-print("Runtime lifecycle regression checks passed (options, events, startup scheduling, combat, War Mode and missions).")
+print("Runtime lifecycle regression checks passed (options, category ID, events, startup scheduling, combat, War Mode and missions).")

@@ -70,8 +70,9 @@ live in `Tracking/TrackingPolicy.lua`. `GetState` returns enabled, always and ch
 flags; `IsBulkMode` accepts only disabled/default/always; `SetValue` updates the
 mode and exclusive owner together. `UI/Options.lua` still schedules refreshes.
 
-Existing behavior is preserved: only achievements consume the character-only
-flag, and their inherited `forcedByMe` reset remains a separate correctness issue.
+Only achievements consume the character-only flag. Nested achievement
+registration preserves an inherited character-only force so completed child
+achievements are still evaluated for the selected character.
 A missing exclusive owner still displays the original mode in Settings, while
 runtime eligibility rejects it for a named character.
 

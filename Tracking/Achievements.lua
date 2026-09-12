@@ -20,8 +20,7 @@ function WQA.Achievements:Register(achievement, forced, forcedByMe)
     if always then
         forced = true
     end
-    -- Preserve 1.1 behavior: inherited forcedByMe is not propagated to children.
-    forcedByMe = characterOnly
+    forcedByMe = forcedByMe or characterOnly
 
     local _, _, _, completed, _, _, _, _, _, _, _, _, wasEarnedByMe = GetAchievementInfo(id)
     if (achievement.notAccountwide and not wasEarnedByMe) or not completed or forced or forcedByMe then
@@ -90,11 +89,7 @@ function WQA.Achievements:Register_QUEST_PIN(achievement, forced)
     for i = 1, GetAchievementNumCriteria(id) do
         local _, _, completed, _, _, _, _, questID = GetAchievementCriteriaInfo(id, i)
 
-        if not questID then
-            return
-        end
-
-        if not completed or forced then
+        if questID and (not completed or forced) then
             if achievement.criteriaInfo[i] then
                 for _, questID in pairs(achievement.criteriaInfo[i]) do
                     WQA:AddRewardToQuest(questID, RewardType.Achievement, id)

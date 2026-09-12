@@ -89,9 +89,11 @@ loadSource("Tracking/Achievements.lua")
 loadSource("UI/Options.lua")
 
 local publications, refreshes = 0, 0
-WQA.AddRewardToQuest = function(_, _, kind)
+local publishedQuestIDs = {}
+WQA.AddRewardToQuest = function(_, questID, kind)
     assert(kind == "CHANCE" or kind == "ACHIEVEMENT")
     publications = publications + 1
+    publishedQuestIDs[#publishedQuestIDs + 1] = questID
 end
 WQA.ScheduleOptionsRefresh = function() refreshes = refreshes + 1 end
 
@@ -113,6 +115,7 @@ end
 local function reset(group, case)
     WQA.db.profile[group] = settings(case)
     publications, refreshes = 0, 0
+    publishedQuestIDs = {}
     WQA.itemList = {}
     blocked = {}
 end
@@ -196,7 +199,7 @@ for _, case in ipairs(modes) do
     end
 end
 
--- Lock the known inherited-force behavior without silently correcting it.
+-- Character-only forcing on a parent achievement must reach nested criteria.
 reset("achievements", modes[1])
 completed, earned = true, true
 local parent = { id = 101, criteriaType = "ACHIEVEMENT", criteria = {
@@ -204,10 +207,44 @@ local parent = { id = 101, criteriaType = "ACHIEVEMENT", criteria = {
 } }
 WQA.db.profile.achievements[101] = "wasEarnedByMe"
 WQA.Achievements:Register(parent)
-assert(publications == 0, "Character-only forcing must still reset at the child")
+local expectedInheritedPublications = arg[1] and 0 or 1
+assert(publications == expectedInheritedPublications,
+    "Character-only forcing must match the selected source baseline")
+publications = 0
 WQA.db.profile.achievements[101] = "always"
 WQA.Achievements:Register(parent)
 assert(publications == 1, "Always forcing must propagate to the child")
+
+-- One malformed quest-pin criterion must not hide valid later criteria.
+reset("achievements", modes[1])
+completed, earned = false, false
+C_QuestLine = {
+    RequestQuestLinesForMap = function(mapID)
+        assert(mapID == 1462)
+    end
+}
+GetAchievementNumCriteria = function(id)
+    assert(id == 102)
+    return 2
+end
+GetAchievementCriteriaInfo = function(id, index)
+    assert(id == 102)
+    if index == 1 then
+        return nil, nil, false, nil, nil, nil, nil, nil
+    end
+    return nil, nil, false, nil, nil, nil, nil, 301
+end
+WQA.questPinList = {}
+WQA.questPinMapList = {}
+WQA.Achievements:Register({ id = 102, criteriaType = "QUEST_PIN", mapID = 1462, criteriaInfo = {} })
+local expectedPinPublications = arg[1] and 0 or 1
+assert(publications == expectedPinPublications,
+    "Quest-pin continuation must match the selected source baseline")
+if not arg[1] then
+    assert(publishedQuestIDs[1] == 301)
+    assert(WQA.questPinList[301] == true)
+    assert(WQA.questPinMapList[1462] == true)
+end
 
 local groups = { "achievements", "mounts", "pets", "toys" }
 for _, group in ipairs(groups) do
@@ -272,4 +309,4 @@ if not arg[1] then
     assert(WQA.collectionCache.petValid == false)
 end
 
-print("Tracking regression checks passed (collectibles, achievements, ownership, bulk refreshes, rebuild invalidation, journal caching, Settings cache reuse).")
+print("Tracking regression checks passed (collectibles, achievements, nested forcing, quest pins, ownership, bulk refreshes, rebuild invalidation, journal caching, Settings cache reuse).")

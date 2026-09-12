@@ -22,19 +22,28 @@ lua5.1 tools/test_task_resolver.lua
 lua5.1 tools/test_tooltip_lifecycle.lua
 ```
 
+In the local Windows workspace, Lua 5.1.5 is installed at:
+
+```powershell
+$lua = Join-Path $env:LOCALAPPDATA 'Programs/Lua/5.1.5/lua5.1.exe'
+& $lua tools/test_tracking_policy.lua
+```
+
 The test loads actual registration and Settings methods with stubbed Blizzard
 APIs. It covers default/disabled/always/exclusive/character-only modes, missing
 owners, unknown values, owned/unowned collections, completed tracking quests,
-unknown journal entries, achievement completion and inherited forcing, exclusive
-owner cleanup, bulk state and one refresh per bulk operation. It also checks
-that repeated registration and Settings completion queries reuse journal
-snapshots, and that `CreateQuestList()` invalidates both snapshots exactly once
-without a load-order wrapper.
+unknown journal entries, achievement completion, nested character-only forcing,
+missing quest-pin criterion IDs, exclusive owner cleanup, bulk state and one
+refresh per bulk operation. It also checks that repeated registration and
+Settings completion queries reuse journal snapshots, and that
+`CreateQuestList()` invalidates both snapshots exactly once without a load-order
+wrapper.
 
 The reward-classifier test covers authoritative item-link fallback, missing
-data retries, containers, gear upgrades, equipment caches, transmog and retry,
-reputation items, recipes, known/custom items, Azerite traits and conduits. It
-can run the same cases against an optional prior `WQATurbo.lua` path.
+data retries, containers, gear upgrades, StatWeightScore dual-slot selection,
+equipment caches, transmog and retry, reputation items, recipes, known/custom
+items, Azerite traits and conduits. It can run the same cases against an
+optional prior `WQATurbo.lua` path.
 
 The reward-scanner test checks that initial reward inspection and completed
 item retries dirty a publication batch, and that repeated flushes without new
@@ -46,7 +55,8 @@ asserts that `Scanning/RewardScanner.lua` supplies `Reward()`.
 
 The runtime-lifecycle test exercises the canonical `OnEnable()` owner. It
 checks Settings registration, startup-delay capping, recurring refreshes,
-combat recovery, quest completion, War Mode refresh and mission updates.
+numeric Blizzard Settings category-ID capture, combat recovery, quest
+completion, War Mode refresh and mission updates.
 
 The task-resolver test exercises the canonical `CheckWQ()` owner. It checks
 per-task readiness, retry coalescing/cancellation, final filtering and
