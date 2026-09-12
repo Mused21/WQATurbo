@@ -32,7 +32,9 @@ git status
 
 ## 2. Trace the runtime owner first
 
-Because later-loaded specialized modules override core methods, never patch based only on the first function definition you find.
+Step 8 gives each major runtime entry point one source owner. Search before
+patching so that ownership remains explicit and duplicate definitions do not
+silently return.
 
 Use:
 
@@ -41,7 +43,8 @@ git grep -n "function WQA:CheckWQ"
 git grep -n "WQA.CheckWQ"
 ```
 
-Then inspect TOC load order.
+Then inspect TOC load order for dependencies and later performance
+instrumentation.
 
 This rule applies especially to:
 

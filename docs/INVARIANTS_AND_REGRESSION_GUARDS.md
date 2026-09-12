@@ -19,6 +19,8 @@ Achievement/static collectible results should become usable immediately.
 ### 4. Collection journals are indexed once per refresh
 
 Do not repeatedly walk the full mount/pet journal for every expansion/item.
+`WQATurbo.lua` owns `CreateQuestList()` and calls the invalidation helper once
+before rebuilding; `Tracking/CollectionCache.lua` must not wrap that method.
 
 ### 5. Settings bulk operations coalesce refreshes
 
@@ -194,7 +196,9 @@ Once Step 8 consolidates a method, do not restore a compatibility copy earlier
 in the TOC. `Show()` is owned only by `Runtime/Display.lua`, and `OnEnable()`
 is owned only by `Runtime/Runtime.lua`. `AddMounts()` and `AddPets()` are owned
 only by `Tracking/CollectionCache.lua`, and `CheckWQ()` is owned only by
-`Runtime/TaskResolver.lua`. The validator enforces this ownership.
+`Runtime/TaskResolver.lua`. `Reward()` is owned only by
+`Scanning/RewardScanner.lua`. `CreateQuestList()` is owned only by
+`WQATurbo.lua`. The validator enforces this ownership.
 
 ## Review technique
 

@@ -4,7 +4,7 @@
 >
 > **Behavioral baseline:** 1.1.0 functionality merged to master
 >
-> **Last major documentation refresh:** 2026-09-12
+> **Last major documentation refresh:** 2026-09-13
 
 This directory is the canonical architectural and functional reference for WQA Turbo.
 
@@ -16,27 +16,32 @@ The documentation is deliberately written for maintainers. It explains not only 
 
 WQA Turbo is not a clean-sheet rewrite of WQAchievements.
 
-The repository still contains a large compatibility/core implementation in `WQATurbo.lua`, and several later-loaded specialized modules replace or augment important methods with optimized implementations.
+The repository still contains a large compatibility/core implementation in
+`WQATurbo.lua`. Specialized modules own the performance-sensitive runtime
+paths. Each consolidated runtime method has one source owner.
 
 Therefore:
 
-> **When tracing runtime behavior, TOC load order matters. The last loaded implementation of a method wins.**
+> **When tracing runtime behavior, start with the owning module and then check
+> TOC load order for its dependencies and performance instrumentation.**
 
 Examples:
 
-- `WQATurbo.lua` contains the legacy reward scan, while `Scanning/RewardScanner.lua` supplies the optimized incremental runtime scanner.
+- `Scanning/RewardScanner.lua` owns the incremental runtime reward scanner.
 - `Runtime/TaskResolver.lua` owns readiness and final task publication.
 - `Runtime/Display.lua` owns the cache-first display/refresh split.
 - `Tracking/CollectionCache.lua` owns collectible collection-state access.
 - `Runtime/Runtime.lua` owns startup/runtime orchestration and command handling.
+- `WQATurbo.lua` owns the `CreateQuestList()` rebuild.
 
-This rule should be the first thing checked when debugging a function that appears to behave differently from its implementation in `WQATurbo.lua`.
+The validator rejects missing or duplicate owners for these consolidated
+runtime methods.
 
 ## Documentation map
 
 | Document | Purpose |
 |---|---|
-| [ARCHITECTURE.md](ARCHITECTURE.md) | Module boundaries, load order, lifecycle, major data flows, runtime overrides |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Module boundaries, load order, lifecycle, major data flows, runtime ownership |
 | [SCANNING_AND_PERFORMANCE.md](SCANNING_AND_PERFORMANCE.md) | Incremental reward scanner, readiness, retries, collection caching, performance model |
 | [FUNCTIONAL_REFERENCE.md](FUNCTIONAL_REFERENCE.md) | User-visible behavior and feature semantics |
 | [DATA_MODEL.md](DATA_MODEL.md) | SavedVariables, runtime tables, reward/criteria/task models |
@@ -48,8 +53,8 @@ This rule should be the first thing checked when debugging a function that appea
 | [INVARIANTS_AND_REGRESSION_GUARDS.md](INVARIANTS_AND_REGRESSION_GUARDS.md) | Things future changes must not break |
 | [KNOWN_LIMITATIONS.md](KNOWN_LIMITATIONS.md) | Current limitations, technical debt and research-only findings |
 | [MAINTAINING_DOCUMENTATION.md](MAINTAINING_DOCUMENTATION.md) | Mandatory documentation-update rules and PR checklist |
-| [VERSION_1.1.0.md](VERSION_1.1.0.md) | Planned 1.1.0 behavior delta |
-| [VERSION_1.2.0.md](VERSION_1.2.0.md) | Active refactor plan, local progress and validation |
+| [VERSION_1.1.0.md](VERSION_1.1.0.md) | Historical 1.1.0 behavior delta |
+| [VERSION_1.2.0.md](VERSION_1.2.0.md) | Completed refactor plan, validation and release preparation |
 | [ARCHITECTURE_FLOWS.md](ARCHITECTURE_FLOWS.md) | End-to-end sequence/data-flow traces |
 | [API_AND_FUNCTION_INDEX.md](API_AND_FUNCTION_INDEX.md) | Maintainer index of important functions/runtime entry points |
 | [TESTING_REFERENCE.md](TESTING_REFERENCE.md) | Functional/performance regression matrix |
@@ -90,7 +95,7 @@ The core design goal is:
 When debugging or extending the addon:
 
 1. **Current repository source** is authoritative.
-2. Later-loaded Turbo overrides are authoritative over earlier compatibility implementations.
+2. Each consolidated runtime entry point has one source owner.
 3. Blizzard APIs are authoritative for game state.
 4. Static addon mappings are authoritative only for the specific mappings they define.
 5. ATT and CanIMogIt are presentation integrations only for transmog; they are not collection-state authorities.
@@ -98,10 +103,10 @@ When debugging or extending the addon:
 
 ## Current release direction
 
-Current work is the incremental **1.2.0** refactor on `refactor/1.2.0`.
-Steps 2 through 7 are implemented and have passed local checks and in-game
-smoke testing. See
-[VERSION_1.2.0.md](VERSION_1.2.0.md) for validation status and the next steps.
+The incremental **1.2.0** refactor on `refactor/1.2.0` is complete.
+Steps 1 through 8 are implemented and have passed their focused local and
+in-game checks. See [VERSION_1.2.0.md](VERSION_1.2.0.md) for validation status
+and release preparation.
 
 The preserved **1.1.0** behavior includes:
 

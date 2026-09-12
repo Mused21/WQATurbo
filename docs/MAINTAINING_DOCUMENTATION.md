@@ -103,17 +103,13 @@ documentation baseline branch/release
 last major documentation refresh date
 ```
 
-After 1.1.0 releases, change:
+For the current release, keep this aligned with:
 
 ```text
-feature/popupandcontainers, planned 1.1.0
+refactor/1.2.0, local 1.2.0 refactor
 ```
 
-to:
-
-```text
-1.1.0 / master
-```
+After release, update it to `1.2.0 / master`.
 
 ## 7. Architecture-review routine
 
@@ -131,7 +127,8 @@ Then verify docs still describe actual runtime ownership.
 
 ## 8. Source search before documenting a function
 
-Because of runtime overrides:
+Each consolidated runtime method has one source owner, but search before
+documenting it so duplicate definitions cannot silently return:
 
 ```powershell
 git grep -n "function WQA:FUNCTION_NAME"

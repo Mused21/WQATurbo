@@ -59,15 +59,16 @@ no label       → patch release
 
 Manual workflow dispatch can explicitly choose bump type.
 
-## 5. 1.1.0
+## 5. 1.2.0
 
-Because current public baseline is 1.0.1 and `feature/popupandcontainers` is planned as 1.1.0, its PR should use:
+Because the latest stable tag is `v1.1.0` and `refactor/1.2.0` targets 1.2.0,
+its release PR should use:
 
 ```text
 release:minor
 ```
 
-Do not manually tag 1.1.0 before the workflow.
+Do not manually tag 1.2.0 before the workflow.
 
 ## 6. Critical packaging/tag invariant
 

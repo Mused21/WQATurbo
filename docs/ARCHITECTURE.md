@@ -2,16 +2,19 @@
 
 ## 1. Architectural style
 
-WQA Turbo is best described as a **compatibility core with layered performance overrides**.
+WQA Turbo is best described as a **compatibility core with specialized runtime modules**.
 
-The project inherited substantial logic and data structures from WQAchievements. Instead of replacing every path at once, WQA Turbo retains compatible helpers and data mappings while loading specialized modules afterward that replace expensive runtime behavior.
+The project inherited substantial logic and data structures from WQAchievements.
+WQA Turbo retains compatible helpers and data mappings while specialized
+modules own performance-sensitive runtime behavior.
 
 That gives the project two important properties:
 
 - mature compatibility/data logic can remain stable;
 - performance-sensitive orchestration can evolve independently.
 
-It also means maintainers must understand **load order and method replacement**.
+It also means maintainers must understand **load order, ownership and
+instrumentation**.
 
 ## 2. Load order
 
@@ -54,11 +57,9 @@ The exact TOC is the authority.
 
 ### Why load order matters
 
-Lua method assignment is mutable. Step 8 removes inactive earlier definitions
-one at a time, after confirming the later specialized implementation and its
-load order.
-
-The same principle applies to optimized reward scanning, runtime startup, display and collection behavior.
+Step 8 consolidated the major runtime methods to one source owner each. Load
+order still supplies every owner's dependencies, and `Performance.lua` wraps
+selected methods after those owners load.
 
 ### Debugging rule
 
@@ -66,10 +67,11 @@ Before patching a function:
 
 1. search the entire repository for every definition/assignment of that function;
 2. inspect `WQATurbo.toc`;
-3. identify which implementation is loaded last;
-4. patch the runtime owner unless the change intentionally belongs in a shared helper.
+3. confirm its sole runtime owner and loaded dependencies;
+4. patch the owner unless the change intentionally belongs in a shared helper.
 
-This prevents fixes from being added to an implementation that is no longer active.
+This prevents duplicate ownership and changes that bypass required setup or
+instrumentation.
 
 ## 3. Module ownership
 
@@ -206,9 +208,12 @@ Responsibilities include:
 - mission-table logic;
 - minimap data object;
 - miscellaneous utility behavior;
-- compatibility implementations later superseded by specialized modules.
+- the sole `CreateQuestList()` implementation, including collection-cache
+  invalidation at the start of each rebuild.
 
-Do not assume every major runtime method defined here remains authoritative after all modules load.
+`Tracking/CollectionCache.lua` provides the invalidation helper and owns the
+mount/pet snapshot implementation. Consolidated runtime methods have one
+source owner.
 
 `CheckReward()` owns item-link acquisition and retry aggregation. Its focused
 classifiers decide what the resolved reward means and publish through
@@ -226,7 +231,8 @@ The module is the sole owner of `AddMounts()` and `AddPets()`.
 
 ### `Scanning/RewardScanner.lua`
 
-Owns the optimized dynamic World Quest reward scan.
+Owns the optimized dynamic World Quest reward scan, including the sole
+`Reward()` implementation.
 
 Key design principles:
 

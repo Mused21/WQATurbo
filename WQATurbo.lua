@@ -152,7 +152,6 @@ function WQA:IsReputationMaxed(factionID)
 	return factionData and type(factionData.reaction) == "number" and factionData.reaction >= 8 or false
 end
 
-local GetQuestTagInfo = C_QuestLog.GetQuestTagInfo
 local GetBountiesForMapID = C_QuestLog.GetBountiesForMapID
 local GetTitleForQuestID = C_QuestLog.GetTitleForQuestID
 local GetCurrencyLink = C_CurrencyInfo.GetCurrencyLink
@@ -320,6 +319,9 @@ end
 
 function WQA:CreateQuestList()
 	self:Debug("CreateQuestList")
+	if self.InvalidateCollectionCache then
+		self:InvalidateCollectionCache()
+	end
 	self.questList = {}
 	self.questPinList = {}
 	self.questPinMapList = {}
@@ -727,167 +729,6 @@ local ReputationCurrencyList = {
 	[2903] = 2600, -- The Severed Threads
 	[2897] = 2590 -- Council of Dornogal
 }
-
--- Quests to skip reward data preload due to inaccurate or misleading Blizzard API results
-local SkipRewardDataPreloadQuests = {
-	[83366] = true, -- See issue #184
-	-- Neighborhood weekly quests
-	[95413] = true,
-	[95416] = true,
-	[95440] = true,
-	[95438] = true
-}
-
-function WQA:Reward()
-	self:Debug("Reward")
-
-	self.event:UnregisterEvent("QUEST_LOG_UPDATE")
-	self.event:UnregisterEvent("GET_ITEM_INFO_RECEIVED")
-	self.rewards = false
-	local retry = false
-	local perfDiag = {
-    		maps = 0,
-    		quests = 0,
-    		missingRewardData = {},
-    		itemRetries = {}
-	}
-	-- Azerite Traits
-	if self.db.profile.options.reward.gear.azeriteTraits ~= "" then
-		self.azeriteTraitsList = {}
-		for spellID in string.gmatch(self.db.profile.options.reward.gear.azeriteTraits, "(%d+)") do
-			self.azeriteTraitsList[tonumber(spellID)] = true
-		end
-	end
-
-	for i in pairs(self.ZoneIDList) do
-		for _, mapID in pairs(self.ZoneIDList[i]) do
-			if self.db.profile.options.zone[mapID] == true then
-				perfDiag.maps = perfDiag.maps + 1
-				local quests = C_TaskQuest.GetQuestsOnMap(mapID)
-				if quests then
-					for i = 1, #quests do
-						local questID = quests[i].questID
-						perfDiag.quests = perfDiag.quests + 1
-						local questTagInfo = GetQuestTagInfo(questID)
-						local worldQuestType = 0
-						if questTagInfo then
-							worldQuestType = questTagInfo.worldQuestType
-						end
-
-						if self.questList[questID] and not self.db.profile.options.reward.general.worldQuestType[worldQuestType] then
-							self.questList[questID] = nil
-						end
-
-						if
-							self.db.profile.options.zone[C_TaskQuest.GetQuestZoneID(questID)] == true and
-							self.db.profile.options.reward.general.worldQuestType[worldQuestType]
-						then
-							-- 100 different World Quests achievements
-							if QuestUtils_IsQuestWorldQuest(questID) and not self.db.global.completed[questID] then
-								local zoneID = C_TaskQuest.GetQuestZoneID(questID)
-								local exp = 0
-								for expansion, zones in pairs(WQA.ZoneIDList) do
-									for _, v in pairs(zones) do
-										if zoneID == v then
-											exp = expansion
-										end
-									end
-								end
-
-								if
-									self.db.profile.achievements[11189] ~= TrackingMode.Disabled and not select(4, GetAchievementInfo(11189)) and exp == 7 and
-									mapID ~= 830 and
-									mapID ~= 885 and
-									mapID ~= 882
-								then
-									self:AddRewardToQuest(questID, RewardType.Achievement, 11189)
-								elseif
-									self.db.profile.achievements[13144] ~= TrackingMode.Disabled and not select(4, GetAchievementInfo(13144)) and exp == 8
-								then
-									self:AddRewardToQuest(questID, RewardType.Achievement, 13144)
-								elseif
-									self.db.profile.achievements[14758] ~= TrackingMode.Disabled and not select(4, GetAchievementInfo(14758)) and exp == 9
-								then
-									self:AddRewardToQuest(questID, RewardType.Achievement, 14758)
-								end
-							end
-
-							-- Skip reward data preload for quests with inaccurate or misleading Blizzard API results
-							if
-    								not SkipRewardDataPreloadQuests[questID]
-    								and HaveQuestData(questID)
-    								and not HaveQuestRewardData(questID)
-							then
-    								C_TaskQuest.RequestPreloadRewardData(questID)
-
-    								perfDiag.missingRewardData[questID] = true
-    								retry = true
-							end
-
-							local itemRetry = self:CheckItems(questID)
-
-							if itemRetry then
-    								perfDiag.itemRetries[questID] = true
-    								retry = true
-							end
-							self:CheckCurrencies(questID)
-
-							-- Profession
-							local tradeskillLineID
-							if questTagInfo then
-								tradeskillLineID = GetQuestTagInfo(questID).tradeskillLineID
-							end
-
-							if tradeskillLineID then
-								local professionName = C_TradeSkillUI.GetTradeSkillDisplayName(tradeskillLineID)
-								local zoneID = C_TaskQuest.GetQuestZoneID(questID)
-								local exp = 0
-								for expansion, zones in pairs(WQA.ZoneIDList) do
-									for _, v in pairs(zones) do
-										if zoneID == v then
-											exp = expansion
-										end
-									end
-								end
-
-								if
-									not self.db.char[exp].profession[tradeskillLineID].isMaxLevel and
-									self.db.profile.options.reward[exp].profession[tradeskillLineID].skillup
-								then
-									self:AddRewardToQuest(questID, RewardType.ProfessionSkillup, professionName)
-								end
-							end
-						end
-					end
-				end
-			end
-		end
-	end
-
-	self.perf.rewardDiagnostics = self.perf.rewardDiagnostics or {}
-	table.insert(self.perf.rewardDiagnostics, {
-    		maps = perfDiag.maps,
-    		quests = perfDiag.quests,
-    		missingRewardData = perfDiag.missingRewardData,
-    		itemRetries = perfDiag.itemRetries
-	})
-
-	if retry == true then
-		self.Debug("|cFFFF0000<<<RETRY>>>|r")
-		self.start = GetTime()
-		self.timer =
-			self:ScheduleTimer(
-				function()
-					self:Reward()
-				end,
-				2
-			)
-		self.event:RegisterEvent("QUEST_LOG_UPDATE")
-		self.event:RegisterEvent("GET_ITEM_INFO_RECEIVED")
-	else
-		self.rewards = true
-	end
-end
 
 local weaponCache = {
 	[165872] = true, -- 7th Legion Equipment Cache

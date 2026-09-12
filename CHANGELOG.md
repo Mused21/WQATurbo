@@ -1,5 +1,19 @@
 # WQA Turbo Changelog
 
+## 1.2.0
+
+### Improved
+- Reorganized internal modules by data, tracking, scanning, runtime, and UI responsibility to make future changes safer.
+- Consolidated runtime entry points so each behavior has one authoritative implementation.
+- Reused mount and pet journal snapshots in Settings instead of rescanning an entire journal for every tracked entry.
+- Split reward classification into focused helpers while preserving incremental, frame-budgeted scanning.
+- Centralized popup tooltip cleanup and rebuilding to prevent stale callbacks from releasing a newer tooltip.
+- Added Lua regression suites and stronger project validation for runtime ownership, lifecycle, tracking, scanning, and tooltip behavior.
+
+### Fixed
+- Fixed an open World Quest popup sometimes remaining at achievement-only results after settings-triggered reward filtering completed.
+- Added the shared Hide Exalted/maximum Renown control to Mission Table reputation settings.
+
 ## 1.1.0
 
 ### Added

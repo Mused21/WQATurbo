@@ -27,8 +27,10 @@ Logic in shared reward handling (`CheckItems`/`CheckReward` and lookup tables) t
 **Static relevance**  
 A reason that can be determined from addon mappings and collection/completion state without current reward payloads.
 
-**Turbo override**  
-A later-loaded WQA module that replaces/augments a compatibility implementation defined earlier, commonly in `WQATurbo.lua`.
+**Specialized runtime module**
+
+A focused module under `Scanning/`, `Runtime/`, or `Tracking/` that owns a
+specific runtime responsibility formerly mixed into the compatibility core.
 
 **Watched task**  
 A task remembered as already seen for "new task" announcement behavior.

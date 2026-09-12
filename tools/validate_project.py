@@ -119,7 +119,9 @@ CONSOLIDATED_RUNTIME_METHOD_OWNERS = {
     "AddMounts": "Tracking/CollectionCache.lua",
     "AddPets": "Tracking/CollectionCache.lua",
     "CheckWQ": "Runtime/TaskResolver.lua",
+    "CreateQuestList": "WQATurbo.lua",
     "OnEnable": "Runtime/Runtime.lua",
+    "Reward": "Scanning/RewardScanner.lua",
     "Show": "Runtime/Display.lua",
 }
 

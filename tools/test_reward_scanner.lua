@@ -33,6 +33,7 @@ WQATurbo = {
 }
 local WQA = WQATurbo
 dofile("Scanning/RewardScanner.lua")
+assert(type(WQA.Reward) == "function", "RewardScanner must own Reward")
 
 local publications = 0
 local publishedMode

@@ -54,17 +54,15 @@ Contains important shared logic such as:
 - mission logic;
 - minimap data object;
 - custom tracking helpers;
-- the remaining compatibility implementation of `Reward()`.
-
-Important: several methods are overridden by later specialized modules.
-
-Always search the repo before assuming the definition here is active.
+- the canonical `CreateQuestList()` rebuild and its collection-cache
+  invalidation call.
 
 ### `Tracking/CollectionCache.lua`
 
 Optimized mount/pet collection snapshot and ownership lookup logic shared by
 runtime registration and Settings completion grouping.
-Owns the canonical `AddMounts()` and `AddPets()` implementations.
+Owns the canonical `AddMounts()` and `AddPets()` implementations and provides
+the ephemeral snapshot invalidation helper used by `CreateQuestList()`.
 
 Change when:
 
@@ -76,6 +74,7 @@ Do not turn it into persistent SavedVariables.
 ### `Scanning/RewardScanner.lua`
 
 Incremental frame-budgeted dynamic reward scanner.
+Owns the canonical `Reward()` implementation.
 
 Change only for scanner/discovery/readiness behavior.
 

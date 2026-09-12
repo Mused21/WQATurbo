@@ -71,13 +71,20 @@ loadSource("Rewards/RewardType.lua")
 assert(WQA.Criterias == criteriaNamespace and WQA.Criterias.sentinel)
 assert(WQA.Rewards == rewardsNamespace and WQA.Rewards.sentinel)
 loadSource("WQATurbo.lua")
-local legacyMounts, legacyPets, legacyCheckWQ = WQA.AddMounts, WQA.AddPets, WQA.CheckWQ
+local coreCreateQuestList = WQA.CreateQuestList
+local legacyMounts, legacyPets, legacyCheckWQ, legacyReward =
+    WQA.AddMounts, WQA.AddPets, WQA.CheckWQ, WQA.Reward
 if not arg[1] then
     assert(legacyMounts == nil, "The compatibility core must not define AddMounts")
     assert(legacyPets == nil, "The compatibility core must not define AddPets")
     assert(legacyCheckWQ == nil, "The compatibility core must not define CheckWQ")
+    assert(legacyReward == nil, "The compatibility core must not define Reward")
 end
 loadSource("Tracking/CollectionCache.lua")
+if not arg[1] then
+    assert(WQA.CreateQuestList == coreCreateQuestList,
+        "CollectionCache must not replace the core CreateQuestList owner")
+end
 loadSource("Tracking/Achievements.lua")
 loadSource("UI/Options.lua")
 
@@ -239,4 +246,30 @@ assert(rows["100"].get() == "other")
 WQA.db.profile.toys.exclusive[100] = nil
 assert(rows["100"].get() == "exclusive", "A missing owner keeps the existing UI value")
 
-print("Tracking regression checks passed (collectibles, achievements, ownership, bulk refreshes, journal caching, Settings cache reuse).")
+-- The core rebuild owns cache invalidation, so one rebuild invalidates both
+-- snapshots exactly once without a load-order wrapper.
+if not arg[1] then
+    local invalidations = 0
+    local invalidateCollectionCache = WQA.InvalidateCollectionCache
+    WQA.InvalidateCollectionCache = function(self)
+        invalidations = invalidations + 1
+        return invalidateCollectionCache(self)
+    end
+    WQA.data = {}
+    for expansionID = 7, 12 do
+        WQA.data[expansionID] = {}
+    end
+    WQA.Criterias.AreaPoi = { list = { stale = true } }
+    WQA.collectionCache.mountValid = true
+    WQA.collectionCache.petValid = true
+    WQA.AddCustom = noop
+    WQA.Special = noop
+    WQA.Reward = noop
+    WQA.EmissaryReward = noop
+    WQA:CreateQuestList()
+    assert(invalidations == 1, "CreateQuestList must invalidate collection snapshots once")
+    assert(WQA.collectionCache.mountValid == false)
+    assert(WQA.collectionCache.petValid == false)
+end
+
+print("Tracking regression checks passed (collectibles, achievements, ownership, bulk refreshes, rebuild invalidation, journal caching, Settings cache reuse).")

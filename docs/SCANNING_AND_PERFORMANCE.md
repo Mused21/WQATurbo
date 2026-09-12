@@ -104,7 +104,7 @@ Some quests are intentionally excluded through `SkipRewardDataPreloadQuests` bec
 
 ### Maintenance note
 
-Historically the skip list existed in both the optimized scanner and a legacy/fallback path. If both copies still exist, keep them synchronized or centralize them in a future cleanup.
+The canonical skip list lives in `Scanning/RewardScanner.lua`.
 
 Do not casually delete the list: the exclusions were added because specific quests produced pathological reward-preload behavior.
 

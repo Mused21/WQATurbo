@@ -28,7 +28,8 @@ owners, unknown values, owned/unowned collections, completed tracking quests,
 unknown journal entries, achievement completion and inherited forcing, exclusive
 owner cleanup, bulk state and one refresh per bulk operation. It also checks
 that repeated registration and Settings completion queries reuse journal
-snapshots.
+snapshots, and that `CreateQuestList()` invalidates both snapshots exactly once
+without a load-order wrapper.
 
 The reward-classifier test covers authoritative item-link fallback, missing
 data retries, containers, gear upgrades, equipment caches, transmog and retry,
@@ -40,7 +41,8 @@ item retries dirty a publication batch, and that repeated flushes without new
 work do not rebuild the display again. It also verifies that a scanner started
 by a Settings refresh republishes silently while ordinary scans use new-task
 mode. Its display checks cover refresh-mode visibility, first-access fallback
-and cache-only popup routing through the canonical `Show()` owner.
+and cache-only popup routing through the canonical `Show()` owner, and it
+asserts that `Scanning/RewardScanner.lua` supplies `Reward()`.
 
 The runtime-lifecycle test exercises the canonical `OnEnable()` owner. It
 checks Settings registration, startup-delay capping, recurring refreshes,

@@ -234,7 +234,8 @@ reorganized addon working correctly.
   and collection/achievement registration under `Tracking/`, reward discovery
   under `Scanning/`, runtime overrides under `Runtime/`, and user-interface
   modules under `UI/`.
-- Renamed the three Turbo override filenames to their actual responsibilities:
+- Renamed the three specialized runtime-module filenames to their actual
+  responsibilities:
   `Runtime/Runtime.lua`, `Runtime/Display.lua` and
   `Runtime/TaskResolver.lua`.
 - Preserved every Lua implementation and retained the exact TOC load order;
@@ -249,12 +250,13 @@ checks for all 34 project Lua files and `git diff --check` pass. The developer
 reports the reorganized addon working nicely in game. Remote CI remains
 pending.
 
-## Current Step
+## Final Refactor Step
 
 ### Step 8 — Runtime override consolidation
 
-Status: IN PROGRESS; `Show()`, `OnEnable()`, `AddMounts()`, `AddPets()` and
-`CheckWQ()` passed local and in-game smoke testing.
+Status: COMPLETED; the runtime consolidations, Mission Table reputation
+control, and direct `CreateQuestList()` cache invalidation passed focused
+in-game smoke testing.
 
 - Moved the established data-refresh sequence from the compatibility-core
   `Show()` into a private helper in `Runtime/Display.lua`.
@@ -293,15 +295,35 @@ Status: IN PROGRESS; `Show()`, `OnEnable()`, `AddMounts()`, `AddPets()` and
 - Separately fixed the confirmed empty Mission Table reputation-page case by
   exposing the existing shared hide-maxed control there. World Quest and
   Mission Table reputation pages now update the same profile setting.
+- Removed the compatibility-core `Reward()` implementation, its unused cached
+  quest-tag API reference, the duplicate preload-skip table and legacy broad
+  retry diagnostics. Shared reward classifiers and mission helpers remain in
+  `WQATurbo.lua`.
+- `Scanning/RewardScanner.lua` is now the sole `Reward()` owner and retains the
+  existing frame-budgeted discovery, bounded retries and progressive
+  publication behavior.
+- Added current-source and validator guards enforcing the single `Reward()`
+  owner. The reward-scanner regression suite exercises the canonical method.
+- Moved collection-cache invalidation into the core `CreateQuestList()` method
+  and removed the `Tracking/CollectionCache.lua` load-order wrapper.
+- Added regression and validator guards enforcing `WQATurbo.lua` as the sole
+  `CreateQuestList()` owner and exactly one cache invalidation per rebuild.
 
-Validation: project validation, all six Lua regression suites, Lua 5.1 syntax
-checks for all 36 project Lua files and `git diff --check` pass. The developer
-reports the consolidated runtime paths and shared Mission Table reputation
-control working in game. Remote CI remains pending.
+Validation for the current tree: project validation, Lua 5.1 syntax checks for
+all 36 project Lua files and `git diff --check` pass. All six Lua regression
+suite sources compile; executing them requires the Lua interpreter used by CI,
+which is not installed in the current local shell. The developer reports the
+complete Step 8 path working in game. Remote CI remains pending.
 
-Remaining direct override: `Reward()`.
-`CreateQuestList()` is a deliberate wrapper and requires separate treatment
-rather than simple deletion.
+Step 8 now has one source owner for every consolidated runtime method; no
+load-order method wrapper remains.
+
+## Refactor Completion
+
+The planned 1.2.0 refactor steps are complete. Remaining work is release
+preparation: run remote CI and its executable Lua suites, complete a broad
+in-game regression pass, verify the packaged ZIP, and resolve or explicitly
+defer the separate correctness issues below.
 
 ## Separate Correctness Issues
 

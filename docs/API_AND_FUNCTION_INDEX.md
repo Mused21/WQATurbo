@@ -2,7 +2,9 @@
 
 This is a maintainer-oriented index of the important public/shared methods and runtime entry points.
 
-It is not intended to replace source search. WQA Turbo deliberately overrides some methods in later-loaded modules, so always confirm the final implementation in the current branch.
+It is not intended to replace source search. Major runtime entry points have
+one source owner; confirm that owner and its TOC dependencies in the current
+branch before changing it.
 
 ## Core / initialization
 
@@ -37,7 +39,8 @@ the garrison UI dependency.
 
 ### `WQA:CreateQuestList()`
 
-Rebuilds the current relevance model.
+Owned only by `WQATurbo.lua`. Rebuilds the current relevance model and
+invalidates the mount/pet journal snapshots once at the start of the rebuild.
 
 Conceptually:
 
@@ -111,11 +114,8 @@ Evaluates current POI availability/readiness and returns active/new/retry inform
 
 ### `WQA:Reward()`
 
-A compatibility implementation exists in `WQATurbo.lua`.
-
-The optimized active runtime implementation is supplied by `Scanning/RewardScanner.lua`.
-
-Do not patch the legacy broad scanner expecting runtime behavior to change unless the optimized override intentionally calls that helper.
+Owned only by `Scanning/RewardScanner.lua`. It starts frame-budgeted dynamic
+reward enrichment and makes the static task set immediately usable.
 
 ### `WQA:CheckItems(questID, isEmissary)`
 

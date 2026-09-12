@@ -224,16 +224,6 @@ function WQA:AddPets(pets)
 	end
 end
 
--- Preserve upstream semantics by rebuilding the account-wide ownership
--- snapshots once for each CreateQuestList() refresh. AddMounts/AddPets can then
--- be called repeatedly by the expansion loop without rescanning the journals.
-local OriginalCreateQuestList = WQA.CreateQuestList
-
-function WQA:CreateQuestList(...)
-	self:InvalidateCollectionCache()
-	return OriginalCreateQuestList(self, ...)
-end
-
 ---Small diagnostic command:
 ---  /wqacache
 function WQA:CollectionCacheSlash()

@@ -34,24 +34,24 @@ Current development target: WQA Turbo 1.2.0.
 refactor. Unless explicitly requested otherwise, preserve existing
 user-visible behavior.
 
-The active 1.2.0 plan and completed steps are documented in:
+The completed 1.2.0 plan and release preparation are documented in:
 
 `docs/VERSION_1.2.0.md`
 
-Always inspect that file before continuing refactor work.
+Always inspect that file before release preparation or follow-up work.
 
 ## Critical Architecture Rule
 
-WQA Turbo currently contains inherited implementations in `WQATurbo.lua`
-that are overridden by later-loaded specialized modules.
+Step 8 consolidated the major runtime entry points so each has one source
+owner. Specialized modules still depend on the exact TOC load order, and
+`Performance.lua` instruments selected methods after their owners load.
 
 Before modifying any WQA method:
 
 1. Search the entire repository for every definition/assignment.
 2. Inspect `WQATurbo.toc` load order.
-3. Determine which implementation is active at runtime.
-4. Modify the runtime owner, unless deliberately consolidating duplicate
-   implementations as part of the 1.2 refactor.
+3. Confirm the single runtime owner and its dependencies.
+4. Modify that owner and preserve any later performance instrumentation.
 
 Never assume the first definition found is authoritative.
 
