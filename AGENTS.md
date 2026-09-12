@@ -192,7 +192,7 @@ git diff --cached --check
 git diff --cached
 git status
 
-##Documentation
+## Documentation
 
 Architecture, behavior, settings, data-model, release, or invariant changes
 must update the corresponding file under docs/.
@@ -201,3 +201,15 @@ Update docs/VERSION_1.2.0.md as refactor steps are completed.
 
 Do not put transient experiments into the architecture docs as shipped
 functionality. Clearly mark research-only or unshipped behavior.
+
+## External Research
+
+For WoW API behavior that may have changed:
+
+- use internet research when available;
+- prefer current Blizzard documentation and Warcraft Wiki;
+- use Wowhead for item/quest/content IDs and reward/source verification;
+- use GitHub/current addon sources when verifying real-world API usage;
+- distinguish documented API behavior from inference;
+- verify Retail/current-patch relevance before modifying code;
+- do not copy implementation patterns blindly from outdated addons.
