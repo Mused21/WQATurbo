@@ -37,7 +37,7 @@ Commit at the start of Step 2:
 
 ### Step 2 — Safe cleanup
 
-Status: IMPLEMENTED; local checks pass and in-game smoke testing reports no errors so far.
+Status: COMPLETED; local checks and focused in-game smoke testing pass.
 
 Two generated patch scripts were reported to have failed because their remote
 source matching was too strict and to have restored their backups. Before the
@@ -86,8 +86,8 @@ Local validation:
 - Lua 5.1.5 syntax checks passed for all 27 tracked Lua files. The compiler was
   built from the official Lua source archive after SHA-256 verification and
   installed at `%LOCALAPPDATA%\Programs\Lua\5.1.5\luac5.1.exe`;
-- In-game smoke test reported working without errors so far; full regression
-  coverage and GitHub Actions remain pending.
+- In-game smoke testing passed; later 1.2 checkpoints also passed the expanded
+  local regression suites and remote CI.
 
 Repeat the local syntax check from PowerShell at the repository root:
 
@@ -101,7 +101,7 @@ foreach ($luaFile in (rg --files --hidden -g '*.lua' -g '!Libs/**' -g '!.git/**'
 
 ### Step 3 — Constants and tracking policy
 
-Status: IMPLEMENTED; local checks pass and in-game smoke testing reports no errors so far.
+Status: COMPLETED; local checks and focused in-game smoke testing pass.
 
 - Added `Constants.lua` after `Core.lua`, defining RewardType, all eight
   CriteriaType values, TaskType and TrackingMode under `WQA.Constants`.
@@ -121,13 +121,12 @@ Status: IMPLEMENTED; local checks pass and in-game smoke testing reports no erro
 
 Validation: Lua 5.1 syntax checks and local project validation pass. Tracking
 regression checks pass against both the saved Step 2 registration/Settings source
-and Step 3. The developer reports Step 3 working without bugs so far in game.
-Full in-game regression coverage and remote CI remain pending.
+and Step 3. Focused in-game testing passed, and a later 1.2 checkpoint passed
+remote CI.
 
 ### Step 4 — Move runtime data out of UI/Options.lua
 
-Status: IMPLEMENTED; local checks pass and in-game smoke testing reports no
-bugs so far.
+Status: COMPLETED; local checks and focused in-game smoke testing pass.
 
 - Added `Data/RuntimeData.lua` as the source of truth for stable currency,
   reputation, emissary and World Quest type lookup metadata.
@@ -146,13 +145,12 @@ Validation: project validation passes with zero errors and warnings; the Lua
 5.1 regression test passes; Lua 5.1 syntax checks pass for all 31 project Lua
 files; `git diff --check` passes. A recursive table comparison confirmed that
 all moved runtime metadata exactly matches its `HEAD` definitions in
-`UI/Options.lua`. The developer reports Step 4 working without bugs so far in
-game. Broader in-game regression coverage and remote CI remain pending.
+`UI/Options.lua`. Focused in-game testing passed, and a later 1.2 checkpoint
+passed remote CI.
 
 ### Step 5 — Settings collection performance
 
-Status: IMPLEMENTED; local checks pass and in-game testing reports no bugs so
-far.
+Status: COMPLETED; local checks and focused in-game testing pass.
 
 - Added cache-backed mount and pet ownership query helpers to
   `Tracking/CollectionCache.lua`.
@@ -168,13 +166,12 @@ far.
 Validation: project validation passes with zero errors and warnings; the Lua
 5.1 regression test confirms Settings ownership queries reuse one snapshot per
 journal; Lua 5.1 syntax checks pass for all 31 project Lua files; and
-`git diff --check` passes. The developer reports Step 5 working without bugs
-so far in game. Remote CI and broader regression coverage remain pending.
+`git diff --check` passes. Focused in-game testing passed, and a later 1.2
+checkpoint passed remote CI.
 
 ### Step 6 — Reward classifier decomposition
 
-Status: IMPLEMENTED; local checks pass and in-game testing reports the
-classifier and popup-enrichment behavior working correctly.
+Status: COMPLETED; local checks and focused in-game testing pass.
 
 - Kept `CheckReward()` as the single active owner in `WQATurbo.lua` and reduced
   it to authoritative item-link acquisition plus retry orchestration.
@@ -199,12 +196,11 @@ Validation: project validation passes with zero errors and warnings; tracking,
 reward-classifier and reward-scanner regression suites pass; the reward suite
 also passes against the committed Step 5 `WQATurbo.lua` baseline; Lua 5.1
 syntax checks pass for all 33 project Lua files; and `git diff --check` passes.
-Remote CI remains pending.
+Focused in-game testing passed, and a later 1.2 checkpoint passed remote CI.
 
 ### Step 7 — Tooltip lifecycle centralization
 
-Status: IMPLEMENTED; local checks pass and in-game testing reports the popup
-lifecycle working correctly.
+Status: COMPLETED; local checks and focused in-game testing pass.
 
 - Added `ReleaseQTip()` in `UI/Tooltip.lua` as the only direct LibQTip release and
   `WQA.tooltip` detachment owner.
@@ -223,13 +219,12 @@ lifecycle working correctly.
 Validation: project validation passes with zero errors and warnings; tracking,
 reward-classifier, reward-scanner and tooltip-lifecycle regression suites pass;
 Lua 5.1 syntax checks pass for all 34 project Lua files; and `git diff --check`
-passes. The developer reports Step 7 working in game. Remote CI remains
-pending.
+passes. Focused in-game testing passed, and a later 1.2 checkpoint passed
+remote CI.
 
 ### Repository organization before Step 8
 
-Status: IMPLEMENTED; local checks pass and in-game smoke testing reports the
-reorganized addon working correctly.
+Status: COMPLETED; local checks and focused in-game smoke testing pass.
 
 - Grouped stable lookup and expansion content under `Data/`, tracking policy
   and collection/achievement registration under `Tracking/`, reward discovery
@@ -248,8 +243,8 @@ reorganized addon working correctly.
 
 Validation: project validation, all four Lua regression suites, Lua 5.1 syntax
 checks for all 34 project Lua files and `git diff --check` pass. The developer
-reports the reorganized addon working nicely in game. Remote CI remains
-pending.
+reports the reorganized addon working nicely in game. A later 1.2 checkpoint
+passed remote CI.
 
 ## Final Refactor Step
 
@@ -320,9 +315,9 @@ load-order method wrapper remains.
 
 ## Refactor Completion
 
-The planned 1.2.0 refactor steps are complete. Release-candidate correctness
-follow-ups are recorded below. Remaining work is focused in-game regression,
-a fresh remote CI run for the follow-up changes and packaged-ZIP verification.
+The planned 1.2.0 refactor steps and release-candidate correctness follow-ups
+are complete. Release preparation uses the final in-game regression, remote CI,
+and packaged-ZIP checks documented in `RELEASE_AND_CI.md`.
 
 ## Pre-release Correctness Cleanup
 
