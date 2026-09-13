@@ -106,15 +106,12 @@ local function buildEnabledReputationFactionIDs(self)
 	local result = {}
 
 	for factionID, enabled in pairs(self.db.profile.options.reward.reputation or {}) do
-		if type(factionID) == "number" and enabled == true then
-			local hiddenBecauseMaxed =
-				self.db.profile.options.hideExaltedReputations
-				and self.IsReputationMaxed
-				and self:IsReputationMaxed(factionID)
-
-			if not hiddenBecauseMaxed then
-				result[#result + 1] = factionID
-			end
+		if
+			type(factionID) == "number"
+			and enabled == true
+			and self:ShouldTrackReputation(factionID)
+		then
+			result[#result + 1] = factionID
 		end
 	end
 

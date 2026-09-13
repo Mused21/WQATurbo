@@ -86,7 +86,7 @@ function WQA:OnEnable()
 
 		elseif eventName == "PLAYER_REGEN_ENABLED" then
 			self.event:UnregisterEvent("PLAYER_REGEN_ENABLED")
-			self:Show("new", true)
+			self:ResumeDeferredRefresh()
 
 		elseif eventName == "QUEST_TURNED_IN" then
 			self.db.global.completed[id] = true

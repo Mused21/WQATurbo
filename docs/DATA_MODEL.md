@@ -181,6 +181,8 @@ Mission equivalent.
 Item IDs that should make a reward relevant when encountered.
 
 Used by mapped collectible/custom item flows.
+It is rebuilt by `CreateQuestList()` so disabled or newly collected source
+items cannot remain relevant from an earlier refresh.
 
 ### `questPinList` / `questPinMapList`
 

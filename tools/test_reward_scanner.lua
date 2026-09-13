@@ -29,7 +29,10 @@ WQATurbo = {
         RewardType = { Reputation = "REPUTATION" },
         TrackingMode = { Disabled = "disabled" }
     },
-    RegisterChatCommand = noop
+    RegisterChatCommand = noop,
+    ShouldTrackReputation = function(self, factionID)
+        return self.db.profile.options.reward.reputation[factionID] == true
+    end
 }
 local WQA = WQATurbo
 dofile("Scanning/RewardScanner.lua")
@@ -168,10 +171,15 @@ assert(WQA._wqaTurboRefreshMode == nil)
 
 inCombat = true
 WQA.db.profile.options.delayCombat = true
-WQA:Refresh("new", true)
+WQA:Refresh("settings", true)
 assert(createCount == 3 and deferredEvent == "PLAYER_REGEN_ENABLED")
 assert(WQA._wqaTurboRefreshMode == nil)
+assert(WQA._wqaTurboPendingRefresh.mode == "settings")
 inCombat = false
+WQA:ResumeDeferredRefresh()
+assert(createCount == 4 and checkMode == "settings")
+assert(refreshModeDuringCreate == "settings")
+assert(WQA._wqaTurboPendingRefresh == nil)
 
 WQA:TurboPublishEnrichment("settings")
 assert(checkMode == "settings")

@@ -267,7 +267,8 @@ Optional behavior:
 
 The same control appears on World Quest and Mission Table reputation pages and
 updates one shared profile setting. When enabled, maxed factions should
-disappear from settings and be ignored for dynamic matching.
+disappear from settings and be ignored for direct reputation, reputation-item
+and reputation-currency matching in both World Quests and missions.
 
 Max-state detection must cover classic, Renown and friendship systems.
 

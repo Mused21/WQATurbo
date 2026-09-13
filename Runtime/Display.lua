@@ -33,13 +33,7 @@ end
 ---Rebuild the data model using the established refresh sequence.
 ---@param self WQATurbo
 ---@param mode string?
----@param auto boolean?
-local function refreshData(self, mode, auto)
-	if auto and self.db.profile.options.delayCombat == true and UnitAffectingCombat("player") then
-		self.event:RegisterEvent("PLAYER_REGEN_ENABLED")
-		return
-	end
-
+local function refreshData(self, mode)
 	self:Debug("Show", mode)
 	self:CreateQuestList()
 	self:CheckWQ(mode)
@@ -63,10 +57,36 @@ end
 ---@param mode string?
 ---@param auto boolean?
 function WQA:Refresh(mode, auto)
+	if auto and self.db.profile.options.delayCombat == true and UnitAffectingCombat("player") then
+		self._wqaTurboPendingRefresh = {
+			mode = mode,
+			auto = auto
+		}
+		self.event:RegisterEvent("PLAYER_REGEN_ENABLED")
+		return
+	end
+
+	if self._wqaTurboPendingRefresh then
+		self._wqaTurboPendingRefresh = nil
+		self.event:UnregisterEvent("PLAYER_REGEN_ENABLED")
+	end
+
 	local previousMode = self._wqaTurboRefreshMode
 	self._wqaTurboRefreshMode = mode
-	refreshData(self, mode, auto)
+	refreshData(self, mode)
 	self._wqaTurboRefreshMode = previousMode
+end
+
+---Resume the most recent automatic refresh that combat deferred.
+function WQA:ResumeDeferredRefresh()
+	local pending = self._wqaTurboPendingRefresh
+	self._wqaTurboPendingRefresh = nil
+
+	if pending then
+		self:Refresh(pending.mode, pending.auto)
+	else
+		self:Refresh("new", true)
+	end
 end
 
 ---Compatibility entry point used by the original minimap/LDB callbacks.

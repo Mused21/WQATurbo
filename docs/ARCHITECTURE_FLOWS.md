@@ -69,6 +69,7 @@ Expected:
 - no chat spam;
 - no popup forced open;
 - many bulk changes coalesce.
+- combat-delayed refreshes resume with the same silent Settings mode.
 
 ## Flow D: 1.1.0 Shift+Left-click
 

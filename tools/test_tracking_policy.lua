@@ -297,6 +297,7 @@ if not arg[1] then
         WQA.data[expansionID] = {}
     end
     WQA.Criterias.AreaPoi = { list = { stale = true } }
+    WQA.itemList = { stale = true }
     WQA.collectionCache.mountValid = true
     WQA.collectionCache.petValid = true
     WQA.AddCustom = noop
@@ -305,6 +306,7 @@ if not arg[1] then
     WQA.EmissaryReward = noop
     WQA:CreateQuestList()
     assert(invalidations == 1, "CreateQuestList must invalidate collection snapshots once")
+    assert(next(WQA.itemList) == nil, "CreateQuestList must discard stale collectible source items")
     assert(WQA.collectionCache.mountValid == false)
     assert(WQA.collectionCache.petValid == false)
 end

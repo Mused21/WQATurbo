@@ -313,16 +313,16 @@ in-game smoke testing.
 Validation at the completed Step 8 checkpoint: project validation, all six Lua
 regression suites, Lua 5.1 syntax checks for all 36 project Lua files and
 `git diff --check` pass. The developer reports the complete Step 8 path working
-in game. Remote CI remains pending.
+in game. Remote CI subsequently passed for the container-completion checkpoint.
 
 Step 8 now has one source owner for every consolidated runtime method; no
 load-order method wrapper remains.
 
 ## Refactor Completion
 
-The planned 1.2.0 refactor steps are complete. Remaining work is release
-preparation: run remote CI and its executable Lua suites, complete a broad
-in-game regression pass, and verify the packaged ZIP.
+The planned 1.2.0 refactor steps are complete. Release-candidate correctness
+follow-ups are recorded below. Remaining work is focused in-game regression,
+a fresh remote CI run for the follow-up changes and packaged-ZIP verification.
 
 ## Pre-release Correctness Cleanup
 
@@ -353,8 +353,7 @@ The developer reports all four corrections working in game.
 
 ## Pre-release container completion enhancement
 
-Status: IMPLEMENTED; local validation complete, focused in-game verification
-pending.
+Status: COMPLETED; local validation and focused in-game verification pass.
 
 - Added fixed collectible pools for all four Dragonflight racing purses and all
   nine Nazjatar Benthic armor tokens.
@@ -372,6 +371,27 @@ pending.
   combined static pool.
 - Added classifier regression coverage for incomplete, complete and unavailable
   container collection states.
+
+## Release-candidate correctness follow-up
+
+Status: IMPLEMENTED; local validation complete, focused in-game verification
+pending.
+
+- Rebuilds the collectible source-item index on every `CreateQuestList()` pass
+  so disabling or collecting a pet/toy cannot leave its source item tracked
+  until the next UI reload.
+- Centralizes enabled/maxed reputation policy and applies it to direct rewards,
+  reputation items and reputation currencies for World Quests and missions.
+- Preserves the originating publication mode when combat defers an automatic
+  refresh, including silent Settings refreshes.
+- Resolves sort names according to World Quest, mission or Area POI task type
+  and provides a stable fallback for temporarily unavailable names.
+- Activates missions whose only selected reward is a reputation currency and
+  avoids querying a follower type before confirming the garrison type exists.
+- Keeps enabled equipment caches relevant while detailed item-level metadata
+  is pending, and retries only the supplemental upgrade calculation.
+- Expanded tracking, classifier, scanner and runtime-lifecycle coverage for the
+  corrected paths.
 
 ## Non-goals for 1.2 Refactor
 

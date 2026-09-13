@@ -205,6 +205,8 @@ The "Hide Exalted / max Renown reputations" behavior handles:
 
 World Quest and Mission Table reputation pages both expose the same profile
 setting so every reputation list can be restored when all entries are hidden.
+The setting applies consistently to direct reputation rewards, reputation
+tokens and reputation currencies.
 
 Friendship factions such as Captain Tokka must not be treated as ordinary classic reputation.
 

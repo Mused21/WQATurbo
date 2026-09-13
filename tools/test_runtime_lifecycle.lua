@@ -10,6 +10,7 @@ local repeating = {}
 local shown = {}
 local loadedAddons = {}
 local missionChecks = 0
+local deferredRefreshes = 0
 
 local eventFrame = {
 	registered = {},
@@ -105,6 +106,9 @@ WQATurbo = {
 	CheckMissions = function()
 		missionChecks = missionChecks + 1
 	end,
+	ResumeDeferredRefresh = function()
+		deferredRefreshes = deferredRefreshes + 1
+	end,
 	ShowCached = noop,
 	Refresh = noop,
 	ShowWQAMigrationPrompt = noop,
@@ -158,13 +162,13 @@ assert(repeating[1].args[1] == "new" and repeating[1].args[2] == true)
 
 eventFrame.onEvent(eventFrame, "PLAYER_REGEN_ENABLED")
 assert(eventFrame.unregistered.PLAYER_REGEN_ENABLED)
-assert(#shown == 2 and shown[2].mode == "new" and shown[2].auto == true)
+assert(deferredRefreshes == 1)
 
 eventFrame.onEvent(eventFrame, "QUEST_TURNED_IN", 12345)
 assert(WQA.db.global.completed[12345] == true)
 
 eventFrame.onEvent(eventFrame, "WAR_MODE_STATUS_UPDATE")
-assert(#shown == 3 and shown[3].mode == "new" and shown[3].auto == true)
+assert(#shown == 2 and shown[2].mode == "new" and shown[2].auto == true)
 
 eventFrame.onEvent(eventFrame, "GARRISON_MISSION_LIST_UPDATE")
 assert(missionChecks == 1)

@@ -152,6 +152,27 @@ function WQA:IsReputationMaxed(factionID)
 	return factionData and type(factionData.reaction) == "number" and factionData.reaction >= 8 or false
 end
 
+---Return whether an enabled reputation should contribute a tracked reward.
+---@param factionID number
+---@param missionTable boolean?
+---@return boolean
+function WQA:ShouldTrackReputation(factionID, missionTable)
+	local options = self.db.profile.options
+	local configuredReputations
+
+	if missionTable then
+		configuredReputations = options.missionTable.reward.reputation
+	else
+		configuredReputations = options.reward.reputation
+	end
+
+	if not configuredReputations or configuredReputations[factionID] ~= true then
+		return false
+	end
+
+	return not (options.hideExaltedReputations and self:IsReputationMaxed(factionID))
+end
+
 local GetBountiesForMapID = C_QuestLog.GetBountiesForMapID
 local GetTitleForQuestID = C_QuestLog.GetTitleForQuestID
 local GetCurrencyLink = C_CurrencyInfo.GetCurrencyLink
@@ -326,6 +347,7 @@ function WQA:CreateQuestList()
 	self.questPinList = {}
 	self.questPinMapList = {}
 	self.missionList = {}
+	wipe(self.itemList)
 	self.questFlagList = {}
 	self.Criterias.AreaPoi.list = {}
 
@@ -1068,6 +1090,9 @@ local function ClassifyEquipmentCacheReward(self, questID, isEmissary, itemID, i
 		-- Upgrade calculations below are only supplemental metadata.
 		self:AddRewardToQuest(questID, RewardType.Item, { itemLink = itemLink }, isEmissary)
 		local itemLevel = GetDetailedItemLevelInfo(itemLink)
+		if not itemLevel then
+			return true
+		end
 		local AzeriteArmorCacheIsUpgrade = false
 		local AzeriteArmorCache = {}
 		for i = 1, 5, 2 do
@@ -1109,6 +1134,9 @@ local function ClassifyEquipmentCacheReward(self, questID, isEmissary, itemID, i
 		-- Upgrade calculations below are only supplemental metadata.
 		self:AddRewardToQuest(questID, RewardType.Item, { itemLink = itemLink }, isEmissary)
 		local itemLevel = GetDetailedItemLevelInfo(itemLink)
+		if not itemLevel then
+			return true
+		end
 		local n = 0
 		local upgrade
 		local upgradeMax = 0
@@ -1227,7 +1255,7 @@ end
 
 local function ClassifyReputationItemReward(self, questID, isEmissary, itemID, itemLink)
 	local factionID = ReputationItemList[itemID] or nil
-	if factionID and self.db.profile.options.reward.reputation[factionID] == true then
+	if factionID and self:ShouldTrackReputation(factionID) then
 		local reputation = { itemLink = itemLink, factionID = factionID }
 		self:AddRewardToQuest(questID, RewardType.Reputation, reputation, isEmissary)
 	end
@@ -1335,7 +1363,7 @@ function WQA:CheckCurrencies(questID, isEmissary)
 		-- Reputation Currency
 		local factionID = ReputationCurrencyList[currencyID] or nil
 		if factionID then
-			if self.db.profile.options.reward.reputation[factionID] == true then
+			if self:ShouldTrackReputation(factionID) then
 				local reputation = {
 					name = currencyInfo.name,
 					currencyID = currencyID,
@@ -1476,20 +1504,23 @@ local function GetMissionName(missionID)
 	return C_Garrison.GetMissionName(missionID)
 end
 
+local function GetTaskName(task)
+	local name
+
+	if task.type == TaskType.WorldQuest then
+		name = GetQuestName(task.id)
+	elseif task.type == TaskType.Mission then
+		name = GetMissionName(task.id)
+	elseif task.type == TaskType.AreaPoi then
+		local poiInfo = C_AreaPoiInfo.GetAreaPOIInfo(task.mapId, task.id)
+		name = poiInfo and poiInfo.name
+	end
+
+	return name or tostring(task.id or "")
+end
+
 local function SortByName(a, b)
-	if a.type == TaskType.WorldQuest then
-		a = GetQuestName(a.id)
-	else
-		a = GetMissionName(a.id)
-	end
-
-	if b.type == TaskType.WorldQuest then
-		b = GetQuestName(b.id)
-	else
-		b = GetMissionName(b.id)
-	end
-
-	return a < b
+	return GetTaskName(a) < GetTaskName(b)
 end
 
 function WQA:InsertionSort(A, compareFunction)
@@ -1755,8 +1786,8 @@ function WQA:CheckMissions()
 	local retry
 	for i in pairs(WQA.ExpansionList) do
 		local type = LE_GARRISON_TYPE[i]
-		local followerType = GetPrimaryGarrisonFollowerType(type)
 		if type and C_Garrison.HasGarrison(type) then
+			local followerType = GetPrimaryGarrisonFollowerType(type)
 			local missions = C_Garrison.GetAvailableMissions(followerType)
 			-- Add Shipyard Missions
 			if i == 6 and C_Garrison.HasShipyard() then
@@ -1785,13 +1816,14 @@ function WQA:CheckMissions()
 								else
 									local factionID = ReputationCurrencyList[currencyID] or nil
 									if factionID then
-										if self.db.profile.options.missionTable.reward.reputation[factionID] == true then
+										if self:ShouldTrackReputation(factionID, true) then
 											local reputation = {
 												currencyID = currencyID,
 												amount = amount,
 												factionID = factionID
 											}
 											self:AddRewardToMission(missionID, RewardType.Reputation, reputation)
+											addMission = true
 										end
 									end
 								end
@@ -1836,7 +1868,7 @@ function WQA:CheckMissions()
 								-- Reputation Token
 								local factionID = ReputationItemList[itemID] or nil
 								if factionID then
-									if self.db.profile.options.missionTable.reward.reputation[factionID] == true then
+									if self:ShouldTrackReputation(factionID, true) then
 										local reputation = { itemLink = itemLink, factionID = factionID }
 										self:AddRewardToMission(missionID, RewardType.Reputation, reputation)
 										addMission = true

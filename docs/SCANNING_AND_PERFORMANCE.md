@@ -233,6 +233,8 @@ Desired behavior:
 - no chat spam;
 - do not automatically open a closed popup;
 - if the persistent popup is already open, update it when new results are ready.
+- if combat defers the refresh, retain the silent Settings publication mode
+  until `PLAYER_REGEN_ENABLED` resumes it.
 
 Bulk operations should trigger **one** debounced refresh, not one refresh per item.
 
