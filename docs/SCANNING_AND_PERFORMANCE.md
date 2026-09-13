@@ -163,7 +163,14 @@ flag. A missing mission payload or item therefore schedules another readiness
 pass without discarding unrelated ready missions. Mission-list update events
 use the same coalesced TaskResolver path and republish the task cache.
 
-The readiness retry is coalesced through a timer rather than spawning uncontrolled timers.
+The readiness retry is coalesced through a timer rather than spawning
+uncontrolled timers. A full refresh owns a new retry generation and limits its
+readiness window to 30 seconds. Superseded callbacks are inert, while a later
+mission-list event can start a fresh bounded window for newly available data.
+
+Emissary reward discovery uses the same ownership model. It queries each bounty
+map once per pass, publishes partial ready data, cancels timers from superseded
+refreshes and stops retrying after 30 seconds.
 
 ## 8. Collection cache
 

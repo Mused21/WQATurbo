@@ -18,11 +18,17 @@ local taskNames = {}
 local areaPoiNames = {}
 local availableMissions = {}
 local activeGarrisons = {}
+local currentTime = 0
+local mapBounties = {}
+local emissaryTimers = {}
+local questDataReady = true
+local questRewardDataReady = true
 
 C_QuestLog = {
     IsQuestFlaggedCompleted = noop,
     GetTitleForQuestID = function(questID) return taskNames[questID] end,
-    GetQuestRewardCurrencies = function() return questRewardCurrencies end
+    GetQuestRewardCurrencies = function() return questRewardCurrencies end,
+    GetBountiesForMapID = function(mapID) return mapBounties[mapID] end
 }
 C_QuestLog.IsQuestFlaggedCompletedOnAccount = function() return false end
 C_TaskQuest = {
@@ -46,6 +52,14 @@ C_Garrison = {
     HasGarrison = function(garrisonType) return activeGarrisons[garrisonType] == true end,
     GetAvailableMissions = function(followerType) return availableMissions[followerType] end,
     HasShipyard = function() return false end
+}
+C_Timer = {
+    NewTimer = function(delay, callback)
+        local timer = { delay = delay, callback = callback, cancelled = false }
+        function timer:Cancel() self.cancelled = true end
+        emissaryTimers[#emissaryTimers + 1] = timer
+        return timer
+    end
 }
 C_Item = {
     GetItemInfoInstant = function() return scannedItemID end,
@@ -91,6 +105,9 @@ GetQuestLink = function(questID)
     return name and ("[" .. name .. "]") or nil
 end
 GetQuestLogRewardMoney = function() return 0 end
+GetTime = function() return currentTime end
+HaveQuestData = function() return questDataReady end
+HaveQuestRewardData = function() return questRewardDataReady end
 
 local scanTooltip = {
     SetOwner = noop,
@@ -156,6 +173,7 @@ local function NewOptions()
         hideExaltedReputations = false,
         sortByName = false,
         sortByZoneName = false,
+        emissary = {},
         reward = {
             gear = {
                 armorCache = false,
@@ -215,6 +233,11 @@ local function Reset(itemID)
     areaPoiNames = {}
     availableMissions = {}
     activeGarrisons = {}
+    currentTime = 0
+    mapBounties = {}
+    emissaryTimers = {}
+    questDataReady = true
+    questRewardDataReady = true
     PawnIsItemAnUpgrade = nil
     PawnGetItemData = nil
     C_AzeriteEmpoweredItem.IsAzeriteEmpoweredItemByID = function() return false end
@@ -527,4 +550,53 @@ availableMissions[8] = nil
 activeMissions, missionRetry = WQA:CheckMissions()
 assert(next(activeMissions) == nil and missionRetry == true, "A missing mission payload must request retry")
 
-print("Reward classifier regression checks passed (links, retries, containers, caches, sorting, reputation, missions, recipes, custom and legacy rewards).")
+-- Emissary retries are generation-owned, bounded, and avoid a forced retry
+-- when both bounty maps and their rewards are already available.
+Reset(200000)
+local emissaryCurrencyChecks = 0
+local emissaryTaskChecks = 0
+WQA.CheckItems = function() return false end
+WQA.CheckCurrencies = function()
+    emissaryCurrencyChecks = emissaryCurrencyChecks + 1
+end
+WQA.ScheduleTaskResolverCheck = function(_, restartWindow)
+    assert(restartWindow == true)
+    emissaryTaskChecks = emissaryTaskChecks + 1
+end
+WQA.db.profile.options.emissary[700] = true
+mapBounties[627] = { { questID = 700 } }
+mapBounties[875] = {}
+WQA:EmissaryReward()
+assert(WQA.emissaryRewards == true and WQA._wqaEmissaryScan == nil)
+assert(#emissaryTimers == 0 and emissaryCurrencyChecks == 1)
+assert(emissaryTaskChecks == 1)
+
+Reset(200000)
+emissaryTaskChecks = 0
+WQA.ScheduleTaskResolverCheck = function(_, restartWindow)
+	if restartWindow then
+		emissaryTaskChecks = emissaryTaskChecks + 10
+	else
+		emissaryTaskChecks = emissaryTaskChecks + 1
+	end
+end
+questDataReady = false
+mapBounties[627] = { { questID = 701 } }
+mapBounties[875] = {}
+WQA:EmissaryReward()
+local staleEmissaryTimer = emissaryTimers[1]
+local staleEmissaryState = WQA._wqaEmissaryScan
+WQA:EmissaryReward()
+local currentEmissaryTimer = emissaryTimers[2]
+assert(staleEmissaryTimer.cancelled == true)
+assert(WQA._wqaEmissaryScan ~= staleEmissaryState)
+staleEmissaryTimer.callback()
+assert(#emissaryTimers == 2 and WQA._wqaEmissaryScan ~= nil)
+
+currentTime = 31
+currentEmissaryTimer.callback()
+assert(WQA.emissaryRewards == true and WQA._wqaEmissaryScan == nil)
+assert(#emissaryTimers == 2, "Timed-out emissary data must stop scheduling")
+assert(emissaryTaskChecks == 12, "Ready emissary data must publish during retries and once at completion")
+
+print("Reward classifier regression checks passed (links, bounded emissary retries, containers, caches, sorting, reputation, missions, recipes, custom and legacy rewards).")

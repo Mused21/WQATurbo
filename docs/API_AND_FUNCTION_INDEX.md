@@ -217,9 +217,10 @@ Used by hide-maxed behavior.
 
 ### `WQA:EmissaryReward()`
 
-Compatibility/core emissary reward processing.
-
-Inspects enabled emissaries and feeds rewards through shared item/currency classifiers.
+Inspects enabled emissaries and feeds rewards through shared item/currency
+classifiers. Each full invocation owns a new scan generation; unresolved
+Blizzard bounty/reward data is retried for at most 30 seconds, and superseded
+callbacks are ignored.
 
 ### `WQA:EmissaryIsActive(questID)`
 
@@ -248,10 +249,17 @@ The Turbo implementation:
 - populates `activeTasks` and `newTasks`;
 - routes to chat/popup/LDB behavior by mode.
 
-### `WQA:ScheduleTaskResolverCheck()`
+### `WQA:ResetTaskResolverRetry()`
+
+Cancels a pending TaskResolver timer and starts ownership for a new full-refresh
+generation.
+
+### `WQA:ScheduleTaskResolverCheck(restartWindow)`
 
 Coalesces readiness retries and mission-list event updates behind the existing
-TaskResolver timer before calling `CheckWQ("new", true)`.
+TaskResolver timer before calling `CheckWQ("new", true)`. Retries are limited to
+30 seconds per generation; `restartWindow` lets an external readiness event
+start a fresh bounded window.
 
 ### `WQA:Show(...)`
 

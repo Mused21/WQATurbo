@@ -287,10 +287,14 @@ assert(rows["100"].get() == "exclusive", "A missing owner keeps the existing UI 
 -- snapshots exactly once without a load-order wrapper.
 if not arg[1] then
     local invalidations = 0
+    local taskRetryResets = 0
     local invalidateCollectionCache = WQA.InvalidateCollectionCache
     WQA.InvalidateCollectionCache = function(self)
         invalidations = invalidations + 1
         return invalidateCollectionCache(self)
+    end
+    WQA.ResetTaskResolverRetry = function()
+        taskRetryResets = taskRetryResets + 1
     end
     WQA.data = {}
     for expansionID = 7, 12 do
@@ -305,6 +309,7 @@ if not arg[1] then
     WQA.Reward = noop
     WQA.EmissaryReward = noop
     WQA:CreateQuestList()
+    assert(taskRetryResets == 1, "CreateQuestList must begin one task retry generation")
     assert(invalidations == 1, "CreateQuestList must invalidate collection snapshots once")
     assert(next(WQA.itemList) == nil, "CreateQuestList must discard stale collectible source items")
     assert(WQA.collectionCache.mountValid == false)

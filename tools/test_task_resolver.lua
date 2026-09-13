@@ -5,6 +5,9 @@ local function noop() end
 local activeQuests = {}
 local timers = {}
 local poiInfoByKey = {}
+local currentTime = 0
+
+GetTime = function() return currentTime end
 
 C_TaskQuest = {
 	IsActive = function(questID)
@@ -250,4 +253,33 @@ assert(poiResult.retry == false)
 assert(poiResult.active[301][401] and poiResult.active[302][402] and poiResult.active[303][403])
 assert(poiResult.new[301][401] and poiResult.new[302][402] and poiResult.new[303][403])
 
-print("Task resolver regression checks passed (progressive task and Area POI readiness, retries, filtering and display modes).")
+-- Readiness retries stop after 30 seconds, and callbacks from an older refresh
+-- generation cannot run against the new task lists.
+rewardLinksReady = false
+missionDataPending = false
+currentTime = 0
+WQA:ResetTaskResolverRetry()
+local boundedGeneration = WQA._wqaTurboTaskGeneration
+WQA:CheckWQ("settings")
+local boundedTimer = timers[#timers]
+assert(boundedTimer and boundedTimer.delay == 0.50)
+
+currentTime = 31
+boundedTimer.callback()
+assert(WQA._wqaTurboCheckRetryTimer == nil)
+assert(WQA._wqaTurboCheckRetryTimedOut == true)
+local timerCountAfterTimeout = #timers
+WQA:ScheduleTaskResolverCheck()
+assert(#timers == timerCountAfterTimeout, "Timed-out readiness must not keep scheduling")
+
+WQA:ScheduleTaskResolverCheck(true)
+local eventTimer = timers[#timers]
+assert(#timers == timerCountAfterTimeout + 1)
+assert(WQA._wqaTurboCheckRetryTimedOut == nil)
+WQA:ResetTaskResolverRetry()
+assert(eventTimer.cancelled == true)
+assert(WQA._wqaTurboTaskGeneration == boundedGeneration + 1)
+eventTimer.callback()
+assert(WQA._wqaTurboCheckRetryTimer == nil, "A stale generation callback must be inert")
+
+print("Task resolver regression checks passed (progressive readiness, bounded generation retries, filtering and display modes).")

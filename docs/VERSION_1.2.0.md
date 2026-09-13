@@ -394,8 +394,7 @@ Status: COMPLETED; local validation and focused in-game verification pass.
 
 ## Area POI readiness follow-up
 
-Status: IMPLEMENTED; local validation complete, focused in-game verification
-pending.
+Status: COMPLETED; local validation and focused in-game verification pass.
 
 - Keeps a POI pending when its Blizzard metadata is unavailable instead of
   silently omitting it until an unrelated refresh.
@@ -410,8 +409,7 @@ pending.
 
 ## Mission readiness and event follow-up
 
-Status: IMPLEMENTED; local validation complete, focused in-game verification
-pending.
+Status: COMPLETED; local validation and focused in-game verification pass.
 
 - Returns ready missions even when another mission payload, item link or
   transmog result still needs a retry.
@@ -422,6 +420,21 @@ pending.
   so changes republish `activeTasks` and an open popup.
 - Extends classifier, TaskResolver and runtime-lifecycle tests for partial
   mission readiness and event routing.
+
+## Bounded task and emissary retry follow-up
+
+Status: COMPLETED; local validation and focused in-game verification pass.
+
+- Gives each full refresh a new TaskResolver and emissary generation so a
+  callback owned by an older refresh cannot alter current state.
+- Coalesces TaskResolver readiness checks and stops unresolved retries after a
+  30-second window; mission-list events can start a fresh bounded window.
+- Queries each emissary bounty map once per pass and completes immediately when
+  Blizzard's bounty and reward data are already ready.
+- Keeps partial emissary results publishable while other bounty data is pending,
+  then republishes once when the pass completes or reaches its time limit.
+- Cancels superseded timers and extends classifier, TaskResolver, tracking and
+  runtime-lifecycle coverage for retry ownership and expiry.
 
 ## Non-goals for 1.2 Refactor
 
