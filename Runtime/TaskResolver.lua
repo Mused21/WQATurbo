@@ -29,6 +29,19 @@ The same principle is applied to missions/POIs: unavailable auxiliary data may
 schedule a later retry but does not block ready world quests.
 ]]
 
+function WQA:PrintReadinessStatus()
+	local function show(label, entries)
+		local ids = {}
+		for id in pairs(entries or {}) do ids[#ids + 1] = id end
+		table.sort(ids)
+		print("|cff00ccffWQA TURBO READINESS|r " .. label .. ": " .. (#ids > 0 and table.concat(ids, ", ") or "none"))
+	end
+	show("task pending", self._wqaTaskPending)
+	show("task last timeout", self._wqaTaskTimeout)
+	show("emissary pending", self._wqaEmissaryScan and self._wqaEmissaryScan.pending)
+	show("emissary last timeout", self._wqaEmissaryTimeout)
+end
+
 local IsActive = C_TaskQuest.IsActive
 
 local CHECK_RETRY_DELAY_SECONDS = 0.50
@@ -50,6 +63,9 @@ function WQA:ResetTaskResolverRetry()
 	self._wqaTurboTaskGeneration = (self._wqaTurboTaskGeneration or 0) + 1
 	self._wqaTurboCheckRetryStartedAt = nil
 	self._wqaTurboCheckRetryTimedOut = nil
+	self._wqaTaskPending = nil
+	self._wqaTaskTimeout = nil
+	self._wqaTaskRetryMode = self._wqaTurboRefreshMode == "settings" and "settings" or "new"
 end
 
 ---Schedule one generation-owned readiness pass.
@@ -69,6 +85,7 @@ function WQA:ScheduleTaskResolverCheck(restartWindow)
 
 	if now - self._wqaTurboCheckRetryStartedAt >= CHECK_RETRY_MAX_AGE_SECONDS then
 		self._wqaTurboCheckRetryTimedOut = true
+		self._wqaTaskTimeout = self._wqaTaskPending
 		return false
 	end
 
@@ -86,8 +103,8 @@ function WQA:ScheduleTaskResolverCheck(restartWindow)
 
 			self._wqaTurboCheckRetryTimer = nil
 
-			-- "new" means already-published tasks are not announced again.
-			self:CheckWQ("new", true)
+			-- Keep Settings/profile generations silent; ordinary retries use "new".
+			self:CheckWQ(self._wqaTaskRetryMode or "new", true)
 		end
 	)
 	self._wqaTurboCheckRetryTimer = timer
@@ -244,7 +261,11 @@ function WQA:CheckWQ(mode, fromRetry)
 
 	local activeQuests = {}
 	local newQuests = {}
-	local needsRetry = false
+	local retryStarted = self._wqaTurboCheckRetryStartedAt
+	local requestPins = not retryStarted or GetTime() - retryStarted < CHECK_RETRY_MAX_AGE_SECONDS
+	local pending = self.RefreshQuestPins and self:RefreshQuestPins(requestPins) or {}
+	self._wqaTaskPending = pending
+	local needsRetry = next(pending) ~= nil
 
 	for questID in pairs(self.questList or {}) do
 		if isQuestActive(self, questID) then
@@ -256,6 +277,7 @@ function WQA:CheckWQ(mode, fromRetry)
 				end
 			else
 				-- Only this quest waits. Ready quests continue to publication.
+				pending["world-quest:" .. tostring(questID)] = true
 				needsRetry = true
 			end
 		end
@@ -274,6 +296,7 @@ function WQA:CheckWQ(mode, fromRetry)
 					newMissions[missionID] = true
 				end
 			else
+				pending["mission:" .. tostring(missionID)] = true
 				needsRetry = true
 			end
 		end
@@ -285,6 +308,7 @@ function WQA:CheckWQ(mode, fromRetry)
 	if missionsNeedRetry then
 		needsRetry = true
 	end
+	for key in pairs(self._wqaMissionPending or {}) do pending[key] = true end
 
 	local pois = self.Criterias.AreaPoi:Check()
 
@@ -299,6 +323,7 @@ function WQA:CheckWQ(mode, fromRetry)
 	if pois.retry then
 		needsRetry = true
 	end
+	for key in pairs(pois.pending or {}) do pending[key] = true end
 
 	-- Publish all READY tasks now. This is the crucial difference from
 	-- upstream, which returned before reaching this block if anything needed

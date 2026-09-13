@@ -349,7 +349,12 @@ event dispatch, combat recovery, War Mode refresh and mission updates.
 `test_task_resolver.lua` checks progressive readiness, retry ownership, final
 filtering and display-mode routing.
 `test_tooltip_lifecycle.lua` checks exact ownership, stale callbacks,
-idempotent cleanup and popup/LDB rebuild ordering.
+idempotent cleanup and popup/LDB rebuild ordering, including POI hover metadata
+loss and recovery. The core/classifier suite also covers Quest Pin readiness,
+map-name fallback recovery and emissary/mission timeout IDs. Lifecycle tests
+cover profile callbacks and minimap rebinding.
+`test_custom_options.lua` checks input validation, duplicate protection,
+control deletion and debounced refreshes through actual editor callbacks.
 
 ### `.gitignore`
 

@@ -1,5 +1,17 @@
 # WQA Turbo Changelog
 
+## Unreleased - 1.3.0
+
+### Fixed
+- Reject invalid custom IDs and duplicate additions without overwriting saved entries.
+- Store custom map IDs numerically and require a valid map for Quest Pin entries.
+- Refresh runtime results after custom adds, edits, toggles and deletes through the silent Settings debouncer.
+- Remove leftover quest type and map controls when deleting a custom quest.
+- Retry unavailable Quest Pin map data without blocking ready tasks or repeatedly querying every map for each quest.
+- Tolerate disappearing map and Area POI metadata; temporary fallback names recover when data becomes available.
+- Rebuild results and update the minimap immediately after changing, copying or resetting a profile, with silent background publication.
+- Include unresolved task and emissary IDs in on-demand scan/performance diagnostics after readiness timeouts.
+
 ## 1.2.0
 
 ### Improved

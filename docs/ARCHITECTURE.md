@@ -264,6 +264,13 @@ It is the sole owner of `OnEnable()` and its startup/event schedule.
 
 It avoids the old startup behavior that synchronously preloaded/scanned every map and provides the modern `/wqat` command flow.
 
+The unreleased 1.3.0 profile callback handles changed, copied and reset profiles.
+It detaches the exact old tooltip, clears watched sets, rebinds LibDBIcon to the
+current profile, and immediately rebuilds through `RefreshFromOptions(true)`.
+This explicit user action bypasses automatic combat deferral to prevent showing
+another profile's cache. The normal refresh sequence supersedes old scanner,
+emissary and TaskResolver generations. Settings controls are then notified.
+
 ### `Runtime/Display.lua`
 
 Separates **display cached results** from **explicit refresh**.

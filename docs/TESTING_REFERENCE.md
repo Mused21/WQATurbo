@@ -20,6 +20,7 @@ lua5.1 tools/test_reward_scanner.lua
 lua5.1 tools/test_runtime_lifecycle.lua
 lua5.1 tools/test_task_resolver.lua
 lua5.1 tools/test_tooltip_lifecycle.lua
+lua5.1 tools/test_custom_options.lua
 ```
 
 In the local Windows workspace, Lua 5.1.5 is installed at:
@@ -56,7 +57,10 @@ asserts that `Scanning/RewardScanner.lua` supplies `Reward()`.
 The runtime-lifecycle test exercises the canonical `OnEnable()` owner. It
 checks Settings registration, startup-delay capping, recurring refreshes,
 numeric Blizzard Settings category-ID capture, combat recovery, quest
-completion, War Mode refresh and mission updates.
+completion, War Mode refresh and mission updates. It also invokes all three
+AceDB profile callbacks through the real Options/Display refresh path, checking
+queued refresh cancellation, silent immediate rebuild, watched-state reset and
+LibDBIcon rebinding even with combat deferral enabled.
 
 The task-resolver test exercises the canonical `CheckWQ()` owner. It checks
 per-task readiness, retry coalescing/cancellation, final filtering and
@@ -64,7 +68,19 @@ Settings/popup/LDB publication modes.
 
 The tooltip-lifecycle test checks exact-object ownership, stale `OnHide`
 callbacks, idempotent release, attached-task cleanup and popup/LDB rebuild
-ordering against the actual lifecycle helpers.
+ordering against the actual lifecycle helpers. POI hover tests remove metadata
+after row creation and then restore it, checking fallback and recovery.
+
+The reward/core suite additionally exercises real Quest Pin lookup with the
+TaskResolver: nil and empty map results, independent ready-map publication,
+per-pass lookup count, throttled requests, retry expiry and silent Settings
+publication. Map-name tests verify fallback values are not cached permanently.
+Task, POI, mission/item and emissary timeout diagnostics retain identifiable IDs.
+
+The custom-editor test checks rejected IDs and duplicate adds, numeric map
+storage, required Quest Pin maps, optional mission rewards, deletion cleanup,
+and silent refresh coalescing through the actual Settings callbacks and timer.
+Building the editor alone must not schedule a refresh.
 
 This is separate from `luac5.1 -p`, which checks syntax without running code.
 All checks run in GitHub Actions; in-game smoke testing is still required.

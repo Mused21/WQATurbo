@@ -21,8 +21,8 @@ The validation pipeline includes:
 1. checkout with full enough history for packaging/version context;
 2. project structure, startup load order and hygiene validation;
 3. Lua 5.1 syntax validation plus tracking-policy, reward-classifier,
-   reward-scanner publication, runtime-lifecycle, task-resolver and
-   tooltip-lifecycle regression checks;
+   reward-scanner publication, runtime-lifecycle, task-resolver,
+   tooltip-lifecycle and custom-editor regression checks;
 4. BigWigs packager build with externals;
 5. validation that required runtime modules and embedded libraries exist in the ZIP;
 6. upload of PR test build artifact.
@@ -59,16 +59,18 @@ no label       → patch release
 
 Manual workflow dispatch can explicitly choose bump type.
 
-## 5. 1.2.0
+## 5. Planned 1.3.0 release
 
-Because the latest stable tag is `v1.1.0` and `refactor/1.2.0` targets 1.2.0,
-its release PR should use:
+The released baseline is `v1.2.0`. The consolidated `feature/1.3.0` work
+includes the tested hardening and the remaining roadmap; no separate 1.2.1
+release is planned. Its release PR must use:
 
 ```text
 release:minor
 ```
 
-Do not manually tag 1.2.0 before the workflow.
+Do not manually tag 1.3.0 before the workflow. A manual release must select
+`minor`; the ordinary unlabeled PR path selects a patch bump.
 
 ## 6. Critical packaging/tag invariant
 

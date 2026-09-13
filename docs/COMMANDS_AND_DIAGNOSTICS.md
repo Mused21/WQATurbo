@@ -41,6 +41,14 @@ Useful for:
 
 Show reward scanner diagnostics.
 
+Unreleased 1.3.0 also reports current readiness pending IDs and the last task
+and emissary timeout snapshots through `/wqat scan` and `/wqat perf`.
+Keys distinguish World Quests, missions (with pending item IDs when known),
+mission lists (follower type), Quest Pin maps, POIs with map IDs, emissary
+quests and bounty maps. `none` means no recorded entries for that category.
+Timeout records reset on a full refresh and produce no automatic chat output.
+A timeout stops retries; it does not prove the content is inactive.
+
 Useful for:
 
 - pending quest counts;

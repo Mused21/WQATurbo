@@ -103,10 +103,10 @@ When debugging or extending the addon:
 
 ## Current release direction
 
-The incremental **1.2.0** refactor on `refactor/1.2.0` is complete.
-Steps 1 through 8 are implemented and have passed their focused local and
-in-game checks. See [VERSION_1.2.0.md](VERSION_1.2.0.md) for validation status
-and release preparation.
+Version **1.2.0** is released. Its completed refactor and verification history
+remain in [VERSION_1.2.0.md](VERSION_1.2.0.md). Current **1.3.0** work combines
+the tested hardening with maintainability, performance, feature and data work. See [ROADMAP.md](ROADMAP.md) for implementation and
+in-game verification status.
 
 The preserved **1.1.0** behavior includes:
 

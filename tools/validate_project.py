@@ -73,6 +73,7 @@ REQUIRED_PROJECT_FILES = (
     "tools/test_runtime_lifecycle.lua",
     "tools/test_task_resolver.lua",
     "tools/test_tooltip_lifecycle.lua",
+    "tools/test_custom_options.lua",
 )
 
 REQUIRED_PACKAGE_ITEMS = (

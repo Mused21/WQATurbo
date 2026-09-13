@@ -75,11 +75,10 @@ function WQA:GetTaskZoneID(task)
 end
 
 function WQA:GetMapInfo(mapID)
-    if mapID then
-        return C_Map.GetMapInfo(mapID)
-    else
-        return { name = "Unknown" }
-    end
+    local info = mapID and C_Map.GetMapInfo(mapID)
+    if info and info.name then return info end
+    -- Do not cache this fallback: metadata can become available later.
+    return { name = mapID and ("Map " .. tostring(mapID)) or "Unknown", pending = true }
 end
 
 function WQA:GetQuestZoneName(questID)
@@ -89,9 +88,11 @@ function WQA:GetQuestZoneName(questID)
     if not WQA.questList[questID].info then
         WQA.questList[questID].info = {}
     end
-    WQA.questList[questID].info.zoneName = WQA.questList[questID].info.zoneName or
-        self:GetMapInfo(self:GetQuestZoneID(questID)).name
-    return WQA.questList[questID].info.zoneName
+    local info = WQA.questList[questID].info
+    if info.zoneName then return info.zoneName end
+    local mapInfo = self:GetMapInfo(self:GetQuestZoneID(questID))
+    if not mapInfo.pending then info.zoneName = mapInfo.name end
+    return mapInfo.name
 end
 
 function WQA:GetMissionZoneName(missionID)

@@ -188,6 +188,15 @@ items cannot remain relevant from an earlier refresh.
 
 State for custom/achievement quest-pin style criteria.
 
+In unreleased 1.3.0, `_wqaQuestPinsActive` is a per-readiness-pass quest-ID set;
+`_wqaQuestPinRequests` holds throttled map request times. Both reset on a full
+rebuild and are not SavedVariables.
+
+`_wqaTaskPending` and emissary scan `pending` contain unresolved diagnostic keys
+(task class plus quest/mission/POI/map IDs). `_wqaTaskTimeout` and
+`_wqaEmissaryTimeout` retain the last timeout snapshot until the next full
+refresh; they are session-only and never affect eligibility.
+
 ### `questFlagList`
 
 State for quest-flag based criteria.

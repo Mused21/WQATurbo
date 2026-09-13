@@ -304,6 +304,22 @@ Possible task forms include:
 
 Custom reward item IDs can also be tracked.
 
+For the unreleased 1.3.0 hardening change, saved editor values must be
+positive integer IDs. Blank mission reward IDs remain optional; other invalid
+values are rejected without changing the saved entry. Duplicate adds report an
+error and preserve the existing entry, including its tracking toggle.
+
+Supplied map IDs are stored as numbers and must resolve through
+`C_Map.GetMapInfo()`. Quest Pin requires a map: set a valid map before changing
+an existing entry to Quest Pin. Other quest types may leave the map blank.
+Invalid edits report an error in chat and retain the previous saved value.
+
+Successful adds, edits, toggles and deletes use the existing 0.30-second silent
+Settings refresh debouncer. Rapid changes coalesce into one runtime rebuild;
+an open popup updates as results become ready. Opening the editor does not
+refresh runtime state. Deleting a quest removes its type and map controls too.
+Existing SavedVariables are not migrated by this editor fix.
+
 ## 13. Options
 
 General UI/output options include behavior such as:
@@ -335,6 +351,15 @@ WQA:ScheduleOptionsRefresh()
 rather than directly starting multiple full scans.
 
 The debouncer is intended to collapse rapid changes into one refresh.
+
+### Profile changes
+
+For unreleased 1.3.0, changing, copying or resetting an AceDB profile immediately
+rebuilds results silently, clears old watched state and refreshes the minimap's
+visibility and position from the new profile. An open popup is rebuilt; a closed
+popup stays closed. The profile action supersedes queued Settings refreshes and
+combat-deferred refreshes. Unlike automatic settings refreshes, this explicit
+profile action rebuilds even in combat so the previous profile is not displayed.
 
 ## 15. Blizzard Settings category
 

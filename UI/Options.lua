@@ -1467,13 +1467,13 @@ function WQA:ScheduleOptionsRefresh(delay)
 	end, delay)
 end
 
-function WQA:RefreshFromOptions()
+function WQA:RefreshFromOptions(immediate)
 	if optionsRefreshTimer then
 		self:CancelTimer(optionsRefreshTimer)
 		optionsRefreshTimer = nil
 	end
 
-	self:Refresh("settings", true)
+	self:Refresh("settings", not immediate)
 end
 
 function WQA:SetTrackingValue(groupName, id, value, suppressRefresh)
@@ -1887,18 +1887,57 @@ function WQA:CreateTrackingSearch(options)
 	end
 end
 
+-- Validate again at each write boundary; Add can also be called directly.
+local function CustomID(value)
+	if type(value) ~= "string" and type(value) ~= "number" then return nil end
+	local id = tonumber(value)
+	if id and id > 0 and id < math.huge and id % 1 == 0 then return id end
+end
+
+local function CustomBlank(value)
+	return value == nil or (type(value) == "string" and value:match("^%s*$") ~= nil)
+end
+
+local function CustomError(message)
+	WQA:Print(message)
+	return false
+end
+
+local function CustomMap(value, questType)
+	if CustomBlank(value) and questType ~= CriteriaType.QuestPin then return true, nil end
+	local id = CustomID(value)
+	if not id or not C_Map.GetMapInfo(id) then return false end
+	return true, id
+end
+
+local function NewCustomID(group, value)
+	local id = CustomID(value)
+	if not id then return nil, "Enter a positive integer ID." end
+	local entries = WQA.db.global.custom and WQA.db.global.custom[group]
+	if entries and (entries[id] ~= nil or entries[tostring(id)] ~= nil) then
+		return nil, "This ID already exists. Edit the existing entry."
+	end
+	return id
+end
+
 function WQA:CreateCustomQuest()
+	local id, err = NewCustomID("worldQuest", self.data.custom.wqID)
+	if not id then return CustomError(err) end
+	local valid, mapID = CustomMap(self.data.custom.mapID, self.data.custom.questType)
+	if not valid then return CustomError("Enter a valid map ID; Quest Pin requires a map.") end
 	if not self.db.global.custom then
 		self.db.global.custom = {}
 	end
 	if not self.db.global.custom.worldQuest then
 		self.db.global.custom.worldQuest = {}
 	end
-	self.db.global.custom.worldQuest[tonumber(self.data.custom.wqID)] = {
+	self.db.global.custom.worldQuest[id] = {
 		questType = self.data.custom.questType,
-		mapID = self.data.custom.mapID
-	} -- {rewardID = tonumber(self.data.custom.rewardID), rewardType = self.data.custom.rewardType}
+		mapID = mapID
+	}
 	self:UpdateCustomQuests()
+	self:ScheduleOptionsRefresh()
+	return true
 end
 
 function WQA:UpdateCustomQuests()
@@ -1913,6 +1952,7 @@ function WQA:UpdateCustomQuests()
 			name = GetQuestLink(id) or GetTitleForQuestID(id) or tostring(id),
 			set = function(info, val)
 				WQA.db.profile.custom.worldQuest[id] = val
+				WQA:ScheduleOptionsRefresh()
 			end,
 			descStyle = "inline",
 			get = function()
@@ -1936,7 +1976,12 @@ function WQA:UpdateCustomQuests()
 			},
 			width = .8,
 			set = function(info, val)
-				self.db.global.custom.worldQuest[id].questType = val
+				local entry = self.db.global.custom.worldQuest[id]
+				local valid, mapID = CustomMap(entry.mapID, val)
+				if not valid then return CustomError("Enter a valid map ID before selecting Quest Pin.") end
+				entry.questType = val
+				entry.mapID = mapID
+				self:ScheduleOptionsRefresh()
 			end,
 			get = function()
 				return tostring(self.db.global.custom.worldQuest[id].questType or "")
@@ -1949,7 +1994,11 @@ function WQA:UpdateCustomQuests()
 			width = .4,
 			order = newOrder(),
 			set = function(info, val)
-				self.db.global.custom.worldQuest[id].mapID = val
+				local entry = self.db.global.custom.worldQuest[id]
+				local valid, mapID = CustomMap(val, entry.questType)
+				if not valid then return CustomError("Enter a valid map ID; Quest Pin requires a map.") end
+				entry.mapID = mapID
+				self:ScheduleOptionsRefresh()
 			end,
 			get = function()
 				return tostring(self.db.global.custom.worldQuest[id].mapID or "")
@@ -1992,7 +2041,10 @@ function WQA:UpdateCustomQuests()
 				args[id .. "RewardType"] = nil
 				args[id .. "Delete"] = nil
 				args[id .. "space"] = nil
+				args[id .. "questType"] = nil
+				args[id .. "mapID"] = nil
 				self.db.global.custom.worldQuest[id] = nil
+				self:ScheduleOptionsRefresh()
 				self:UpdateCustomQuests()
 				GameTooltip:Hide()
 			end
@@ -2007,14 +2059,18 @@ function WQA:UpdateCustomQuests()
 end
 
 function WQA:CreateCustomReward()
+	local id, err = NewCustomID("worldQuestReward", self.data.custom.worldQuestReward)
+	if not id then return CustomError(err) end
 	if not self.db.global.custom then
 		self.db.global.custom = {}
 	end
 	if not self.db.global.custom.worldQuestReward then
 		self.db.global.custom.worldQuestReward = {}
 	end
-	self.db.global.custom.worldQuestReward[tonumber(self.data.custom.worldQuestReward)] = true
+	self.db.global.custom.worldQuestReward[id] = true
 	self:UpdateCustomRewards()
+	self:ScheduleOptionsRefresh()
+	return true
 end
 
 function WQA:UpdateCustomRewards()
@@ -2031,6 +2087,7 @@ function WQA:UpdateCustomRewards()
 			--width = "double",
 			set = function(info, val)
 				WQA.db.profile.custom.worldQuestReward[id] = val
+				WQA:ScheduleOptionsRefresh()
 			end,
 			descStyle = "inline",
 			get = function()
@@ -2049,6 +2106,7 @@ function WQA:UpdateCustomRewards()
 				args[id .. "Delete"] = nil
 				args[id .. "space"] = nil
 				self.db.global.custom.worldQuestReward[id] = nil
+				self:ScheduleOptionsRefresh()
 				self:UpdateCustomRewards()
 				GameTooltip:Hide()
 			end
@@ -2063,17 +2121,25 @@ function WQA:UpdateCustomRewards()
 end
 
 function WQA:CreateCustomMission()
+	local id, err = NewCustomID("mission", self.data.custom.mission.missionID)
+	if not id then return CustomError(err) end
+	local rewardID = CustomID(self.data.custom.mission.rewardID)
+	if not CustomBlank(self.data.custom.mission.rewardID) and not rewardID then
+		return CustomError("Enter a positive integer reward ID, or leave it blank.")
+	end
 	if not self.db.global.custom then
 		self.db.global.custom = {}
 	end
 	if not self.db.global.custom.mission then
 		self.db.global.custom.mission = {}
 	end
-	self.db.global.custom.mission[tonumber(self.data.custom.mission.missionID)] = {
-		rewardID = tonumber(self.data.custom.mission.rewardID),
+	self.db.global.custom.mission[id] = {
+		rewardID = rewardID,
 		rewardType = self.data.custom.mission.rewardType
 	}
 	self:UpdateCustomMissions()
+	self:ScheduleOptionsRefresh()
+	return true
 end
 
 function WQA:UpdateCustomMissions()
@@ -2088,6 +2154,7 @@ function WQA:UpdateCustomMissions()
 			name = C_Garrison.GetMissionLink(id) or tostring(id),
 			set = function(info, val)
 				WQA.db.profile.custom.mission[id] = val
+				WQA:ScheduleOptionsRefresh()
 			end,
 			descStyle = "inline",
 			get = function()
@@ -2103,7 +2170,12 @@ function WQA:UpdateCustomMissions()
 			width = .6,
 			order = newOrder(),
 			set = function(info, val)
-				self.db.global.custom.mission[id].rewardID = tonumber(val)
+				local rewardID = CustomID(val)
+				if not CustomBlank(val) and not rewardID then
+					return CustomError("Enter a positive integer reward ID, or leave it blank.")
+				end
+				self.db.global.custom.mission[id].rewardID = rewardID
+				self:ScheduleOptionsRefresh()
 			end,
 			get = function()
 				return tostring(self.db.global.custom.mission[id].rewardID or "")
@@ -2117,6 +2189,7 @@ function WQA:UpdateCustomMissions()
 			width = .6,
 			set = function(info, val)
 				self.db.global.custom.mission[id].rewardType = val
+				self:ScheduleOptionsRefresh()
 			end,
 			get = function()
 				return self.db.global.custom.mission[id].rewardType or nil
@@ -2134,6 +2207,7 @@ function WQA:UpdateCustomMissions()
 				args[id .. "Delete"] = nil
 				args[id .. "space"] = nil
 				self.db.global.custom.mission[id] = nil
+				self:ScheduleOptionsRefresh()
 				self:UpdateCustomMissions()
 				GameTooltip:Hide()
 			end
@@ -2148,14 +2222,18 @@ function WQA:UpdateCustomMissions()
 end
 
 function WQA:CreateCustomMissionReward()
+	local id, err = NewCustomID("missionReward", self.data.custom.missionReward)
+	if not id then return CustomError(err) end
 	if not self.db.global.custom then
 		self.db.global.custom = {}
 	end
 	if not self.db.global.custom.missionReward then
 		self.db.global.custom.missionReward = {}
 	end
-	self.db.global.custom.missionReward[tonumber(self.data.custom.missionReward)] = true
+	self.db.global.custom.missionReward[id] = true
 	self:UpdateCustomMissionRewards()
+	self:ScheduleOptionsRefresh()
+	return true
 end
 
 function WQA:UpdateCustomMissionRewards()
@@ -2171,6 +2249,7 @@ function WQA:UpdateCustomMissionRewards()
 			name = itemLink or tostring(id),
 			set = function(info, val)
 				WQA.db.profile.custom.missionReward[id] = val
+				WQA:ScheduleOptionsRefresh()
 			end,
 			descStyle = "inline",
 			get = function()
@@ -2189,6 +2268,7 @@ function WQA:UpdateCustomMissionRewards()
 				args[id .. "Delete"] = nil
 				args[id .. "space"] = nil
 				self.db.global.custom.missionReward[id] = nil
+				self:ScheduleOptionsRefresh()
 				self:UpdateCustomMissionRewards()
 				GameTooltip:Hide()
 			end

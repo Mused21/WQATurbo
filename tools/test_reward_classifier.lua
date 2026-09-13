@@ -545,10 +545,12 @@ end
 activeMissions, missionRetry = WQA:CheckMissions()
 assert(activeMissions[501] == true, "A ready mission must survive another mission's pending item")
 assert(activeMissions[502] == nil and missionRetry == true)
+assert(WQA._wqaMissionPending["mission:502@item:999"])
 
 availableMissions[8] = nil
 activeMissions, missionRetry = WQA:CheckMissions()
 assert(next(activeMissions) == nil and missionRetry == true, "A missing mission payload must request retry")
+assert(WQA._wqaMissionPending["mission-list:8"])
 
 -- Emissary retries are generation-owned, bounded, and avoid a forced retry
 -- when both bounty maps and their rewards are already available.
@@ -597,6 +599,94 @@ currentTime = 31
 currentEmissaryTimer.callback()
 assert(WQA.emissaryRewards == true and WQA._wqaEmissaryScan == nil)
 assert(#emissaryTimers == 2, "Timed-out emissary data must stop scheduling")
+assert(WQA._wqaEmissaryTimeout["emissary:701"])
 assert(emissaryTaskChecks == 12, "Ready emissary data must publish during retries and once at completion")
 
-print("Reward classifier regression checks passed (links, bounded emissary retries, containers, caches, sorting, reputation, missions, recipes, custom and legacy rewards).")
+-- Missing bounty maps have an ID even when no quest ID is available.
+currentTime = 0
+mapBounties = {}
+WQA:EmissaryReward()
+assert(WQA._wqaEmissaryTimeout == nil)
+currentTime = 31
+emissaryTimers[#emissaryTimers].callback()
+assert(WQA._wqaEmissaryTimeout["emissary-map:627"])
+assert(WQA._wqaEmissaryTimeout["emissary-map:875"])
+
+-- Exercise core Quest Pin lookup with the real progressive TaskResolver.
+local pins = { [84] = { { questID = 101 }, {} }, [86] = {} }
+local pinCalls, pinRequests = {}, {}
+C_QuestLine = {
+    GetAvailableQuestLines = function(mapID)
+        pinCalls[mapID] = (pinCalls[mapID] or 0) + 1
+        return pins[mapID]
+    end,
+    RequestQuestLinesForMap = function(mapID)
+        pinRequests[mapID] = (pinRequests[mapID] or 0) + 1
+    end
+}
+C_TaskQuest.IsActive = function() return false end
+dofile("Runtime/TaskResolver.lua")
+WQA.Debug = noop
+WQA.ShouldIncludeWorldQuestForCurrentMode = function() return true end
+WQA.EmissaryIsActive = function() return false end
+WQA.IsQuestFlaggedCompleted = function() return false end
+WQA.CheckMissions = function(self) self._wqaMissionPending = {}; return {}, false end
+WQA.Criterias.AreaPoi = { watched = {}, Check = function() return { active = {}, new = {} } end }
+WQA.GetTaskLink = function() return "quest" end
+WQA.SortQuestList = function(_, tasks) return tasks end
+local chatCalls = 0
+WQA.AnnounceChat = function() chatCalls = chatCalls + 1 end
+WQA.AnnouncePopUp = function() error("unexpected popup") end
+WQA.UpdateLDBText, WQA.TurboRefreshOpenPopup = noop, noop
+WQA.questList = { [101] = { reward = { custom = true } }, [102] = { reward = { custom = true } } }
+WQA.questPinMapList = { [84] = true, [85] = true, [86] = true }
+WQA.watched, WQA.watchedMissions = {}, {}
+WQA._wqaTurboRefreshMode = "settings"
+currentTime = 0
+WQA:ResetTaskResolverRetry()
+WQA:CheckWQ("settings")
+assert(#WQA.activeTasks == 1 and WQA.activeTasks[1].id == 101)
+assert(pinCalls[84] == 1 and pinCalls[85] == 1 and pinCalls[86] == 1)
+assert(pinRequests[85] == 1 and pinRequests[84] == nil and pinRequests[86] == nil)
+local pinTimer = WQA._wqaTurboCheckRetryTimer
+assert(pinTimer and WQA._wqaTaskPending["quest-pin-map:85"])
+WQA:CheckWQ("settings")
+assert(pinRequests[85] == 1, "coalesced publications must not spam map requests")
+assert(WQA._wqaTurboCheckRetryTimer == pinTimer)
+pins[85] = { { questID = 102 } }
+currentTime = 0.5
+pinTimer.callback()
+assert(#WQA.activeTasks == 2 and WQA._wqaTurboCheckRetryTimer == nil)
+assert(chatCalls == 0, "Settings/profile retry must remain silent")
+pins[85] = nil
+WQA:CheckWQ("settings")
+pinTimer = WQA._wqaTurboCheckRetryTimer
+local requestsBeforeExpiry = pinRequests[85]
+currentTime = 32
+pinTimer.callback()
+assert(pinRequests[85] == requestsBeforeExpiry, "deadline pass must not re-request")
+assert(WQA._wqaTurboCheckRetryTimer == nil and WQA._wqaTaskTimeout["quest-pin-map:85"])
+assert(#WQA.activeTasks == 1)
+local timedOutRequests = pinRequests[85]
+WQA:CheckWQ("settings")
+assert(pinRequests[85] == timedOutRequests, "expired maps must not re-request")
+local diagnosticPrint = print
+local diagnostics = {}
+print = function(line) diagnostics[#diagnostics + 1] = line end
+WQA:PrintReadinessStatus()
+print = diagnosticPrint
+assert(table.concat(diagnostics, "\n"):find("quest%-pin%-map:85"))
+assert(table.concat(diagnostics, "\n"):find("emissary%-map:627"))
+
+-- Fallback map names are safe but must not poison the later metadata cache.
+local mapInfo
+C_Map = { GetMapInfo = function() return mapInfo end }
+C_TaskQuest.GetQuestZoneID = function() return 84 end
+dofile("Utilities.lua")
+assert(WQA:GetMapInfo(nil).name == "Unknown")
+assert(WQA:GetQuestZoneName(101) == "Map 84")
+assert(WQA.questList[101].info.zoneName == nil)
+mapInfo = { name = "Stormwind" }
+assert(WQA:GetQuestZoneName(101) == "Stormwind")
+assert(WQA:GetTaskZoneName({ type = WQA.Constants.TaskType.AreaPoi, mapId = 84 }) == "Stormwind")
+print("Reward/core regression checks passed (classification, missions, emissaries, Quest Pin readiness and metadata recovery).")

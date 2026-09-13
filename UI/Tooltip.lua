@@ -287,6 +287,7 @@ function WQA:UpdateQTip(tasks)
                             end
                         elseif task.type == TaskType.AreaPoi then
                             local poiInfo = C_AreaPoiInfo.GetAreaPOIInfo(task.mapId, task.id)
+                                or { name = "POI " .. tostring(task.id), areaPoiID = task.id }
 
                             GameTooltip_SetTitle(GameTooltip, poiInfo.name, HIGHLIGHT_FONT_COLOR)
 

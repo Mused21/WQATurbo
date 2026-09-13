@@ -349,6 +349,8 @@ function WQA:CreateQuestList()
 	self.questList = {}
 	self.questPinList = {}
 	self.questPinMapList = {}
+	self._wqaQuestPinsActive = nil
+	self._wqaQuestPinRequests = {}
 	self.missionList = {}
 	wipe(self.itemList)
 	self.questFlagList = {}
@@ -1576,6 +1578,7 @@ function WQA:EmissaryReward(state)
 			retryTimer = nil
 		}
 		self._wqaEmissaryScan = state
+		self._wqaEmissaryTimeout = nil
 	elseif
 		self._wqaEmissaryScan ~= state
 		or self._wqaEmissaryGeneration ~= state.generation
@@ -1586,10 +1589,13 @@ function WQA:EmissaryReward(state)
 	self.emissaryRewards = false
 	local retry = false
 	local relevanceMayHaveChanged = false
+	local pending = {}
+	state.pending = pending
 
 	for _, mapID in ipairs(EMISSARY_MAP_IDS) do
 		local bounties = GetBountiesForMapID(mapID)
 		if not bounties then
+			pending["emissary-map:" .. tostring(mapID)] = true
 			retry = true
 		else
 			for _, emissary in ipairs(bounties) do
@@ -1599,9 +1605,12 @@ function WQA:EmissaryReward(state)
 					self:AddEmissaryReward(questID, RewardType.Custom, nil, true)
 				end
 				if HaveQuestData(questID) and HaveQuestRewardData(questID) then
-					retry = self:CheckItems(questID, true) or retry
+					local itemsPending = self:CheckItems(questID, true)
+					if itemsPending then pending["emissary:" .. tostring(questID)] = true end
+					retry = itemsPending or retry
 					self:CheckCurrencies(questID, true)
 				else
+					pending["emissary:" .. tostring(questID)] = true
 					retry = true
 				end
 			end
@@ -1631,6 +1640,7 @@ function WQA:EmissaryReward(state)
 	end
 
 	CancelEmissaryRetry(state)
+	if retry then self._wqaEmissaryTimeout = pending end
 	if self._wqaEmissaryScan == state then
 		self._wqaEmissaryScan = nil
 		self.emissaryRewards = true
@@ -1838,12 +1848,15 @@ local LE_GARRISON_TYPE = {
 function WQA:CheckMissions()
 	local activeMissions = {}
 	local retry = false
+	local pending = {}
+	self._wqaMissionPending = pending
 	for i in pairs(WQA.ExpansionList) do
 		local type = LE_GARRISON_TYPE[i]
 		if type and C_Garrison.HasGarrison(type) then
 			local followerType = GetPrimaryGarrisonFollowerType(type)
 			local missions = C_Garrison.GetAvailableMissions(followerType)
 			if not missions then
+				pending["mission-list:" .. tostring(followerType)] = true
 				retry = true
 				missions = {}
 			end
@@ -1857,6 +1870,7 @@ function WQA:CheckMissions()
 						missions[#missions + 1] = mission
 					end
 				else
+					pending["mission-list:" .. tostring(Enum.GarrisonFollowerType.FollowerType_6_0_Boat)] = true
 					retry = true
 				end
 			end
@@ -1920,6 +1934,7 @@ function WQA:CheckMissions()
 							itemSubClassID = GetItemInfo(itemID)
 
 							if not itemLink then
+								pending["mission:" .. tostring(missionID) .. "@item:" .. tostring(itemID)] = true
 								retry = true
 							else
 								-- Custom Mission Reward
@@ -1947,6 +1962,7 @@ function WQA:CheckMissions()
 									if itemClassID == 2 or itemClassID == 4 then
 										local transmog, transmogRetry = self:GetTrackedTransmogIcon(itemLink)
 										if transmogRetry then
+											pending["mission:" .. tostring(missionID) .. "@item:" .. tostring(itemID)] = true
 											retry = true
 										elseif transmog then
 											local item = { itemLink = itemLink, transmog = transmog }
@@ -1978,15 +1994,33 @@ function WQA:CheckMissions()
 	return activeMissions, retry
 end
 
-function WQA:isQuestPinActive(questID)
-	for mapID in pairs(self.questPinMapList) do
-		for _, questPin in pairs(C_QuestLine.GetAvailableQuestLines(mapID)) do
-			if questPin.questID == questID then
-				return true
+-- One map query per readiness pass, rather than per candidate quest.
+function WQA:RefreshQuestPins(requestPending)
+	local active, pending = {}, {}
+	local now = GetTime()
+	self._wqaQuestPinRequests = self._wqaQuestPinRequests or {}
+	local requests = self._wqaQuestPinRequests
+	for mapID in pairs(self.questPinMapList or {}) do
+		local pins = C_QuestLine.GetAvailableQuestLines(mapID)
+		if type(pins) ~= "table" then
+			pending["quest-pin-map:" .. tostring(mapID)] = true
+			if requestPending ~= false and (not requests[mapID] or now - requests[mapID] >= 1.5) then
+				requests[mapID] = now
+				C_QuestLine.RequestQuestLinesForMap(mapID)
+			end
+		else
+			for _, pin in pairs(pins) do
+				if pin.questID then active[pin.questID] = true end
 			end
 		end
 	end
-	return false
+	self._wqaQuestPinsActive = active
+	return pending
+end
+
+function WQA:isQuestPinActive(questID)
+	if not self._wqaQuestPinsActive then self:RefreshQuestPins() end
+	return self._wqaQuestPinsActive[questID] == true
 end
 
 function WQA:IsQuestFlaggedCompleted(questID)

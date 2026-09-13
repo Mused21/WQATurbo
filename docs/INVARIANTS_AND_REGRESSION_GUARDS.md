@@ -208,6 +208,17 @@ Unknown containers, unknown character armor types and unavailable Blizzard
 collection data must keep a container visible. Do not infer completion from a
 partial or combined loot pool.
 
+### 33. Profile transitions cannot retain another profile's runtime cache
+
+Changed, copied and reset profiles must supersede old asynchronous work,
+rebind minimap settings, rebuild options and publish new-profile results silently.
+
+### 34. Transient metadata is not a permanent negative result
+
+Missing map names and POI hover metadata must not crash. Do not cache fallback
+zone names as resolved metadata. Missing Quest Pin results use bounded retries;
+ready maps and tasks continue independently.
+
 ## Review technique
 
 For every significant PR, ask:

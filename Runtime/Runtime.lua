@@ -43,6 +43,10 @@ function WQA:OnEnable()
 			"WQA Turbo"
 		)
 
+	for _, event in ipairs({ "OnProfileChanged", "OnProfileCopied", "OnProfileReset" }) do
+		self.db.RegisterCallback(self, event, "OnProfileChanged")
+	end
+
 	local profiles = LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db)
 	LibStub("AceConfig-3.0"):RegisterOptionsTable("WQATurboProfiles", profiles)
 
@@ -105,6 +109,20 @@ elseif eventName == "GARRISON_MISSION_LIST_UPDATE" then
 C_AddOns.LoadAddOn("Blizzard_GarrisonUI")
 end
 
+-- A user-selected profile must replace the old cache immediately, even in
+-- combat; the normal automatic-refresh combat preference remains unchanged.
+function WQA:OnProfileChanged()
+	self.options = nil
+	self.watched = {}
+	self.watchedMissions = {}
+	self.Criterias.AreaPoi.watched = {}
+	self:ReleaseQTip(self.tooltip)
+	LibStub("LibDBIcon-1.0"):Refresh("WQATurbo", self.db.profile.options.LibDBIcon)
+	self:UpdateMinimapIcon()
+	self:RefreshFromOptions(true)
+	LibStub("AceConfigRegistry-3.0"):NotifyChange("WQATurbo")
+end
+
 -- Keep the original /wqa command for users migrating from WQATurbo.
 -- Add one compact Turbo command for development and later release use.
 function WQA:TurboSlash(input)
@@ -131,6 +149,7 @@ self:ShowWQAMigrationPrompt(true)
 		self:ResetPerf()
 	elseif command == "scan" then
 		self:PrintRewardScannerStatus()
+		self:PrintReadinessStatus()
 	elseif command == "cache" then
 		self:CollectionCacheSlash()
 	else
