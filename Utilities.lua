@@ -1,5 +1,7 @@
 ---@class WQATurbo
 local WQA = WQATurbo
+local TaskType = WQA.Constants.TaskType
+local EmissaryQuestIDList = WQA.RuntimeData.EmissaryQuestIDsByExpansion
 
 local GetTitleForQuestID = C_QuestLog.GetTitleForQuestID
 
@@ -51,13 +53,6 @@ function WQA:GetQuestZoneID(questID)
     if WQA.questList[questID] and WQA.questList[questID].isEmissary then
         return "Emissary"
     end
-    --if not WQA.questList[questID].info then	WQA.questList[questID].info = {} end
-    --if WQA.questList[questID].info.zoneID then
-    --	return WQA.questList[questID].info.zoneID
-    --else
-    --	WQA.questList[questID].info.zoneID = questZoneIDList[questID] or C_TaskQuest.GetQuestZoneID(questID)
-    --	return WQA.questList[questID].info.zoneID
-    --end
     return questZoneIDList[questID] or C_TaskQuest.GetQuestZoneID(questID)
 end
 
@@ -70,11 +65,11 @@ function WQA:GetMissionZoneID(missionID)
 end
 
 function WQA:GetTaskZoneID(task)
-    if task.type == "MISSION" then
+    if task.type == TaskType.Mission then
         return self:GetMissionZoneID(task.id)
-    elseif task.type == "WORLD_QUEST" then
+    elseif task.type == TaskType.WorldQuest then
         return self:GetQuestZoneID(task.id)
-    elseif task.type == "AREA_POI" then
+    elseif task.type == TaskType.AreaPoi then
         return task.mapId
     end
 end
@@ -108,18 +103,18 @@ function WQA:GetMissionZoneName(missionID)
 end
 
 function WQA:GetTaskZoneName(task)
-    if task.type == "MISSION" then
+    if task.type == TaskType.Mission then
         return self:GetMissionZoneName(task.id)
     end
 
-    if task.type == "AREA_POI" then
+    if task.type == TaskType.AreaPoi then
         return self:GetMapInfo(task.mapId).name
     end
 
     return self:GetQuestZoneName(task.id)
 end
 
-ExpansionByZoneID = {
+local ExpansionByZoneID = {
     -- BfA
     [1169] = 8 -- Tol Dagor
 }
@@ -141,10 +136,6 @@ function WQA:GetExpansionByMapId(mapId)
 end
 
 function WQA:GetExpansionByQuestID(questID)
-    --if not WQA.questList[questID].info then	WQA.questList[questID].info = {} end
-    --if WQA.questList[questID].info.expansion then
-    --	return WQA.questList[questID].info.expansion
-    --else
     local zoneID = self:GetQuestZoneID(questID)
 
     local expansionId = self:GetExpansionByMapId(zoneID)
@@ -153,7 +144,7 @@ function WQA:GetExpansionByQuestID(questID)
         return expansionId
     end
 
-    for expansion, v in pairs(WQA.EmissaryQuestIDList) do
+    for expansion, v in pairs(EmissaryQuestIDList) do
         for _, id in pairs(v) do
             if type(id) == "table" then
                 id = id.id
@@ -167,11 +158,11 @@ function WQA:GetExpansionByQuestID(questID)
 end
 
 function WQA:GetExpansion(task)
-    if task.type == "MISSION" then
+    if task.type == TaskType.Mission then
         return self:GetExpansionByMissionID(task.id)
     end
 
-    if task.type == "AREA_POI" then
+    if task.type == TaskType.AreaPoi then
         return self:GetExpansionByMapId(task.mapId)
     end
 
@@ -191,11 +182,11 @@ function WQA:GetMissionTimeLeftMinutes(id)
 end
 
 function WQA:GetTaskTime(task)
-    if task.type == "WORLD_QUEST" then
+    if task.type == TaskType.WorldQuest then
         return C_TaskQuest.GetQuestTimeLeftMinutes(task.id)
-    elseif task.type == "MISSION" then
+    elseif task.type == TaskType.Mission then
         return self:GetMissionTimeLeftMinutes(task.id)
-    elseif task.type == "AREA_POI" then
+    elseif task.type == TaskType.AreaPoi then
         local seconds = C_AreaPoiInfo.GetAreaPOISecondsLeft(task.id)
         if seconds then
             return seconds / 60
@@ -204,15 +195,12 @@ function WQA:GetTaskTime(task)
 end
 
 function WQA:GetTaskLink(task)
-    if task.type == "WORLD_QUEST" then
-        --	else
-        --		return GetQuestLink(task.id)
-        --	end
-        --	if WQA.questPinList[task.id] or WQA.questFlagList[task.id] then
+    if task.type == TaskType.WorldQuest then
         return GetQuestLink(task.id) or GetTitleForQuestID(task.id)
-    elseif task.type == "MISSION" then
+    elseif task.type == TaskType.Mission then
         return C_Garrison.GetMissionLink(task.id)
-    elseif task.type == "AREA_POI" then
-        return C_AreaPoiInfo.GetAreaPOIInfo(task.mapId, task.id).name
+    elseif task.type == TaskType.AreaPoi then
+        local poiInfo = C_AreaPoiInfo.GetAreaPOIInfo(task.mapId, task.id)
+        return poiInfo and poiInfo.name
     end
 end

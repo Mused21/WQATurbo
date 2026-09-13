@@ -140,10 +140,10 @@ Inspect:
 
 ```text
 questList
-→ TurboCheck final eligibility
+→ TaskResolver final eligibility
 → readiness
 → activeTasks
-→ TurboDisplay popup rebuild
+→ Display popup rebuild
 ```
 
 Do not immediately patch discovery.

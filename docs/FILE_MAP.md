@@ -2,7 +2,23 @@
 
 This document explains the responsibility of each significant repository file/directory.
 
-## Root runtime files
+The source tree is grouped by responsibility while the compatibility core and
+cross-cutting support modules remain at the repository root:
+
+```text
+Core.lua, Constants.lua, WQATurbo.lua
+Data/                  stable lookup and expansion content
+Tracking/              policy, achievements and collection state
+Scanning/              dynamic reward discovery
+Runtime/               orchestration, display and task publication
+UI/                    tooltip and Settings UI
+Criterias/, Rewards/, Items/
+Migration.lua, Performance.lua, Utilities.lua, Locales.lua
+```
+
+The detailed entries below follow approximate TOC load order.
+
+## Core and feature modules
 
 ### `Core.lua`
 
@@ -15,6 +31,21 @@ Change when:
 
 Avoid putting feature-specific logic here.
 
+### `Constants.lua`
+
+Canonical reward, criteria, task and tracking-mode strings under `WQA.Constants`.
+Loaded immediately after `Core.lua`; content and SavedVariables values stay stable.
+
+### `Tracking/TrackingPolicy.lua`
+
+Shared tracking-mode flags, bulk-mode eligibility and exclusive-owner updates.
+No collection API calls, scanning or refresh scheduling.
+
+### `Tracking/ContainerCompletion.lua`
+
+Evaluates fixed container pools through Blizzard quest and transmog collection
+APIs. Unknown containers and unavailable collection data remain visible.
+
 ### `WQATurbo.lua`
 
 Large compatibility/core implementation.
@@ -22,21 +53,21 @@ Large compatibility/core implementation.
 Contains important shared logic such as:
 
 - AceDB defaults/initialization;
-- reward classification;
+- reward-link acquisition/retry orchestration and focused reward classifiers;
 - transmog state helpers;
 - reputation item/currency lookup;
 - mission logic;
 - minimap data object;
 - custom tracking helpers;
-- compatibility implementations of runtime methods.
+- the canonical `CreateQuestList()` rebuild and its collection-cache
+  invalidation call.
 
-Important: several methods are overridden by later Turbo modules.
+### `Tracking/CollectionCache.lua`
 
-Always search the repo before assuming the definition here is active.
-
-### `CollectionCache.lua`
-
-Optimized mount/pet collection snapshot logic.
+Optimized mount/pet collection snapshot and ownership lookup logic shared by
+runtime registration and Settings completion grouping.
+Owns the canonical `AddMounts()` and `AddPets()` implementations and provides
+the ephemeral snapshot invalidation helper used by `CreateQuestList()`.
 
 Change when:
 
@@ -45,40 +76,44 @@ Change when:
 
 Do not turn it into persistent SavedVariables.
 
-### `RewardScanner.lua`
+### `Scanning/RewardScanner.lua`
 
 Incremental frame-budgeted dynamic reward scanner.
+Owns the canonical `Reward()` implementation.
 
 Change only for scanner/discovery/readiness behavior.
 
 Do not add ordinary item-ID classification rules here.
 
-### `TurboRuntime.lua`
+### `Runtime/Runtime.lua`
 
 Runtime/startup orchestration and modern command handling.
 
 Responsibilities include:
 
-- optimized `OnEnable`;
+- sole ownership of the optimized `OnEnable()`;
 - startup scheduling;
 - event orchestration;
 - `/wqat` command dispatch;
 - avoiding legacy broad preload behavior.
 
-### `TurboDisplay.lua`
+### `Runtime/Display.lua`
 
 Cache-first display behavior and explicit refresh separation.
 
 Responsibilities include:
 
+- sole ownership of `Show()`;
+- the canonical data refresh sequence used by `Refresh()`;
 - cached display;
 - explicit refresh;
 - progressive open-popup rebuild;
 - enrichment publication hooks.
 
-### `TurboCheck.lua`
+### `Runtime/TaskResolver.lua`
 
 Final task eligibility/readiness/publication.
+Owns the canonical `CheckWQ()` implementation.
 
 Responsibilities include:
 
@@ -90,7 +125,7 @@ Responsibilities include:
 - display-mode publication;
 - coalesced retries.
 
-### `Tooltip.lua`
+### `UI/Tooltip.lua`
 
 LibQTip popup rendering and lifecycle.
 
@@ -101,9 +136,10 @@ Responsibilities include:
 - expansion collapse;
 - popup position;
 - sort/display helpers;
-- safe release/rebuild.
+- exact-object, idempotent release through `ReleaseQTip()`;
+- canonical popup/LDB replacement through `RebuildQTip()`.
 
-### `Options.lua`
+### `UI/Options.lua`
 
 AceConfig settings UI.
 
@@ -129,7 +165,7 @@ Responsibilities include:
 - temporary original-addon enable/reload flow;
 - migration prompt/state.
 
-### `Achievements.lua`
+### `Tracking/Achievements.lua`
 
 Interprets declarative achievement data and registers relevant quest/POI/mission rewards.
 
@@ -169,14 +205,14 @@ Preserve WQAchievements/Urtgard attribution.
 
 Licensing information.
 
-## DB
+## Data
 
-### `DB/Data/Legion.lua`
-### `DB/Data/BattleForAzeroth.lua`
-### `DB/Data/Shadowlands.lua`
-### `DB/Data/Dragonflight.lua`
-### `DB/Data/WarWithin.lua`
-### `DB/Data/Midnight.lua`
+### `Data/Expansions/Legion.lua`
+### `Data/Expansions/BattleForAzeroth.lua`
+### `Data/Expansions/Shadowlands.lua`
+### `Data/Expansions/Dragonflight.lua`
+### `Data/Expansions/WarWithin.lua`
+### `Data/Expansions/Midnight.lua`
 
 Expansion-specific declarative content mappings.
 
@@ -190,21 +226,34 @@ Data can include:
 
 Do not put scanner loops or UI architecture here.
 
-### `DB/Expansions.lua`
+### `Data/Expansions.lua`
 
 Expansion-index/name map.
 
-### `DB/Zones.lua`
+### `Data/Zones.lua`
 
 Expansion-index/map-ID scan list.
 
 Adding a zone affects standard scanner coverage and Settings zone pages.
 
+### `Data/RuntimeData.lua`
+
+Stable shared lookup tables for currency IDs, reputation faction IDs,
+emissary quest IDs and localized World Quest type labels. Loaded before all
+runtime and Settings consumers. Preserves `WQA.EmissaryQuestIDList` as an alias
+to the canonical emissary table.
+
+### `Data/ContainerCollectibles.lua`
+
+Fixed collectible pools for racing purses and Benthic armor tokens. Stores
+account-wide manuscript quest IDs and Benthic item-modified appearance source
+IDs; it contains no collection API calls.
+
 ## Criterias
 
 ### `Criterias/CriteriaType.lua`
 
-Criteria enum/namespace.
+Compatibility alias to `WQA.Constants.CriteriaType`; preserves `WQA.Criterias`.
 
 ### `Criterias/AreaPoi.lua`
 
@@ -216,7 +265,7 @@ Maintains active/new/watched POI state and retry behavior.
 
 ### `Rewards/RewardType.lua`
 
-Canonical reward type strings.
+Compatibility alias to `WQA.Constants.RewardType`; preserves `WQA.Rewards`.
 
 ### `Rewards/Reward.lua`
 
@@ -289,24 +338,38 @@ See [RELEASE_AND_CI.md](RELEASE_AND_CI.md).
 
 Development tooling/scripts. Excluded from release package.
 
+`validate_project.py` checks structure, startup load order and package hygiene.
+`test_tracking_policy.lua` exercises tracking behavior with stubbed Blizzard APIs
+and runs under Lua 5.1 in the validation workflow. `test_reward_classifier.lua`
+checks representative reward categories, link fallbacks and retry propagation.
+`test_reward_scanner.lua` checks coalesced publication after initial reward
+inspection and completed item retries, including silent Settings publication.
+`test_runtime_lifecycle.lua` checks Settings registration, startup timing,
+event dispatch, combat recovery, War Mode refresh and mission updates.
+`test_task_resolver.lua` checks progressive readiness, retry ownership, final
+filtering and display-mode routing.
+`test_tooltip_lifecycle.lua` checks exact ownership, stale callbacks,
+idempotent cleanup and popup/LDB rebuild ordering.
+
 ### `.gitignore`
 
 Repository ignore rules.
 
 ### `.travis.yml`
 
-Legacy CI configuration if still retained. GitHub Actions are the active documented workflows.
+Removed in 1.2 Step 2. GitHub Actions own validation and release; the project
+validator rejects reintroducing this obsolete configuration.
 
 ## File ownership rule of thumb
 
 ```text
-stable game-ID mapping          → DB/Data, DB/Zones, lookup table
+stable game-ID mapping          → Data/Expansions, Data/Zones, Data/RuntimeData
 reward meaning/classification   → WQATurbo shared classifier / Rewards
 scanner timing/readiness        → RewardScanner
-task publication/readiness      → TurboCheck
-display/cache opening           → TurboDisplay
+task publication/readiness      → TaskResolver
+display/cache opening           → Display
 popup layout/lifecycle          → Tooltip
 settings                         → Options
-runtime scheduling/commands     → TurboRuntime
+runtime scheduling/commands     → Runtime
 collection API optimization     → CollectionCache
 ```

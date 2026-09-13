@@ -13,7 +13,11 @@ Custom
 Options
 ```
 
-Settings are built dynamically in `Options.lua`.
+Settings are built dynamically in `UI/Options.lua`.
+
+Stable currency, reputation, emissary and World Quest type lookup metadata is
+owned by `Data/RuntimeData.lua`. `UI/Options.lua` reads those tables while building
+the UI; loading Settings is not required to initialize runtime metadata.
 
 Most setters call a debounced refresh scheduler so that configuration changes become visible without requiring `/reload`.
 
@@ -61,6 +65,17 @@ Ordinary values:
 
 Character-specific/exclusive modes can also exist on individual entries.
 
+In 1.2 Step 3, mode keys come from `WQA.Constants.TrackingMode` and common rules
+live in `Tracking/TrackingPolicy.lua`. `GetState` returns enabled, always and character-only
+flags; `IsBulkMode` accepts only disabled/default/always; `SetValue` updates the
+mode and exclusive owner together. `UI/Options.lua` still schedules refreshes.
+
+Only achievements consume the character-only flag. Nested achievement
+registration preserves an inherited character-only force so completed child
+achievements are still evaluated for the selected character.
+A missing exclusive owner still displays the original mode in Settings, while
+runtime eligibility rejects it for a named character.
+
 ### Category bulk tracking
 
 Example:
@@ -84,6 +99,10 @@ Do not expose exclusive/character-only modes as bulk values.
 ### Completed entries and tooltips
 
 Completed entries remain hoverable.
+
+Mount and pet completion grouping uses the shared `Tracking/CollectionCache.lua`
+ownership indexes. Building the Settings tree does not perform one complete
+journal walk per collectible row.
 
 Achievement tooltips use achievement hyperlinks.
 
@@ -149,7 +168,7 @@ General behavior includes concepts such as:
 - minimum gold;
 - World Quest type filtering.
 
-The actual Settings label structure should be verified in `Options.lua`.
+The actual Settings label structure should be verified in `UI/Options.lua`.
 
 ## 5. World Quest types
 
@@ -216,6 +235,10 @@ Recognized items:
 
 Changing the toggle schedules the standard debounced settings refresh.
 
+An enabled purse is shown only while its own fixed manuscript pool contains an
+uncollected customization. This completion filtering is automatic and does not
+add another profile option.
+
 ## 8. Benthic gear — 1.1.0
 
 No new Benthic-specific option is introduced.
@@ -228,6 +251,10 @@ Rewards > Gear > Armor Cache
 
 This keeps the user model simple: these are equipment-container/token rewards.
 
+For 1.2.0, a Benthic token is automatically hidden when all appearances it can
+produce for the current character's armor type are collected. A missing
+transmog API result keeps the token visible.
+
 ## 9. Reputation
 
 Reputation pages are expansion-aware.
@@ -238,7 +265,10 @@ Optional behavior:
 
 > Hide Exalted / max Renown reputations
 
-When enabled, maxed factions should disappear from settings and be ignored for dynamic matching.
+The same control appears on World Quest and Mission Table reputation pages and
+updates one shared profile setting. When enabled, maxed factions should
+disappear from settings and be ignored for direct reputation, reputation-item
+and reputation-currency matching in both World Quests and missions.
 
 Max-state detection must cover classic, Renown and friendship systems.
 

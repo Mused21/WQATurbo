@@ -1,5 +1,6 @@
 ---@class WQATurbo
 local WQA = WQATurbo
+local TaskType = WQA.Constants.TaskType
 
 --[[
 WQA Turbo progressive CheckWQ
@@ -31,6 +32,7 @@ schedule a later retry but does not block ready world quests.
 local IsActive = C_TaskQuest.IsActive
 
 local CHECK_RETRY_DELAY_SECONDS = 0.50
+local CHECK_RETRY_MAX_AGE_SECONDS = 30.0
 
 local function cancelCheckRetry(self)
 	local timer = self._wqaTurboCheckRetryTimer
@@ -42,21 +44,54 @@ local function cancelCheckRetry(self)
 	self._wqaTurboCheckRetryTimer = nil
 end
 
-local function scheduleCheckRetry(self)
+---Cancel pending readiness work and begin ownership for a new full refresh.
+function WQA:ResetTaskResolverRetry()
+	cancelCheckRetry(self)
+	self._wqaTurboTaskGeneration = (self._wqaTurboTaskGeneration or 0) + 1
+	self._wqaTurboCheckRetryStartedAt = nil
+	self._wqaTurboCheckRetryTimedOut = nil
+end
+
+---Schedule one generation-owned readiness pass.
+---@param restartWindow boolean? Start a new retry window after an external event.
+---@return boolean scheduled
+function WQA:ScheduleTaskResolverCheck(restartWindow)
 	-- Coalesce all unresolved task/link retries into one timer.
 	if self._wqaTurboCheckRetryTimer then
-		return
+		return true
 	end
 
-	self._wqaTurboCheckRetryTimer = C_Timer.NewTimer(
+	local now = GetTime()
+	if restartWindow or not self._wqaTurboCheckRetryStartedAt then
+		self._wqaTurboCheckRetryStartedAt = now
+		self._wqaTurboCheckRetryTimedOut = nil
+	end
+
+	if now - self._wqaTurboCheckRetryStartedAt >= CHECK_RETRY_MAX_AGE_SECONDS then
+		self._wqaTurboCheckRetryTimedOut = true
+		return false
+	end
+
+	local generation = self._wqaTurboTaskGeneration or 0
+	local timer
+	timer = C_Timer.NewTimer(
 		CHECK_RETRY_DELAY_SECONDS,
 		function()
+			if
+				self._wqaTurboCheckRetryTimer ~= timer
+				or (self._wqaTurboTaskGeneration or 0) ~= generation
+			then
+				return
+			end
+
 			self._wqaTurboCheckRetryTimer = nil
 
 			-- "new" means already-published tasks are not announced again.
 			self:CheckWQ("new", true)
 		end
 	)
+	self._wqaTurboCheckRetryTimer = timer
+	return true
 end
 
 local function isQuestActive(self, questID)
@@ -82,7 +117,7 @@ function WQA:TurboPrepareWorldQuest(questID)
 
 	local questLink = self:GetTaskLink({
 		id = questID,
-		type = "WORLD_QUEST"
+		type = TaskType.WorldQuest
 	})
 
 	if not questLink then
@@ -207,12 +242,6 @@ end
 function WQA:CheckWQ(mode, fromRetry)
 	self:Debug("CheckWQ (WQA Turbo progressive)", mode)
 
-	-- Dynamic Reward() is background-only in Turbo. EmissaryReward() is still
-	-- upstream code, so allow it to finish without blocking ordinary WQs.
-	if self.emissaryRewards ~= true then
-		scheduleCheckRetry(self)
-	end
-
 	local activeQuests = {}
 	local newQuests = {}
 	local needsRetry = false
@@ -232,7 +261,7 @@ function WQA:CheckWQ(mode, fromRetry)
 		end
 	end
 
-	local activeMissions = self:CheckMissions()
+	local activeMissions, missionsNeedRetry = self:CheckMissions()
 	local readyMissions = {}
 	local newMissions = {}
 
@@ -250,6 +279,10 @@ function WQA:CheckWQ(mode, fromRetry)
 		end
 	else
 		activeMissions = {}
+		needsRetry = true
+	end
+
+	if missionsNeedRetry then
 		needsRetry = true
 	end
 
@@ -277,7 +310,7 @@ function WQA:CheckWQ(mode, fromRetry)
 			self.activeTasks,
 			{
 				id = id,
-				type = "WORLD_QUEST"
+				type = TaskType.WorldQuest
 			}
 		)
 	end
@@ -287,7 +320,7 @@ function WQA:CheckWQ(mode, fromRetry)
 			self.activeTasks,
 			{
 				id = id,
-				type = "MISSION"
+				type = TaskType.Mission
 			}
 		)
 	end
@@ -299,7 +332,7 @@ function WQA:CheckWQ(mode, fromRetry)
 				{
 					id = poiId,
 					mapId = mapId,
-					type = "AREA_POI"
+					type = TaskType.AreaPoi
 				}
 			)
 		end
@@ -316,7 +349,7 @@ function WQA:CheckWQ(mode, fromRetry)
 			self.newTasks,
 			{
 				id = id,
-				type = "WORLD_QUEST"
+				type = TaskType.WorldQuest
 			}
 		)
 	end
@@ -328,7 +361,7 @@ function WQA:CheckWQ(mode, fromRetry)
 			self.newTasks,
 			{
 				id = id,
-				type = "MISSION"
+				type = TaskType.Mission
 			}
 		)
 	end
@@ -346,7 +379,7 @@ function WQA:CheckWQ(mode, fromRetry)
 				{
 					id = poiId,
 					mapId = mapId,
-					type = "AREA_POI"
+					type = TaskType.AreaPoi
 				}
 			)
 		end
@@ -376,9 +409,11 @@ function WQA:CheckWQ(mode, fromRetry)
 	self:UpdateLDBText(next(self.activeTasks), next(self.newTasks))
 
 	if needsRetry then
-		scheduleCheckRetry(self)
+		self:ScheduleTaskResolverCheck()
 	else
 		cancelCheckRetry(self)
+		self._wqaTurboCheckRetryStartedAt = nil
+		self._wqaTurboCheckRetryTimedOut = nil
 	end
 
 	-- A retry or background enrichment may have changed activeTasks while the

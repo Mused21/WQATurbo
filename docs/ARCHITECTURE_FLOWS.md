@@ -7,9 +7,9 @@ This companion document contains end-to-end flow traces for common behaviors.
 ```text
 user: /wqat
     ↓
-TurboRuntime command dispatch
+Runtime command dispatch
     ↓
-TurboDisplay cache-first path
+Display cache-first path
     ↓
 current activeTasks / questList
     ↓
@@ -42,7 +42,7 @@ per-quest pending/retry
          ↓
 TurboPublishEnrichment when useful results appear
          ↓
-TurboCheck
+TaskResolver
          ↓
 activeTasks/newTasks
 ```
@@ -69,6 +69,7 @@ Expected:
 - no chat spam;
 - no popup forced open;
 - many bulk changes coalesce.
+- combat-delayed refreshes resume with the same silent Settings mode.
 
 ## Flow D: 1.1.0 Shift+Left-click
 
@@ -101,7 +102,7 @@ AddRewardToQuest(wqID, ACHIEVEMENT, ...)
     ↓
 questList populated immediately
     ↓
-TurboCheck final activity/type/zone filter
+TaskResolver final activity/type/zone filter
     ↓
 ready task appears
 ```
@@ -185,18 +186,22 @@ Eligibility and upgrade usefulness are separate.
 ```text
 enrichment/settings causes popup refresh
     ↓
-capture old tooltip
+RebuildQTip captures old tooltip
     ↓
-detach WQA.tooltip reference
+ReleaseQTip verifies exact ownership
     ↓
-clear old attached quests/missions/pois
+detach WQA.tooltip and matching popup reference
+    ↓
+clear attached quests/missions/pois
     ↓
 LibQTip:Release(old)
     ↓
 acquire/rebuild popup
 ```
 
-Any delayed old callback verifies it still owns the same tooltip before releasing.
+Popup hide, LDB auto-hide, collapse and progressive enrichment all converge on
+this lifecycle. Any delayed old callback verifies it still owns the same
+tooltip before releasing or hiding the popup.
 
 ## Flow J: migration
 

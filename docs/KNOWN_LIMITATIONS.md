@@ -8,6 +8,12 @@ Static achievement relevance is recreated immediately from addon data.
 
 Reward-derived relevance such as transmog depends on Blizzard reward/item data and can take longer to rediscover after an explicit refresh.
 
+An already-open popup is republished after the initial scan pass and after a
+retry batch resolves more reward data. It can show static achievements first,
+but it should fill in the newly filtered reward items without being closed and
+reopened. A Settings-triggered scan retains silent publication mode while doing
+that asynchronous work.
+
 Current behavior does not retain a session-local stale-while-revalidate dynamic reward cache.
 
 Possible future improvement:
@@ -37,15 +43,8 @@ No implementation can assume every API is complete on the first call after login
 
 `SkipRewardDataPreloadQuests` exists because certain quests produce inaccurate or problematic preload behavior.
 
-If duplicate skip lists still exist in legacy and optimized paths, they are maintenance debt.
-
-Potential cleanup:
-
-```text
-one shared skip-list source
-```
-
-Do not centralize immediately before release without need.
+The canonical skip list lives in `Scanning/RewardScanner.lua`; keep new
+exclusions there.
 
 ## 4. Legacy/special daily and weekly quests do not use one universal API
 
@@ -94,23 +93,7 @@ Older expansion item-level comparisons may be meaningless to a modern character.
 
 1.1.0 fixes category eligibility for caches, but the old metadata/scoring code remains.
 
-## 8. Main module retains legacy implementations
-
-`WQATurbo.lua` contains runtime methods that later Turbo modules supersede.
-
-This increases cognitive load and creates a risk of patching an inactive implementation.
-
-Long-term cleanup could separate:
-
-```text
-shared classifier/helpers
-from
-legacy fallback/runtime orchestration
-```
-
-but should be done incrementally with strong regression tests.
-
-## 9. Data completeness is manual
+## 8. Data completeness is manual
 
 Achievement/collectible mappings are curated.
 
@@ -125,20 +108,21 @@ Blizzard adding or changing:
 
 can require a data update.
 
-## 10. Zone fallback mappings can age
+## 9. Zone fallback mappings can age
 
 `Utilities.lua` contains some quest-to-zone fallback mappings for cases where direct APIs are incomplete.
 
 These mappings need maintenance when content moves/changes.
 
-## 11. Settings labels have constrained width
+## 10. Settings labels have constrained width
 
 Blizzard Settings UI can clip long labels.
 
 Use short option labels and full-width descriptions rather than embedding explanations into the label.
 
-## 12. Current docs baseline
+## 11. Current docs baseline
 
-These docs target planned 1.1.0 on `feature/popupandcontainers`.
+These docs target the 1.2.0 refactor on `refactor/1.2.0`.
 
-If additional commits land before 1.1.0 merge, update `VERSION_1.1.0.md` and any affected architectural reference in the same PR.
+Update `VERSION_1.2.0.md` and any affected architectural reference during
+release preparation or follow-up development.

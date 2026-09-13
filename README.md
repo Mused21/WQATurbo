@@ -53,7 +53,6 @@ The original project is distributed as Public Domain.
 
 See `CREDITS.md` and `LICENSE.md`.
 
-```markdown
 ## Developer documentation
 
 Maintainer and contributor documentation is available under [`docs/`](docs/README.md), including:
@@ -63,4 +62,3 @@ Maintainer and contributor documentation is available under [`docs/`](docs/READM
 - settings and functional behavior;
 - data models and extension guides;
 - diagnostics, release automation and regression invariants.
-```

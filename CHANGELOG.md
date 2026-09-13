@@ -1,5 +1,34 @@
 # WQA Turbo Changelog
 
+## 1.2.0
+
+### Improved
+- Racing reward purses and Benthic armor tokens now stop making a World Quest relevant after every collectible outcome available from that specific container is owned.
+- Reorganized internal modules by data, tracking, scanning, runtime, and UI responsibility to make future changes safer.
+- Consolidated runtime entry points so each behavior has one authoritative implementation.
+- Reused mount and pet journal snapshots in Settings instead of rescanning an entire journal for every tracked entry.
+- Split reward classification into focused helpers while preserving incremental, frame-budgeted scanning.
+- Centralized popup tooltip cleanup and rebuilding to prevent stale callbacks from releasing a newer tooltip.
+- Made World Quest, Area POI, Mission Table, and emissary readiness progressive so available entries can appear while unrelated Blizzard data is still loading.
+- Bounded task and emissary readiness retries and cancelled callbacks belonging to superseded refreshes.
+- Added Lua regression suites and stronger project validation for runtime ownership, lifecycle, tracking, scanning, and tooltip behavior.
+
+### Fixed
+- Fixed an open World Quest popup sometimes remaining at achievement-only results after settings-triggered reward filtering completed.
+- Added the shared Hide Exalted/maximum Renown control to Mission Table reputation settings.
+- Fixed character-only tracking on a parent achievement failing to propagate to nested achievement criteria.
+- Fixed one missing `QUEST_PIN` criterion quest ID preventing valid later criteria from being registered.
+- Fixed StatWeightScore dual-slot comparisons selecting the second slot instead of the lower equipped score.
+- Fixed minimap right-click navigation failing to retain the numeric Blizzard Settings category ID returned by AceConfigDialog.
+- Fixed stale collectible source items remaining tracked after their setting or collection state changed.
+- Applied Hide Exalted/maximum Renown consistently to direct, item, and currency reputation rewards across World Quests and missions.
+- Preserved silent Settings refresh behavior when a refresh is deferred by combat.
+- Fixed sorting when Blizzard temporarily has no task, mission, or Area POI name available.
+- Fixed reputation-currency-only missions being omitted and allowed ready missions to appear while another mission is still loading.
+- Kept enabled equipment caches visible while supplemental item-level data is pending.
+- Fixed Area POIs being omitted when their metadata or one of their reward links was temporarily unavailable.
+- Fixed an open popup failing to republish after Mission Table or emissary data became available.
+
 ## 1.1.0
 
 ### Added

@@ -9,6 +9,66 @@ WQA Turbo has two kinds of correctness requirements:
 
 A feature is not finished until both are considered.
 
+## Local regression checks
+
+From the repository root with a Lua 5.1 interpreter:
+
+```text
+lua5.1 tools/test_tracking_policy.lua
+lua5.1 tools/test_reward_classifier.lua
+lua5.1 tools/test_reward_scanner.lua
+lua5.1 tools/test_runtime_lifecycle.lua
+lua5.1 tools/test_task_resolver.lua
+lua5.1 tools/test_tooltip_lifecycle.lua
+```
+
+In the local Windows workspace, Lua 5.1.5 is installed at:
+
+```powershell
+$lua = Join-Path $env:LOCALAPPDATA 'Programs/Lua/5.1.5/lua5.1.exe'
+& $lua tools/test_tracking_policy.lua
+```
+
+The test loads actual registration and Settings methods with stubbed Blizzard
+APIs. It covers default/disabled/always/exclusive/character-only modes, missing
+owners, unknown values, owned/unowned collections, completed tracking quests,
+unknown journal entries, achievement completion, nested character-only forcing,
+missing quest-pin criterion IDs, exclusive owner cleanup, bulk state and one
+refresh per bulk operation. It also checks that repeated registration and
+Settings completion queries reuse journal snapshots, and that
+`CreateQuestList()` invalidates both snapshots exactly once without a load-order
+wrapper.
+
+The reward-classifier test covers authoritative item-link fallback, missing
+data retries, containers, gear upgrades, StatWeightScore dual-slot selection,
+equipment caches, transmog and retry, reputation items, recipes, known/custom
+items, Azerite traits and conduits. It can run the same cases against an
+optional prior `WQATurbo.lua` path.
+
+The reward-scanner test checks that initial reward inspection and completed
+item retries dirty a publication batch, and that repeated flushes without new
+work do not rebuild the display again. It also verifies that a scanner started
+by a Settings refresh republishes silently while ordinary scans use new-task
+mode. Its display checks cover refresh-mode visibility, first-access fallback
+and cache-only popup routing through the canonical `Show()` owner, and it
+asserts that `Scanning/RewardScanner.lua` supplies `Reward()`.
+
+The runtime-lifecycle test exercises the canonical `OnEnable()` owner. It
+checks Settings registration, startup-delay capping, recurring refreshes,
+numeric Blizzard Settings category-ID capture, combat recovery, quest
+completion, War Mode refresh and mission updates.
+
+The task-resolver test exercises the canonical `CheckWQ()` owner. It checks
+per-task readiness, retry coalescing/cancellation, final filtering and
+Settings/popup/LDB publication modes.
+
+The tooltip-lifecycle test checks exact-object ownership, stale `OnHide`
+callbacks, idempotent release, attached-task cleanup and popup/LDB rebuild
+ordering against the actual lifecycle helpers.
+
+This is separate from `luac5.1 -p`, which checks syntax without running code.
+All checks run in GitHub Actions; in-game smoke testing is still required.
+
 ## 2. Baseline smoke test
 
 After any meaningful change:
@@ -130,7 +190,8 @@ Expected:
 - no stale LibQTip errors;
 - no nil tooltip callback;
 - no duplicate popup;
-- no stuck old rows.
+- no stuck old rows;
+- delayed old tooltip callbacks do not close or release the current popup.
 
 ## 10. Zone/type/War Mode test
 
@@ -190,14 +251,19 @@ With Armor Cache enabled, test an active Nazjatar WQ rewarding one of IDs 169477
 
 Expected:
 
-- token appears as reward;
+- token appears while at least one appearance for the current character's
+  armor type is uncollected;
+- token disappears when every appearance in its fixed pool is collected;
+- a missing/uncached transmog source keeps the token visible and is retried;
 - no requirement that it upgrade current gear.
 
 ## 15. 1.1.0 Dragonflight racing purses
 
 With Racing reward containers enabled:
 
-- active racing WQ with recognized purse → show.
+- active racing WQ with at least one uncollected manuscript from that purse → show;
+- active racing WQ whose purse-specific manuscript pool is complete → hide;
+- completing Reach Racer's four manuscripts must not hide any other purse.
 
 Disable:
 

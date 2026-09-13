@@ -22,7 +22,7 @@ WQA Turbo changes the unit of retry from **the whole world scan** to **the indiv
 
 ## 2. Scanner responsibilities
 
-`RewardScanner.lua` is responsible for dynamic reward enrichment.
+`Scanning/RewardScanner.lua` is responsible for dynamic reward enrichment.
 
 It does not replace the static achievement/collectible mapping system.
 
@@ -51,7 +51,7 @@ MAX_PRELOAD_REISSUES            2
 MAX_PENDING_AGE_SECONDS         30 s
 ```
 
-Always verify the constants in `RewardScanner.lua` before relying on exact values.
+Always verify the constants in `Scanning/RewardScanner.lua` before relying on exact values.
 
 ### Why a frame budget is preferable to a quest-count budget
 
@@ -104,7 +104,7 @@ Some quests are intentionally excluded through `SkipRewardDataPreloadQuests` bec
 
 ### Maintenance note
 
-Historically the skip list existed in both the optimized scanner and a legacy/fallback path. If both copies still exist, keep them synchronized or centralize them in a future cleanup.
+The canonical skip list lives in `Scanning/RewardScanner.lua`.
 
 Do not casually delete the list: the exclusions were added because specific quests produced pathological reward-preload behavior.
 
@@ -123,17 +123,25 @@ pending quest becomes ready later
     ↓
 classify reward
     ↓
-if quest becomes relevant:
+mark the scan batch dirty
+    ↓
+at the end of the initial pass or retry batch:
     TurboPublishEnrichment()
     ↓
-TurboCheck
+TaskResolver
     ↓
 refresh open popup / new-task state
 ```
 
-This is why an open persistent popup can gain additional reward-based quests after it was opened.
+Initial reward inspection marks its batch dirty for item, currency, profession
+and reputation classification. An item-only retry marks the batch dirty when it
+finishes. Publication is coalesced at batch boundaries, so an open persistent
+popup gains the resolved reward-based quests without rebuilding once per quest.
+The scanner also retains the refresh mode that created it: Settings-triggered
+enrichment republishes in silent `settings` mode, while ordinary background
+discovery uses `new` mode.
 
-## 7. Readiness in `TurboCheck.lua`
+## 7. Readiness in `Runtime/TaskResolver.lua`
 
 Reward scanning and task display have separate readiness concerns.
 
@@ -145,17 +153,33 @@ Even after relevance exists, WQA may still need:
 - currency link;
 - mission link/reward text.
 
-`TurboCheck` prepares each task individually.
+`TaskResolver` prepares each task individually.
 
 A task that is ready can be published even if another task needs a link retry.
+Area POI metadata and all rewards are likewise checked per `(POI, map)` pair,
+so one incomplete POI does not suppress another ready POI.
+Mission discovery returns ready missions together with an aggregate pending
+flag. A missing mission payload or item therefore schedules another readiness
+pass without discarding unrelated ready missions. Mission-list update events
+use the same coalesced TaskResolver path and republish the task cache.
 
-The readiness retry is coalesced through a timer rather than spawning uncontrolled timers.
+The readiness retry is coalesced through a timer rather than spawning
+uncontrolled timers. A full refresh owns a new retry generation and limits its
+readiness window to 30 seconds. Superseded callbacks are inert, while a later
+mission-list event can start a fresh bounded window for newly available data.
+
+Emissary reward discovery uses the same ownership model. It queries each bounty
+map once per pass, publishes partial ready data, cancels timers from superseded
+refreshes and stops retrying after 30 seconds.
 
 ## 8. Collection cache
 
 Mount and pet journal scans are relatively expensive when repeated.
 
-`CollectionCache.lua` builds collection indexes once per refresh and lets static registration reuse them.
+`Tracking/CollectionCache.lua` builds collection indexes once per refresh and lets static
+registration and Settings completion grouping reuse them. Settings queries use
+constant-time spell-ID/creature-ID lookups instead of walking a whole journal
+for every displayed mount or pet.
 
 The conceptual flow is:
 
@@ -166,12 +190,20 @@ refresh
 → discard/rebuild on next refresh as appropriate
 ```
 
+Mode eligibility now uses `TrackingPolicy.GetState` after the same known-entry
+checks. This helper returns flags without allocating tables or querying journals.
+The once-per-refresh snapshots and per-quest tracking gates are unchanged.
+Scanner changes in Step 3 only replace reward/mode literals with equal constants.
+
 This avoids:
 
 ```text
 for each expansion:
     for each mapped pet/mount:
         rescan entire Blizzard collection journal
+
+for each Settings row:
+    rescan the corresponding collection journal
 ```
 
 ## 9. What is cached and what is not
@@ -214,6 +246,8 @@ Desired behavior:
 - no chat spam;
 - do not automatically open a closed popup;
 - if the persistent popup is already open, update it when new results are ready.
+- if combat defers the refresh, retain the silent Settings publication mode
+  until `PLAYER_REGEN_ENABLED` resumes it.
 
 Bulk operations should trigger **one** debounced refresh, not one refresh per item.
 
@@ -287,7 +321,7 @@ This separates scanner bugs from classification bugs and publication bugs.
 
 ## 14. Reward classification versus scanner ownership
 
-Do not put item IDs and one-off category rules into `RewardScanner.lua` unless discovery itself requires scanner-specific behavior.
+Do not put item IDs and one-off category rules into `Scanning/RewardScanner.lua` unless discovery itself requires scanner-specific behavior.
 
 Preferred ownership:
 
@@ -299,4 +333,14 @@ CheckReward / data tables
     = what a reward means
 ```
 
-The 1.1.0 container changes follow this rule: scanner architecture is unchanged; only reward classification/settings semantics changed.
+`CheckReward()` resolves the authoritative reward link and aggregates retry
+state. Focused local classifiers handle containers, gear upgrades, equipment
+caches, transmog, reputation items, recipes, known/custom items and legacy
+Azerite/conduit behavior. Each classifier publishes through the canonical
+reward merge path.
+
+The classifier split does not change pending-quest state or frame budgets.
+During in-game verification, the scanner's existing batch publication was
+corrected to include initial item/currency/profession inspection and completed
+item retries, so an already-open popup receives those resolved results. The
+scanner retains silent Settings publication semantics across asynchronous work.

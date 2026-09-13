@@ -1,7 +1,6 @@
 package-as: WQATurbo
 enable-nolib-creation: no
 
-
 manual-changelog:
   filename: CHANGELOG.md
   markup-type: markdown
@@ -18,11 +17,12 @@ externals:
   Libs/LibQTip-1.0: https://repos.wowace.com/wow/libqtip-1-0
   Libs/LibStub: https://repos.wowace.com/wow/libstub/trunk
   Libs/LibDBIcon-1.0: https://repos.wowace.com/wow/libdbicon-1-0/trunk
-
 ignore:
   - .git
   - .github
   - tools
   - dist
+  - docs
+  - AGENTS.md
   - RELEASE_CHECKLIST.md
   - CURSEFORGE_DESCRIPTION.md

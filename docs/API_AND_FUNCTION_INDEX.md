@@ -2,7 +2,9 @@
 
 This is a maintainer-oriented index of the important public/shared methods and runtime entry points.
 
-It is not intended to replace source search. WQA Turbo deliberately overrides some methods in later-loaded modules, so always confirm the final implementation in the current branch.
+It is not intended to replace source search. Major runtime entry points have
+one source owner; confirm that owner and its TOC dependencies in the current
+branch before changing it.
 
 ## Core / initialization
 
@@ -29,15 +31,16 @@ AceDB opens WQATurboDB
 
 ### `WQA:OnEnable()`
 
-A compatibility implementation exists in the core module, while optimized startup/runtime behavior is owned by `TurboRuntime.lua`.
-
-Always inspect the later-loaded implementation when debugging startup.
+Owned only by `Runtime/Runtime.lua`. It registers Settings, creates the event
+frame, schedules startup and recurring refreshes, offers migration and loads
+the garrison UI dependency.
 
 ## Quest-list construction
 
 ### `WQA:CreateQuestList()`
 
-Rebuilds the current relevance model.
+Owned only by `WQATurbo.lua`. Rebuilds the current relevance model and
+invalidates the mount/pet journal snapshots once at the start of the rebuild.
 
 Conceptually:
 
@@ -73,13 +76,13 @@ Mission equivalent.
 
 ### `WQA:AddMounts(mounts)`
 
-Registers relevant mapped mount sources.
-
-The optimized collection-cache layer may replace/augment this implementation.
+Owned only by `Tracking/CollectionCache.lua`. Registers relevant mapped mount
+sources using one shared Mount Journal snapshot per refresh.
 
 ### `WQA:AddPets(pets)`
 
-Registers relevant mapped pet sources.
+Owned only by `Tracking/CollectionCache.lua`. Registers relevant mapped pet
+sources using one shared Pet Journal snapshot per refresh.
 
 ### `WQA:AddToys(toys)`
 
@@ -105,17 +108,16 @@ Registers relevance for an Area POI/map pair.
 
 ### `WQA.Criterias.AreaPoi:Check()`
 
-Evaluates current POI availability/readiness and returns active/new/retry information.
+Evaluates current POI availability/readiness and returns active/new/retry
+information. Missing POI metadata or any missing required reward link keeps
+only that POI pending.
 
 ## Reward scanner
 
 ### `WQA:Reward()`
 
-A compatibility implementation exists in `WQATurbo.lua`.
-
-The optimized active runtime implementation is supplied by `RewardScanner.lua`.
-
-Do not patch the legacy broad scanner expecting runtime behavior to change unless the optimized override intentionally calls that helper.
+Owned only by `Scanning/RewardScanner.lua`. It starts frame-budgeted dynamic
+reward enrichment and makes the static task set immediately usable.
 
 ### `WQA:CheckItems(questID, isEmissary)`
 
@@ -143,6 +145,15 @@ Responsibilities include:
 - Azerite traits/conduits.
 
 This is generally where a new ordinary reward-item category belongs.
+
+### `WQA:IsContainerCollectibleComplete(itemID)`
+
+Owned by `Tracking/ContainerCompletion.lua`. Evaluates fixed container pools
+using account-wide quest flags or Blizzard transmog appearance state.
+
+Returns `complete, retry`. Unknown containers return `false, false`; an
+unavailable transmog source returns `false, true`, so classification keeps the
+container visible while the scanner retries.
 
 ### `WQA:CheckCurrencies(questID, isEmissary)`
 
@@ -206,9 +217,10 @@ Used by hide-maxed behavior.
 
 ### `WQA:EmissaryReward()`
 
-Compatibility/core emissary reward processing.
-
-Inspects enabled emissaries and feeds rewards through shared item/currency classifiers.
+Inspects enabled emissaries and feeds rewards through shared item/currency
+classifiers. Each full invocation owns a new scan generation; unresolved
+Blizzard bounty/reward data is retried for at most 30 seconds, and superseded
+callbacks are ignored.
 
 ### `WQA:EmissaryIsActive(questID)`
 
@@ -218,7 +230,8 @@ Checks whether a known emissary quest is currently in the quest log/active model
 
 ### `WQA:CheckMissions()`
 
-Inspects supported mission tables and builds relevant mission state.
+Inspects supported mission tables and returns both the ready mission set and a
+retry flag for unavailable mission/item data.
 
 Supports configured currencies/reputation, custom items, transmog and legacy reward categories.
 
@@ -226,9 +239,7 @@ Supports configured currencies/reputation, custom items, transmog and legacy rew
 
 ### `WQA:CheckWQ(mode, ...)`
 
-A compatibility implementation exists in `WQATurbo.lua`.
-
-The optimized runtime owner is `TurboCheck.lua`.
+Owned only by `Runtime/TaskResolver.lua`.
 
 The Turbo implementation:
 
@@ -238,37 +249,60 @@ The Turbo implementation:
 - populates `activeTasks` and `newTasks`;
 - routes to chat/popup/LDB behavior by mode.
 
+### `WQA:ResetTaskResolverRetry()`
+
+Cancels a pending TaskResolver timer and starts ownership for a new full-refresh
+generation.
+
+### `WQA:ScheduleTaskResolverCheck(restartWindow)`
+
+Coalesces readiness retries and mission-list event updates behind the existing
+TaskResolver timer before calling `CheckWQ("new", true)`. Retries are limited to
+30 seconds per generation; `restartWindow` lets an external readiness event
+start a fresh bounded window.
+
 ### `WQA:Show(...)`
 
-Core display/refresh behavior is augmented/overridden by Turbo modules.
-
-Do not assume a call named `Show` always performs a scan; Turbo display intentionally separates cached display from explicit refresh.
+Owned only by `Runtime/Display.lua`. Popup and LDB modes use `ShowCached()`;
+other modes use `Refresh()`. A call named `Show` therefore does not always
+perform a scan.
 
 ### `WQA:Refresh(...)`
 
-Turbo explicit refresh entry point.
+Explicit refresh entry point owned by `Runtime/Display.lua`.
 
 Used by commands/settings/minimap Shift+Left-click.
 
 ### `WQA:ShowCached(...)`
 
-Turbo cache-first display helper.
+Cache-first display helper owned by `Runtime/Display.lua`.
 
-### `WQA:TurboPublishEnrichment()`
+### `WQA:TurboPublishEnrichment(mode)`
 
 Called when background dynamic scanning discovers useful additional relevance.
 
-Triggers readiness/publication without restarting the global scan.
+Triggers readiness/publication without restarting the global scan, retaining
+silent `settings` mode when that refresh started the scanner.
 
 ### `WQA:TurboRefreshOpenPopup()`
 
-Rebuilds the persistent popup from current ready state while preserving safe tooltip lifecycle.
+Delegates persistent-popup replacement to the canonical `RebuildQTip()` path.
 
 ## Popup / tooltip
 
 ### `WQA:CreateQTip()`
 
 Creates/acquires a LibQTip instance.
+
+### `WQA:ReleaseQTip(tooltip)`
+
+Releases only the exact tooltip still owned by WQA. It detaches shared state
+before LibQTip callbacks run, clears attached tasks and safely ignores stale or
+repeated calls.
+
+### `WQA:RebuildQTip(mode, tasks)`
+
+Canonical release/rebuild path for persistent popup and transient LDB output.
 
 ### `WQA:UpdateQTip(tasks)`
 
@@ -280,7 +314,7 @@ Applies height cap and scrolling behavior.
 
 ### `WQA:RefreshVisibleQTip()`
 
-Rebuild helper used by collapse/display changes.
+Routes expansion-collapse refreshes through `RebuildQTip()`.
 
 ### `WQA:AnnouncePopUp(...)`
 
@@ -393,7 +427,7 @@ Use `/wqat perf`, `/wqat scan`, `/wqat cache` rather than adding permanent print
 
 ## Command dispatch
 
-Modern command handling lives in `TurboRuntime.lua`.
+Modern command handling lives in `Runtime/Runtime.lua`.
 
 Supported commands documented by the project:
 

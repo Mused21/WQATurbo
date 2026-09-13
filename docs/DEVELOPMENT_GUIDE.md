@@ -32,7 +32,9 @@ git status
 
 ## 2. Trace the runtime owner first
 
-Because later-loaded Turbo modules override core methods, never patch based only on the first function definition you find.
+Step 8 gives each major runtime entry point one source owner. Search before
+patching so that ownership remains explicit and duplicate definitions do not
+silently return.
 
 Use:
 
@@ -41,7 +43,8 @@ git grep -n "function WQA:CheckWQ"
 git grep -n "WQA.CheckWQ"
 ```
 
-Then inspect TOC load order.
+Then inspect TOC load order for dependencies and later performance
+instrumentation.
 
 This rule applies especially to:
 
@@ -50,6 +53,22 @@ This rule applies especially to:
 - `Show`
 - `OnEnable`
 - collection registration helpers.
+
+### Shared constants and tracking rules
+
+Use `WQA.Constants.RewardType`, `CriteriaType`, `TaskType` and `TrackingMode` in
+runtime code. `WQA.Rewards.RewardType` and `WQA.Criterias.CriteriaType` remain
+compatible aliases. Keep persisted string values stable; declarative content
+can continue using those strings.
+
+Use `WQA.TrackingPolicy` for shared mode flags, bulk eligibility and ownership
+writes. Do not move collection API calls or refresh scheduling into this module.
+Run `lua5.1 tools/test_tracking_policy.lua` after changing tracking rules.
+
+Stable currency, reputation, emissary and World Quest type lookup metadata
+belongs in `Data/RuntimeData.lua`. Keep `UI/Options.lua` focused on AceConfig tree
+construction and UI-only ordering/label metadata. When adding a runtime-data
+consumer, keep `Data/RuntimeData.lua` earlier in TOC load order.
 
 ## 3. Adding a new achievement mapping
 
@@ -128,7 +147,7 @@ Do not assume every old daily/weekly quest system behaves like Mechagon.
 ## 6. Adding a zone
 
 1. Verify actual Blizzard map ID.
-2. Add to correct expansion in `DB/Zones.lua`.
+2. Add to correct expansion in `Data/Zones.lua`.
 3. Decide whether any quest-zone fallback mapping is needed.
 4. Verify Settings > Zones.
 5. Verify scanner map count.
@@ -164,6 +183,11 @@ Preferred process:
 8. test option ON/OFF.
 
 The 1.1.0 racing-purse change is a good example.
+
+Keep reward meaning in the focused classifiers orchestrated by `CheckReward()`.
+Do not move category logic into `Scanning/RewardScanner.lua`. Run
+`lua5.1 tools/test_reward_classifier.lua` after changing item-link acquisition,
+retry propagation or any reward category.
 
 ## 9. Cache/category semantics
 
@@ -282,6 +306,11 @@ Always hide the hover GameTooltip before opening another UI.
 Respect LibQTip lifecycle safety.
 
 Never release a tooltip from a stale delayed callback.
+
+Capture the tooltip object and call `WQA:ReleaseQTip(capturedTooltip)`. Use
+`WQA:RebuildQTip("popup", tasks)` or `WQA:RebuildQTip("LDB")` when replacing a
+display. Do not add another direct `LibQTip:Release()` or `WQA.tooltip = nil`
+path.
 
 When rebuilding:
 

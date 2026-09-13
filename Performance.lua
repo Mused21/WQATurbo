@@ -215,6 +215,8 @@ WrapMethod(WQA, "AnnounceChat")
 WrapMethod(WQA, "AnnouncePopUp")
 WrapMethod(WQA, "AnnounceLDB")
 WrapMethod(WQA, "UpdateQTip")
+WrapMethod(WQA, "ReleaseQTip")
+WrapMethod(WQA, "RebuildQTip")
 
 -- Area POI processing lives on its own object.
 if WQA.Criterias and WQA.Criterias.AreaPoi then

@@ -1,12 +1,11 @@
 ---@class WQATurbo
 local WQA = WQATurbo
-local LibQTip = LibStub("LibQTip-1.0")
 
 --[[
 WQA Turbo cached UI
 ===================
 
-Upstream WQATurbo uses WQA:Show() for two different jobs:
+The compatibility core used WQA:Show() for two different jobs:
 
   1. rebuild/refresh the entire data model;
   2. display that model in chat, the minimap popup, or the LDB tooltip.
@@ -21,15 +20,24 @@ Turbo separates those concerns:
   * automatic scheduled Show("new", true) still performs a real refresh.
 
 This also provides progressive background publishing. When dynamic reward
-enrichment discovers new information, CheckWQ("new") updates active/new task
-state once, and an already-open popup is rebuilt from that fresh state.
+enrichment discovers new information, CheckWQ updates active/new task state
+once using the originating publication mode, and an already-open popup is
+rebuilt from that fresh state.
 ]]
-
-local OriginalShow = WQA.Show
 
 local function hasUsableCache(self)
 	return type(self.questList) == "table"
 		and type(self.activeTasks) == "table"
+end
+
+---Rebuild the data model using the established refresh sequence.
+---@param self WQATurbo
+---@param mode string?
+local function refreshData(self, mode)
+	self:Debug("Show", mode)
+	self:CreateQuestList()
+	self:CheckWQ(mode)
+	self.first = true
 end
 
 ---Render the currently available cache without rebuilding questList.
@@ -37,7 +45,7 @@ end
 function WQA:ShowCached(mode)
 	if not hasUsableCache(self) then
 		-- First-ever access before startup initialization completed.
-		return OriginalShow(self, mode)
+		return refreshData(self, mode)
 	end
 
 	self:Debug("ShowCached", mode)
@@ -49,10 +57,39 @@ end
 ---@param mode string?
 ---@param auto boolean?
 function WQA:Refresh(mode, auto)
-	return OriginalShow(self, mode, auto)
+	if auto and self.db.profile.options.delayCombat == true and UnitAffectingCombat("player") then
+		self._wqaTurboPendingRefresh = {
+			mode = mode,
+			auto = auto
+		}
+		self.event:RegisterEvent("PLAYER_REGEN_ENABLED")
+		return
+	end
+
+	if self._wqaTurboPendingRefresh then
+		self._wqaTurboPendingRefresh = nil
+		self.event:UnregisterEvent("PLAYER_REGEN_ENABLED")
+	end
+
+	local previousMode = self._wqaTurboRefreshMode
+	self._wqaTurboRefreshMode = mode
+	refreshData(self, mode)
+	self._wqaTurboRefreshMode = previousMode
 end
 
----Compatibility override used by the original minimap/LDB callbacks.
+---Resume the most recent automatic refresh that combat deferred.
+function WQA:ResumeDeferredRefresh()
+	local pending = self._wqaTurboPendingRefresh
+	self._wqaTurboPendingRefresh = nil
+
+	if pending then
+		self:Refresh(pending.mode, pending.auto)
+	else
+		self:Refresh("new", true)
+	end
+end
+
+---Compatibility entry point used by the original minimap/LDB callbacks.
 ---
 ---The original file's data broker object is local, so the cleanest way to
 ---make minimap interaction instant is to make display-only modes cache-only.
@@ -75,24 +112,12 @@ function WQA:TurboRefreshOpenPopup()
 		return
 	end
 
-	if self.tooltip then
-		local tooltip = self.tooltip
-
-		-- Detach first so delayed LibQTip/OnHide callbacks cannot operate on
-		-- a replacement tooltip created by the progressive refresh.
-		self.tooltip = nil
-		tooltip.quests = nil
-		tooltip.missions = nil
-		tooltip.pois = nil
-		LibQTip:Release(tooltip)
-	end
-
-	self:AnnouncePopUp(self.activeTasks or {})
+	self:RebuildQTip("popup", self.activeTasks or {})
 end
-function WQA:TurboPublishEnrichment()
+function WQA:TurboPublishEnrichment(mode)
 	if not self.questList then
 		return
 	end
 
-	self:CheckWQ("new")
+	self:CheckWQ(mode or "new")
 end

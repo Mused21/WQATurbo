@@ -1,5 +1,7 @@
 ---@class WQATurbo
 local WQA = WQATurbo
+local RewardType = WQA.Constants.RewardType
+local TrackingMode = WQA.Constants.TrackingMode
 
 --[[
 WQA Turbo non-blocking reward enrichment
@@ -15,8 +17,9 @@ background and immediately marks the reward phase as usable, allowing CheckWQ()
 to display those static results without waiting for HaveQuestRewardData().
 
 Dynamic item/currency/profession rewards are enriched later. When the
-background pass finishes, CheckWQ("new") runs once so a quest that became
-interesting only because of a dynamic reward can be surfaced.
+background pass finishes, current results are republished once so a quest that
+became interesting only because of a dynamic reward can be surfaced. A scan
+started by Settings retains silent publication mode.
 
 This also replaces the aggressive event-driven 0.1s polling prototype. That
 prototype demonstrated that polling harder cannot make Blizzard populate
@@ -103,15 +106,12 @@ local function buildEnabledReputationFactionIDs(self)
 	local result = {}
 
 	for factionID, enabled in pairs(self.db.profile.options.reward.reputation or {}) do
-		if type(factionID) == "number" and enabled == true then
-			local hiddenBecauseMaxed =
-				self.db.profile.options.hideExaltedReputations
-				and self.IsReputationMaxed
-				and self:IsReputationMaxed(factionID)
-
-			if not hiddenBecauseMaxed then
-				result[#result + 1] = factionID
-			end
+		if
+			type(factionID) == "number"
+			and enabled == true
+			and self:ShouldTrackReputation(factionID)
+		then
+			result[#result + 1] = factionID
 		end
 	end
 
@@ -180,14 +180,13 @@ function WQA:RewardScannerProcessReputations(state, questID)
 
 		if awardsReputation then
 			local factionData = C_Reputation.GetFactionDataByID(factionID)
-			self:AddRewardToQuest(questID, "REPUTATION", {
+			self:AddRewardToQuest(questID, RewardType.Reputation, {
 				direct = true,
 				factionID = factionID,
 				name = factionData and factionData.name or tostring(factionID),
 				amount = majorRewardAmounts[factionID]
 			})
 			state.stats.reputationMatches = state.stats.reputationMatches + 1
-			state.enrichmentDirty = true
 		end
 	end
 end
@@ -205,7 +204,7 @@ function WQA:RewardScannerProcessProfession(state, work, questTagInfo, zoneID)
 		not self.db.char[expansion].profession[tradeskillLineID].isMaxLevel
 		and self.db.profile.options.reward[expansion].profession[tradeskillLineID].skillup
 	then
-		self:AddRewardToQuest(work.questID, "PROFESSION_SKILLUP", professionName)
+		self:AddRewardToQuest(work.questID, RewardType.ProfessionSkillup, professionName)
 	end
 end
 
@@ -223,13 +222,10 @@ function WQA:RewardScannerProcessRewardDetails(state, work, questTagInfo, zoneID
 	self:RewardScannerProcessProfession(state, work, questTagInfo, zoneID)
 
 	state.stats.enrichedQuests = state.stats.enrichedQuests + 1
-
-	-- Initial-pass reputation matches are published once the frame-budgeted
-	-- initial pass finishes. Retry-pass enrichment is published as soon as its
-	-- retry batch finishes.
-	if state.phase == "background-retry" then
-		state.enrichmentDirty = true
-	end
+	-- Reward classifiers publish through AddRewardToQuest() but do not report
+	-- whether they changed questList. Mark the batch dirty after inspection so
+	-- the initial pass and resolved reward retries both refresh current output.
+	state.enrichmentDirty = true
 
 	if itemRetry then
 		addPending(state, "item", work)
@@ -267,26 +263,26 @@ function WQA:RewardScannerProcessInitialQuest(state, work)
 		local expansion = state.zoneToExpansion[zoneID] or 0
 
 		if
-			self.db.profile.achievements[11189] ~= "disabled"
+			self.db.profile.achievements[11189] ~= TrackingMode.Disabled
 			and not select(4, GetAchievementInfo(11189))
 			and expansion == 7
 			and mapID ~= 830
 			and mapID ~= 885
 			and mapID ~= 882
 		then
-			self:AddRewardToQuest(questID, "ACHIEVEMENT", 11189)
+			self:AddRewardToQuest(questID, RewardType.Achievement, 11189)
 		elseif
-			self.db.profile.achievements[13144] ~= "disabled"
+			self.db.profile.achievements[13144] ~= TrackingMode.Disabled
 			and not select(4, GetAchievementInfo(13144))
 			and expansion == 8
 		then
-			self:AddRewardToQuest(questID, "ACHIEVEMENT", 13144)
+			self:AddRewardToQuest(questID, RewardType.Achievement, 13144)
 		elseif
-			self.db.profile.achievements[14758] ~= "disabled"
+			self.db.profile.achievements[14758] ~= TrackingMode.Disabled
 			and not select(4, GetAchievementInfo(14758))
 			and expansion == 9
 		then
-			self:AddRewardToQuest(questID, "ACHIEVEMENT", 14758)
+			self:AddRewardToQuest(questID, RewardType.Achievement, 14758)
 		end
 	end
 
@@ -352,7 +348,9 @@ function WQA:RewardScannerRetryEntry(state, entry)
 	end
 
 	if entry.kind == "item" then
-		if self:CheckItems(questID) then
+		local itemRetry = self:CheckItems(questID)
+
+		if itemRetry then
 			addPending(
 				state,
 				"item",
@@ -362,6 +360,10 @@ function WQA:RewardScannerRetryEntry(state, entry)
 				entry.lastRequestedAt,
 				entry.reissues
 			)
+		else
+			-- The item payload is now complete. Publish once when this retry batch
+			-- ends so an already-open popup receives the final classification.
+			state.enrichmentDirty = true
 		end
 	end
 end
@@ -376,7 +378,7 @@ function WQA:RewardScannerPublishPendingChanges(state)
 
 	-- Publish current results now. Do not wait for every unrelated pending
 	-- quest in the world to resolve.
-	self:TurboPublishEnrichment()
+	self:TurboPublishEnrichment(state.publishMode)
 end
 
 function WQA:RewardScannerScheduleRetry(state)
@@ -595,6 +597,7 @@ function WQA:Reward()
 		retryIndex = 1,
 		retryTimer = nil,
 		enrichmentDirty = false,
+		publishMode = self._wqaTurboRefreshMode == "settings" and "settings" or "new",
 
 		stats = {
 			finished = false,

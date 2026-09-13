@@ -19,6 +19,8 @@ Achievement/static collectible results should become usable immediately.
 ### 4. Collection journals are indexed once per refresh
 
 Do not repeatedly walk the full mount/pet journal for every expansion/item.
+`WQATurbo.lua` owns `CreateQuestList()` and calls the invalidation helper once
+before rebuilding; `Tracking/CollectionCache.lua` must not wrap that method.
 
 ### 5. Settings bulk operations coalesce refreshes
 
@@ -61,9 +63,16 @@ clear attached task references
 release
 ```
 
+All addon-owned release paths must call `WQA:ReleaseQTip(capturedTooltip)`.
+Direct `LibQTip:Release()` and direct `WQA.tooltip = nil` ownership remain in
+that canonical helper only.
+
 ### 11. Cleanup must be idempotent
 
 Multiple hide/rebuild paths must not crash when state was already cleared.
+
+Use `WQA:RebuildQTip()` for popup or LDB replacement rather than duplicating
+release/acquire sequences.
 
 ## World Quest eligibility
 
@@ -177,9 +186,27 @@ Azerite/equipment cache eligibility must not silently depend on modern-character
 
 Upgrade calculations are display metadata.
 
-### 30. Racing purse setting tracks the purse
+### 30. Racing purse completion is purse-specific
 
-Do not claim WQA knows whether every possible manuscript inside the container is already owned unless a reliable Blizzard API is implemented.
+Each purse must be hidden only after every account-wide manuscript quest flag
+in that purse's fixed pool is complete. Completion of one purse must not affect
+another purse.
+
+### 31. Consolidated runtime methods have one owner
+
+Once Step 8 consolidates a method, do not restore a compatibility copy earlier
+in the TOC. `Show()` is owned only by `Runtime/Display.lua`, and `OnEnable()`
+is owned only by `Runtime/Runtime.lua`. `AddMounts()` and `AddPets()` are owned
+only by `Tracking/CollectionCache.lua`, and `CheckWQ()` is owned only by
+`Runtime/TaskResolver.lua`. `Reward()` is owned only by
+`Scanning/RewardScanner.lua`. `CreateQuestList()` is owned only by
+`WQATurbo.lua`. The validator enforces this ownership.
+
+### 32. Container completion fails open
+
+Unknown containers, unknown character armor types and unavailable Blizzard
+collection data must keep a container visible. Do not infer completion from a
+partial or combined loot pool.
 
 ## Review technique
 

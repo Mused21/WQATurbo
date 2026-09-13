@@ -28,8 +28,8 @@ function WQA:OnEnable()
 	local name, server = UnitFullName("player")
 	self.playerName = name .. "-" .. server
 
-	-- Keep the original option-table identifiers for now so existing option
-	-- code and Settings.OpenToCategory("WQATurbo") continue to work.
+	-- Keep the established AceConfig application name for option registration
+	-- and profile-page parenting.
 	LibStub("AceConfig-3.0"):RegisterOptionsTable(
 		"WQATurbo",
 		function()
@@ -37,7 +37,7 @@ function WQA:OnEnable()
 		end
 	)
 
-	self.optionsFrame =
+	self.optionsFrame, self.optionsCategoryID =
 		LibStub("AceConfigDialog-3.0"):AddToBlizOptions(
 			"WQATurbo",
 			"WQA Turbo"
@@ -86,7 +86,7 @@ function WQA:OnEnable()
 
 		elseif eventName == "PLAYER_REGEN_ENABLED" then
 			self.event:UnregisterEvent("PLAYER_REGEN_ENABLED")
-			self:Show("new", true)
+			self:ResumeDeferredRefresh()
 
 		elseif eventName == "QUEST_TURNED_IN" then
 			self.db.global.completed[id] = true
@@ -94,9 +94,9 @@ function WQA:OnEnable()
 		elseif eventName == "WAR_MODE_STATUS_UPDATE" then
 			self:Show("new", true)
 
-		
+
 elseif eventName == "GARRISON_MISSION_LIST_UPDATE" then
-			self:CheckMissions()
+			self:ScheduleTaskResolverCheck(true)
 		end
 	end)
 

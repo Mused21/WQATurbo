@@ -19,10 +19,13 @@ PRs into `master` run the validation workflow.
 The validation pipeline includes:
 
 1. checkout with full enough history for packaging/version context;
-2. Lua syntax validation;
-3. BigWigs packager build with externals;
-4. validation that required embedded libraries exist in the generated ZIP;
-5. upload of PR test build artifact.
+2. project structure, startup load order and hygiene validation;
+3. Lua 5.1 syntax validation plus tracking-policy, reward-classifier,
+   reward-scanner publication, runtime-lifecycle, task-resolver and
+   tooltip-lifecycle regression checks;
+4. BigWigs packager build with externals;
+5. validation that required runtime modules and embedded libraries exist in the ZIP;
+6. upload of PR test build artifact.
 
 The artifact upload must include hidden files because the packager writes to `.release/`.
 
@@ -56,15 +59,16 @@ no label       → patch release
 
 Manual workflow dispatch can explicitly choose bump type.
 
-## 5. 1.1.0
+## 5. 1.2.0
 
-Because current public baseline is 1.0.1 and `feature/popupandcontainers` is planned as 1.1.0, its PR should use:
+Because the latest stable tag is `v1.1.0` and `refactor/1.2.0` targets 1.2.0,
+its release PR should use:
 
 ```text
 release:minor
 ```
 
-Do not manually tag 1.1.0 before the workflow.
+Do not manually tag 1.2.0 before the workflow.
 
 ## 6. Critical packaging/tag invariant
 

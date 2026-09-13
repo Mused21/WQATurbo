@@ -13,16 +13,21 @@ embeds.xml
 Libs\LibQTip-1.0\LibQTip-1.0.lua
 
 Core.lua
+Constants.lua
+Tracking\TrackingPolicy.lua
 
-DB\Data\Legion.lua
-DB\Data\BattleForAzeroth.lua
-DB\Data\Shadowlands.lua
-DB\Data\Dragonflight.lua
-DB\Data\WarWithin.lua
-DB\Data\Midnight.lua
+Data\Expansions\Legion.lua
+Data\Expansions\BattleForAzeroth.lua
+Data\Expansions\Shadowlands.lua
+Data\Expansions\Dragonflight.lua
+Data\Expansions\WarWithin.lua
+Data\Expansions\Midnight.lua
 
-DB\Expansions.lua
-DB\Zones.lua
+Data\Expansions.lua
+Data\Zones.lua
+Data\RuntimeData.lua
+Data\ContainerCollectibles.lua
+Tracking\ContainerCompletion.lua
 Criterias\CriteriaType.lua
 Criterias\AreaPoi.lua
 
@@ -31,18 +36,18 @@ Rewards\Reward.lua
 
 Items\Miscellaneous.lua
 
-Achievements.lua
+Tracking\Achievements.lua
 
 Locales.lua
 Utilities.lua
-Tooltip.lua
+UI\Tooltip.lua
 Migration.lua
 
 WQATurbo.lua
-CollectionCache.lua
-RewardScanner.lua
-TurboRuntime.lua
-TurboDisplay.lua
-TurboCheck.lua
+Tracking\CollectionCache.lua
+Scanning\RewardScanner.lua
+Runtime\Runtime.lua
+Runtime\Display.lua
+Runtime\TaskResolver.lua
 Performance.lua
-Options.lua
+UI\Options.lua

@@ -33,30 +33,33 @@ function criteria:Check()
     local retry = false
 
     for poiId, mapIds in pairs(self.list) do
-        for mapId in pairs(mapIds) do
+        for mapId, poi in pairs(mapIds) do
             local poiInfo = C_AreaPoiInfo.GetAreaPOIInfo(mapId, poiId)
 
-            if poiInfo then
-                local link
-                for k, v in pairs(self.list[poiId][mapId].reward) do
+            if not poiInfo then
+                WQA:Debug(poiId, mapId, "Area POI info pending")
+                retry = true
+            else
+                local ready = true
+                local sawReward = false
+
+                for k, v in pairs(poi.reward or {}) do
+                    sawReward = true
+
                     if k == "custom" or k == "professionSkillup" or k == "gold" then
-                        link = true
+                        -- These reward types render without a link.
                     else
-                        link = WQA:GetRewardLinkByID(poiId, k, v, 1)
-                    end
+                        local rewardCount = 1
+                        if k == "achievement" or k == "chance" or k == "azeriteTraits" then
+                            rewardCount = math.max(1, #v)
+                        end
 
-                    if not link then
-                        WQA:Debug(poiId, k, v, 1)
-                        retry = true
-                    else
-                        WQA:SetRewardLinkByID(poiId, k, v, 1, link)
-                    end
+                        for i = 1, rewardCount do
+                            local link = WQA:GetRewardLinkByID(poiId, k, v, i)
 
-                    if k == "achievement" or k == "chance" or k == "azeriteTraits" then
-                        for i = 2, #v do
-                            link = WQA:GetRewardLinkByID(poiId, k, v, i)
                             if not link then
                                 WQA:Debug(poiId, k, v, i)
+                                ready = false
                                 retry = true
                             else
                                 WQA:SetRewardLinkByID(poiId, k, v, i, link)
@@ -64,10 +67,14 @@ function criteria:Check()
                         end
                     end
                 end
-                if (not link) then
-                    WQA:Debug(poiId, poiInfo.name, link)
+
+                if not sawReward then
+                    WQA:Debug(poiId, poiInfo.name, "Area POI reward pending")
+                    ready = false
                     retry = true
-                else
+                end
+
+                if ready then
                     if not active[poiId] then
                         active[poiId] = {}
                     end

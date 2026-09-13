@@ -2,16 +2,19 @@
 
 ## 1. Architectural style
 
-WQA Turbo is best described as a **compatibility core with layered performance overrides**.
+WQA Turbo is best described as a **compatibility core with specialized runtime modules**.
 
-The project inherited substantial logic and data structures from WQAchievements. Instead of replacing every path at once, WQA Turbo retains compatible helpers and data mappings while loading specialized modules afterward that replace expensive runtime behavior.
+The project inherited substantial logic and data structures from WQAchievements.
+WQA Turbo retains compatible helpers and data mappings while specialized
+modules own performance-sensitive runtime behavior.
 
 That gives the project two important properties:
 
 - mature compatibility/data logic can remain stable;
 - performance-sensitive orchestration can evolve independently.
 
-It also means maintainers must understand **load order and method replacement**.
+It also means maintainers must understand **load order, ownership and
+instrumentation**.
 
 ## 2. Load order
 
@@ -20,40 +23,46 @@ The TOC loads the addon approximately in this order:
 ```text
 embedded libraries
 Core.lua
+Constants.lua
+Tracking/TrackingPolicy.lua
 
-DB/Data/*
-DB/Expansions.lua
-DB/Zones.lua
+Data/Expansions/*
+Data/Expansions.lua
+Data/Zones.lua
+Data/RuntimeData.lua
+Data/ContainerCollectibles.lua
+
+Tracking/ContainerCompletion.lua
 
 Criterias/*
 Rewards/*
 Items/*
 
-Achievements.lua
+Tracking/Achievements.lua
 Locales.lua
 Utilities.lua
-Tooltip.lua
+UI/Tooltip.lua
 Migration.lua
 
 WQATurbo.lua
 
-CollectionCache.lua
-RewardScanner.lua
-TurboRuntime.lua
-TurboDisplay.lua
-TurboCheck.lua
+Tracking/CollectionCache.lua
+Scanning/RewardScanner.lua
+Runtime/Runtime.lua
+Runtime/Display.lua
+Runtime/TaskResolver.lua
 Performance.lua
 
-Options.lua
+UI/Options.lua
 ```
 
 The exact TOC is the authority.
 
 ### Why load order matters
 
-Lua method assignment is mutable. If `WQA:CheckWQ()` is defined in `WQATurbo.lua` and then defined again in `TurboCheck.lua`, the later implementation is the one used at runtime.
-
-The same principle applies to optimized reward scanning, runtime startup, display and collection behavior.
+Step 8 consolidated the major runtime methods to one source owner each. Load
+order still supplies every owner's dependencies, and `Performance.lua` wraps
+selected methods after those owners load.
 
 ### Debugging rule
 
@@ -61,10 +70,11 @@ Before patching a function:
 
 1. search the entire repository for every definition/assignment of that function;
 2. inspect `WQATurbo.toc`;
-3. identify which implementation is loaded last;
-4. patch the runtime owner unless the change intentionally belongs in a shared helper.
+3. confirm its sole runtime owner and loaded dependencies;
+4. patch the owner unless the change intentionally belongs in a shared helper.
 
-This prevents fixes from being added to an implementation that is no longer active.
+This prevents duplicate ownership and changes that bypass required setup or
+instrumentation.
 
 ## 3. Module ownership
 
@@ -92,7 +102,19 @@ It establishes shared state such as:
 - criteria namespace
 - reward namespace
 
-### `DB/Data/*.lua`
+### `Constants.lua` and `Tracking/TrackingPolicy.lua`
+
+`Constants.lua` owns `WQA.Constants.RewardType`, `CriteriaType`, `TaskType` and
+`TrackingMode`. Their string values remain compatible with content data and
+SavedVariables. The existing reward/criteria enum modules expose aliases to
+these same tables without replacing the namespaces created by `Core.lua`.
+
+`Tracking/TrackingPolicy.lua` owns mode eligibility/force flags, ordinary bulk-mode
+eligibility and mode/owner writes. Achievements, collectible registration and
+Settings reuse these helpers. Collection/criterion completion checks stay in
+their existing runtime owners; refresh scheduling stays in Settings.
+
+### `Data/Expansions/*.lua`
 
 Declarative expansion-specific mappings.
 
@@ -107,7 +129,7 @@ Typical data includes:
 
 These files should contain data, not scanner architecture.
 
-### `DB/Expansions.lua`
+### `Data/Expansions.lua`
 
 Maps WQA internal expansion indexes to Blizzard expansion names.
 
@@ -123,13 +145,38 @@ Current relevant indexes:
 12 Midnight
 ```
 
-### `DB/Zones.lua`
+### `Data/Zones.lua`
 
 Maps expansion index to the map IDs scanned for World Quests.
 
 This is a major scanner input: enabled maps are derived from this data plus profile zone settings.
 
-### `Achievements.lua`
+### `Data/RuntimeData.lua`
+
+Owns stable lookup metadata shared by runtime and Settings code:
+
+- currency IDs by expansion;
+- reputation faction IDs by expansion and player faction;
+- emissary quest IDs by expansion and player faction;
+- localized World Quest type labels mapped to Blizzard enum values.
+
+It loads before `Utilities.lua`, `WQATurbo.lua` and `UI/Options.lua` so none of
+those consumers depends on Settings initialization. `WQA.EmissaryQuestIDList`
+remains an alias to the canonical emissary table for compatibility.
+
+### `Data/ContainerCollectibles.lua`
+
+Owns fixed collectible outcome data for racing purses and Benthic armor
+tokens. It is loaded before `Tracking/ContainerCompletion.lua` and the reward
+classifiers.
+
+### `Tracking/ContainerCompletion.lua`
+
+Resolves fixed-pool container completion with Blizzard's account quest and
+transmog appearance APIs. It fails open when data is absent so the classifier
+cannot hide a reward based on an incomplete lookup.
+
+### `Tracking/Achievements.lua`
 
 Converts declarative achievement definitions into actual tracked relevance.
 
@@ -169,25 +216,38 @@ Responsibilities include:
 - AceDB defaults and initialization;
 - migration handoff before AceDB opens;
 - shared reward classification (`CheckItems`, `CheckReward`);
-- gear/cache/transmog classification;
+- focused local classifiers for containers, gear upgrades, equipment caches,
+  transmog, reputation items, recipes, known/custom items and legacy gear;
 - reputation item/currency mappings;
 - custom task helpers;
 - mission-table logic;
 - minimap data object;
 - miscellaneous utility behavior;
-- compatibility implementations later superseded by Turbo modules.
+- the sole `CreateQuestList()` implementation, including collection-cache
+  invalidation at the start of each rebuild.
 
-Do not assume every major runtime method defined here remains authoritative after all modules load.
+`Tracking/CollectionCache.lua` provides the invalidation helper and owns the
+mount/pet snapshot implementation. Consolidated runtime methods have one
+source owner.
 
-### `CollectionCache.lua`
+`CheckReward()` owns item-link acquisition and retry aggregation. Its focused
+classifiers decide what the resolved reward means and publish through
+`AddRewardToQuest()`. They do not control scanner scheduling.
+
+### `Tracking/CollectionCache.lua`
 
 Optimizes collection access.
 
-Instead of repeatedly asking the mount/pet journals while walking each expansion's data, collection state is indexed once per refresh and reused.
+Instead of repeatedly asking the mount/pet journals while walking each
+expansion's data, collection state is indexed once per refresh and reused.
+Settings completion grouping reads the same ownership indexes, so constructing
+one row per tracked mount or pet does not rescan the corresponding journal.
+The module is the sole owner of `AddMounts()` and `AddPets()`.
 
-### `RewardScanner.lua`
+### `Scanning/RewardScanner.lua`
 
-Owns the optimized dynamic World Quest reward scan.
+Owns the optimized dynamic World Quest reward scan, including the sole
+`Reward()` implementation.
 
 Key design principles:
 
@@ -197,15 +257,18 @@ Key design principles:
 - retry only unresolved quests;
 - progressively publish newly ready dynamic relevance.
 
-### `TurboRuntime.lua`
+### `Runtime/Runtime.lua`
 
 Owns optimized runtime orchestration.
+It is the sole owner of `OnEnable()` and its startup/event schedule.
 
 It avoids the old startup behavior that synchronously preloaded/scanned every map and provides the modern `/wqat` command flow.
 
-### `TurboDisplay.lua`
+### `Runtime/Display.lua`
 
 Separates **display cached results** from **explicit refresh**.
+It is the sole owner of `Show()` and contains the canonical refresh sequence
+used by `Refresh()` and the first-access cache fallback.
 
 This is central to WQA Turbo's responsiveness:
 
@@ -213,9 +276,10 @@ This is central to WQA Turbo's responsiveness:
 - `/wqat refresh` explicitly rebuilds/rescans;
 - open popup contents are rebuilt as enrichment arrives.
 
-### `TurboCheck.lua`
+### `Runtime/TaskResolver.lua`
 
-Owns optimized readiness and final task publication.
+Owns optimized readiness and final task publication, including the sole
+`CheckWQ()` implementation.
 
 It converts `questList` relevance into ready `activeTasks`/`newTasks`, while:
 
@@ -224,11 +288,15 @@ It converts `questList` relevance into ready `activeTasks`/`newTasks`, while:
 - allowing ready quests through even when another quest is waiting on data;
 - scheduling coalesced readiness retries.
 
-### `Tooltip.lua`
+### `UI/Tooltip.lua`
 
-Owns LibQTip creation, layout, scrolling, expansion collapsing and safe popup release/rebuild.
+Owns LibQTip creation, layout, scrolling, expansion collapsing and the canonical
+release/rebuild lifecycle. `ReleaseQTip()` accepts only the exact currently
+owned tooltip, detaches shared references before calling LibQTip and is
+idempotent. `RebuildQTip()` is shared by popup enrichment, expansion collapse
+and transient LDB rebuilding.
 
-### `Options.lua`
+### `UI/Options.lua`
 
 Builds the AceConfig settings hierarchy.
 
@@ -238,7 +306,9 @@ Settings are largely generated dynamically from:
 - zone lists;
 - collection definitions;
 - reward lists;
-- profession/reputation/currency mappings.
+- profession mappings;
+- reputation, currency, emissary and World Quest type metadata from
+  `WQA.RuntimeData`.
 
 ### `Migration.lua`
 
@@ -255,11 +325,11 @@ An explicit refresh conceptually performs:
 ```mermaid
 sequenceDiagram
     participant U as User/Timer
-    participant R as TurboRuntime/Display
+    participant R as Runtime/Display
     participant Q as CreateQuestList
     participant C as CollectionCache
     participant S as RewardScanner
-    participant K as TurboCheck
+    participant K as TaskResolver
     participant P as Popup/Chat
 
     U->>R: refresh

@@ -44,9 +44,14 @@ default
 disabled
 always
 exclusive
+wasEarnedByMe
 ```
 
 Exclusive ownership metadata is stored separately under `.exclusive`.
+`Constants.lua` defines these stable values in `WQA.Constants.TrackingMode`;
+`Tracking/TrackingPolicy.lua` reads/writes the existing schema without migration.
+`wasEarnedByMe` retains the legacy achievement-specific behavior; collectibles
+handle it like Default.
 
 ## 3. Core runtime tables
 
@@ -76,6 +81,43 @@ Each expansion can contain:
 ```
 
 Not every expansion defines every collection.
+
+### `WQA.RuntimeData`
+
+Stable, read-only lookup metadata loaded from `Data/RuntimeData.lua` before its
+runtime and Settings consumers:
+
+```lua
+WQA.RuntimeData.CurrencyIDsByExpansion
+WQA.RuntimeData.FactionIDsByExpansion
+WQA.RuntimeData.EmissaryQuestIDsByExpansion
+WQA.RuntimeData.WorldQuestTypesByLabel
+```
+
+Faction-restricted entries keep the existing `{ id = ..., faction = ... }`
+shape. `WQA.EmissaryQuestIDList` aliases the canonical emissary table so
+existing integrations retain the same access path.
+
+### `WQA.data.containerCollectibles`
+
+Fixed collectible pools keyed by container item ID:
+
+```lua
+containerCollectibles[containerItemID] = {
+    questIDs = {...},
+    transmogSources = {
+        all = {...},
+        cloth = {...},
+        leather = {...},
+        mail = {...},
+        plate = {...}
+    }
+}
+```
+
+Racing purses use account-wide hidden quest IDs. Benthic tokens use
+item-modified appearance source IDs grouped by the armor type that the token
+can produce. A container may use either ownership representation.
 
 ### `WQA.questList`
 
@@ -119,6 +161,9 @@ Entries use task descriptors such as:
 { id = areaPoiID, mapId = mapID, type = "AREA_POI" }
 ```
 
+`WQA.Constants.TaskType` names these three task values. Task descriptors keep
+their existing string representation.
+
 ### `WQA.newTasks`
 
 Tasks considered newly discovered relative to watched state.
@@ -136,6 +181,8 @@ Mission equivalent.
 Item IDs that should make a reward relevant when encountered.
 
 Used by mapped collectible/custom item flows.
+It is rebuilt by `CreateQuestList()` so disabled or newly collected source
+items cannot remain relevant from an earlier refresh.
 
 ### `questPinList` / `questPinMapList`
 
@@ -147,7 +194,9 @@ State for quest-flag based criteria.
 
 ## 4. Reward types
 
-`Rewards/RewardType.lua` defines canonical reward type constants:
+`Constants.lua` defines canonical reward type constants under
+`WQA.Constants.RewardType`. `Rewards/RewardType.lua` keeps the existing
+`WQA.Rewards.RewardType` access path as an alias to that same table:
 
 ```text
 ACHIEVEMENT
@@ -369,7 +418,9 @@ Zone profile defaults use wildcard `true`, and individual maps can be disabled.
 
 ## 10. Criteria model
 
-`Criterias/CriteriaType.lua` currently formalizes the criteria subsystem around Area POI criteria.
+`Constants.lua` defines all eight achievement/POI criteria types under
+`WQA.Constants.CriteriaType`. `Criterias/CriteriaType.lua` exposes the same table
+as `WQA.Criterias.CriteriaType`. Declarative data retains its existing strings.
 
 `Criterias/AreaPoi.lua` maintains:
 
@@ -378,13 +429,19 @@ Zone profile defaults use wildcard `true`, and individual maps can be disabled.
 - active/new results;
 - link readiness/retry state.
 
-Achievement data also uses legacy string criterion types handled by `Achievements.lua`.
+Readiness is evaluated independently for each `(AreaPoiId, MapId)` pair. Every
+required reward link must be ready before that POI is published; another ready
+POI can still publish during the same pass.
+
+Achievement criteria are dispatched by `Tracking/Achievements.lua` using these constants.
 
 ## 11. Collection caches
 
 Collection caches are ephemeral runtime indexes, not SavedVariables.
 
-Their purpose is performance, not persistence.
+Their purpose is performance, not persistence. Runtime collectible registration
+and Settings completion grouping share the same spell-ID/creature-ID ownership
+indexes.
 
 If collection state changes, a refresh should rebuild/re-evaluate it.
 
@@ -425,7 +482,7 @@ Use this decision:
 
 ```text
 Is this a stable mapping between game IDs?
-    → DB/Data, DB/Zones, static lookup table
+    → Data/Expansions, Data/Zones or Data/RuntimeData
 
 Is this user preference?
     → AceDB profile/char/global as appropriate

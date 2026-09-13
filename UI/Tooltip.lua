@@ -1,8 +1,56 @@
 ---@class WQATurbo
 local WQA = WQATurbo
+local TaskType = WQA.Constants.TaskType
 
 local L = WQA.L
 local LibQTip = LibStub("LibQTip-1.0")
+
+---Release the exact LibQTip instance currently owned by WQA.
+---@param tooltip table?
+---@return boolean released
+function WQA:ReleaseQTip(tooltip)
+    if not tooltip or self.tooltip ~= tooltip then
+        return false
+    end
+
+    -- Detach shared references before Release(), which may synchronously run
+    -- the tooltip's OnHide script or other UI callbacks.
+    self.tooltip = nil
+
+    if self.PopUp and self.PopUp.tooltip == tooltip then
+        self.PopUp.tooltip = nil
+    end
+
+    tooltip.quests = nil
+    tooltip.missions = nil
+    tooltip.pois = nil
+    LibQTip:Release(tooltip)
+    return true
+end
+
+---Release the current owned QTip and rebuild the requested display.
+---@param mode string
+---@param tasks table?
+---@return boolean rebuilt
+function WQA:RebuildQTip(mode, tasks)
+    if mode ~= "popup" and mode ~= "LDB" then
+        return false
+    end
+
+    local tooltip = self.tooltip
+
+    if tooltip and not self:ReleaseQTip(tooltip) then
+        return false
+    end
+
+    if mode == "popup" then
+        self:AnnouncePopUp(tasks or self.activeTasks or {})
+    else
+        self:Show("LDB")
+    end
+
+    return true
+end
 
 
 function WQA:CreateQTip()
@@ -11,6 +59,10 @@ function WQA:CreateQTip()
         self.tooltip = tooltip
 
         tooltip:SetScript("OnHide", function()
+            if WQA.tooltip ~= tooltip then
+                return
+            end
+
             if WQA.PopUp then
                 WQA.PopUp:Hide()
             end
@@ -61,25 +113,36 @@ end
 -- Expansion headers use this after changing their collapsed state.
 function WQA:RefreshVisibleQTip()
     if self.PopUp and self.PopUp.shown then
-        if self.TurboRefreshOpenPopup then
-            self:TurboRefreshOpenPopup()
+        return self:RebuildQTip("popup", self.activeTasks or {})
+    end
+
+    return self:RebuildQTip("LDB")
+end
+
+local function IsTaskAttached(tooltip, task)
+    if task.type == TaskType.WorldQuest then
+        return tooltip.quests[task.id] == true
+    elseif task.type == TaskType.Mission then
+        return tooltip.missions[task.id] == true
+    elseif task.type == TaskType.AreaPoi then
+        local maps = tooltip.pois[task.id]
+        return type(maps) == "table" and maps[task.mapId] == true
+    end
+
+    return false
+end
+
+local function AttachTask(tooltip, task)
+    if task.type == TaskType.WorldQuest then
+        tooltip.quests[task.id] = true
+    elseif task.type == TaskType.Mission then
+        tooltip.missions[task.id] = true
+    elseif task.type == TaskType.AreaPoi then
+        if type(tooltip.pois[task.id]) ~= "table" then
+            tooltip.pois[task.id] = {}
         end
-        return
+        tooltip.pois[task.id][task.mapId] = true
     end
-
-    -- Minimap/LDB hover tooltips are transient. Release the current LibQTip
-    -- instance and let the normal LDB path recreate it against the existing
-    -- minimap anchor.
-    local tooltip = self.tooltip
-    if tooltip then
-        self.tooltip = nil
-        tooltip.quests = nil
-        tooltip.missions = nil
-        tooltip.pois = nil
-        LibQTip:Release(tooltip)
-    end
-
-    self:Show("LDB")
 end
 
 function WQA:UpdateQTip(tasks)
@@ -95,10 +158,7 @@ function WQA:UpdateQTip(tasks)
         local expansion, zoneID
         for _, task in ipairs(tasks) do
             local id = task.id
-            if
-                (task.type == "WORLD_QUEST" and not tooltip.quests[id]) or (task.type == "MISSION" and not tooltip.missions[id]) or
-                (task.type == "AREA_POI" and not tooltip.pois[id])
-            then
+            if not IsTaskAttached(tooltip, task) then
                 local j = 1
 
                 local expansionCollapsed = false
@@ -178,11 +238,7 @@ function WQA:UpdateQTip(tasks)
                     j = j + 1
                 end
 
-                if task.type == "WORLD_QUEST" then
-                    tooltip.quests[id] = true
-                elseif task.type == "MISSION" then
-                    tooltip.missions[id] = true
-                end
+                AttachTask(tooltip, task)
 
                 local link = self:GetTaskLink(task)
                 tooltip:SetCell(i, j, link)
@@ -196,11 +252,11 @@ function WQA:UpdateQTip(tasks)
                         GameTooltip:ClearLines()
                         GameTooltip:ClearAllPoints()
                         GameTooltip:SetPoint("BOTTOMLEFT", self, "TOPLEFT", 0, 0)
-                        if task.type == "WORLD_QUEST" then
+                        if task.type == TaskType.WorldQuest then
                             if string.find(link, "|Hquest:") then
                                 GameTooltip:SetHyperlink(link)
                             end
-                        elseif task.type == "MISSION" then
+                        elseif task.type == TaskType.Mission then
                             GameTooltip:SetText(C_Garrison.GetMissionName(id))
                             GameTooltip:AddLine(
                                 string.format(GARRISON_MISSION_TOOLTIP_NUM_REQUIRED_FOLLOWERS,
@@ -229,7 +285,7 @@ function WQA:UpdateQTip(tasks)
                                     1
                                 )
                             end
-                        elseif task.type == "AREA_POI" then
+                        elseif task.type == TaskType.AreaPoi then
                             local poiInfo = C_AreaPoiInfo.GetAreaPOIInfo(task.mapId, task.id)
 
                             GameTooltip_SetTitle(GameTooltip, poiInfo.name, HIGHLIGHT_FONT_COLOR)
@@ -280,7 +336,7 @@ function WQA:UpdateQTip(tasks)
                     function()
                         if ChatEdit_TryInsertChatLink(link) ~= true then
                             if
-                                task.type == "WORLD_QUEST" and not WQA.questList[id].isEmissary and
+                                task.type == TaskType.WorldQuest and not WQA.questList[id].isEmissary and
                                 not (self.questPinList[id] or self.questFlagList[id])
                             then
                                 if WorldQuestTrackerAddon and self.db.profile.options.WorldQuestTracker then
@@ -335,11 +391,11 @@ function WQA:UpdateQTip(tasks)
                 )
 
                 local list
-                if task.type == "WORLD_QUEST" then
+                if task.type == TaskType.WorldQuest then
                     list = WQA.questList[id].reward
-                elseif task.type == "MISSION" then
+                elseif task.type == TaskType.Mission then
                     list = WQA.missionList[id].reward
-                elseif task.type == "AREA_POI" then
+                elseif task.type == TaskType.AreaPoi then
                     list = WQA.Criterias.AreaPoi.list[task.id][task.mapId].reward
                 end
 
@@ -486,17 +542,9 @@ function WQA:AnnouncePopUp(quests, silent)
         PopUp:SetScript(
             "OnHide",
             function()
-                if WQA.tooltip ~= nil then
-					local tooltip = WQA.tooltip
-
-					-- Detach the shared reference before Release(). This makes
-					-- cleanup safe against delayed/recursive UI callbacks.
-					WQA.tooltip = nil
-					tooltip.quests = nil
-					tooltip.missions = nil
-					tooltip.pois = nil
-					LibQTip:Release(tooltip)
-				end
+                local tooltip = PopUp.tooltip
+                PopUp.tooltip = nil
+                WQA:ReleaseQTip(tooltip)
 
                 PopUp.shown = false
             end
@@ -509,20 +557,22 @@ function WQA:AnnouncePopUp(quests, silent)
     PopUp:Show()
     PopUp.shown = true
     self:CreateQTip()
-    self.tooltip:SetAutoHideDelay()
-    self.tooltip:ClearAllPoints()
-    self.tooltip:SetPoint("TOP", PopUp, "TOP", 2, -27)
+    local tooltip = self.tooltip
+    PopUp.tooltip = tooltip
+    tooltip:SetAutoHideDelay()
+    tooltip:ClearAllPoints()
+    tooltip:SetPoint("TOP", PopUp, "TOP", 2, -27)
     self:UpdateQTip(quests)
 
-    self:ApplyQTipScrolling(self.tooltip)
+    self:ApplyQTipScrolling(tooltip)
 
-    PopUp:SetWidth(self.tooltip:GetWidth() + 8.5)
-    PopUp:SetHeight(self.tooltip:GetHeight() + 32)
-    PopUp:SetScale(self.tooltip:GetScale())
-    if (PopUp:GetEffectiveScale() ~= self.tooltip:GetEffectiveScale()) then
-        PopUp:SetScale(PopUp:GetScale() * self.tooltip:GetEffectiveScale() / PopUp:GetEffectiveScale())
+    PopUp:SetWidth(tooltip:GetWidth() + 8.5)
+    PopUp:SetHeight(tooltip:GetHeight() + 32)
+    PopUp:SetScale(tooltip:GetScale())
+    if (PopUp:GetEffectiveScale() ~= tooltip:GetEffectiveScale()) then
+        PopUp:SetScale(PopUp:GetScale() * tooltip:GetEffectiveScale() / PopUp:GetEffectiveScale())
     end
-    PopUp:SetFrameLevel(self.tooltip:GetFrameLevel())
+    PopUp:SetFrameLevel(tooltip:GetFrameLevel())
 
     if self.db.profile.options.popupRememberPosition then
         PopUp:ClearAllPoints()
@@ -531,21 +581,21 @@ function WQA:AnnouncePopUp(quests, silent)
 end
 
 function WQA:SortByZoneName(a, b)
-    if a.type == "MISSION" and b.type ~= "MISSION" then
+    if a.type == TaskType.Mission and b.type ~= TaskType.Mission then
         return false
-    elseif b.type == "MISSION" and a.type ~= "MISSION" then
+    elseif b.type == TaskType.Mission and a.type ~= TaskType.Mission then
         return true
-    elseif a.type == "MISSION" and b.type == "MISSION" then
+    elseif a.type == TaskType.Mission and b.type == TaskType.Mission then
         return self:GetTaskZoneName(a) < self:GetTaskZoneName(b)
     end
 
-    if a.type == "WORLD_QUEST" and WQA.questList[a.id].isEmissary ~= nil then
-        if b.type == "WORLD_QUEST" and WQA.questList[b.id].isEmissary ~= nil then
+    if a.type == TaskType.WorldQuest and WQA.questList[a.id].isEmissary ~= nil then
+        if b.type == TaskType.WorldQuest and WQA.questList[b.id].isEmissary ~= nil then
             return false
         else
             return true
         end
-    elseif b.type == "WORLD_QUEST" and WQA.questList[b.id].isEmissary ~= nil then
+    elseif b.type == TaskType.WorldQuest and WQA.questList[b.id].isEmissary ~= nil then
         return false
     end
 

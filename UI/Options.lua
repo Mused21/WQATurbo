@@ -1,4 +1,8 @@
 local WQA = WQATurbo
+local TrackingMode = WQA.Constants.TrackingMode
+local TrackingPolicy = WQA.TrackingPolicy
+local CriteriaType = WQA.Constants.CriteriaType
+local TaskType = WQA.Constants.TaskType
 local L = WQA.L
 
 -- Blizzard
@@ -8,206 +12,11 @@ local GetTitleForQuestID = C_QuestLog.GetTitleForQuestID
 local optionsTimer
 local optionsRefreshTimer
 
-local CurrencyIDList = {
-	[6] = {
-		823, -- Apexis Crystal
-		824 -- Garrison Resources
-	},
-	[7] = {
-		1220, -- Order Resources
-		1226, -- Nethershard
-		1342, -- Legionfall War Supplies
-		1508, -- Veiled Argunite
-		1533 -- Wakening Essence
-	},
-	[8] = {
-		1553,                          -- Azerite
-		1560,                          -- War Ressource
-		{ id = 1716, faction = "Horde" }, -- Honorbound Service Medal
-		{ id = 1717, faction = "Alliance" }, -- 7th Legion Service Medal
-		1721,                          -- Prismatic Manapearl
-		1602,                          -- Conquest
-		1166                           -- Timewarped Badge
-	},
-	[9] = {
-		1819, -- Medallion of Service (Kyrian covenant)
-		1889 -- Adventure Campaign Progress
-	},
-	[10] = {
-		2003, -- Dragon Isles Supplies
-		2123, -- Bloody Tokens
-		2657, -- Mysterious Fragment
-		2245, -- Flightstones
-	},
-	[11] = {
-		3008, -- Valorstones
-		3056, -- Kej
-		2815, -- Resonance Crystals
-	},
-	[12] = {
-		3316 -- Voidlight Marl
-	}
-}
-
-local CraftingReagentIDList = {
-	[7] = {
-		124124, -- Blood of Sargeras
-		133680, -- Slice of Bacon
-		124444, -- Infernal Brimstone
-		151564, -- Empyrium
-		123919, -- Felslate
-		123918, -- Leystone Ore
-		124116, -- Felhide
-		136533, -- Dreadhide Leather
-		151566, -- Fiendish Leather
-		124113, -- Stonehide Leather
-		124115, -- Stormscale
-		124106, -- Felwort
-		124101, -- Aethril
-		124102, -- Dreamleaf
-		124103, -- Foxflower
-		124104, -- Fjarnskaggl
-		124105, -- Starlight Rose
-		151565 -- Astral Glory
-	},
-	[8] = {
-		152513, -- Platinum Ore
-		152512, -- Monelite Ore
-		152579, -- Storm Silver Ore
-		152542, -- Hardened Tempest Hide
-		153051, -- Mistscale
-		154165, -- Calcified Bone
-		154722, -- Tempest Hide
-		152541, -- Coarse Leather
-		153050, -- Shimmerscale
-		154164, -- Blood-Stained Bone
-		152510, -- Anchor Weed
-		152505, -- Riverbud
-		152506, -- Star Moss
-		152507, -- Akunda's Bite
-		152508, -- Winter's Kiss
-		152509, -- Siren's Pollen
-		152511 -- Sea Stalk
-	}
-}
-
-local worldQuestType = {
-	["LE_QUEST_TAG_TYPE_PVP"] = Enum.QuestTagType.PvP,
-	["LE_QUEST_TAG_TYPE_PET_BATTLE"] = Enum.QuestTagType.PetBattle,
-	["LE_QUEST_TAG_TYPE_PROFESSION"] = Enum.QuestTagType.Profession,
-	["LE_QUEST_TAG_TYPE_DUNGEON"] = Enum.QuestTagType.Dungeon
-}
-
-WQA.EmissaryQuestIDList = {
-	[7] = {
-		42233, -- Highmountain Tribes
-		42420, -- Court of Farondis
-		42170, -- The Dreamweavers
-		42422, -- The Wardens
-		42421, -- The Nightfallen
-		42234, -- Valarjar
-		48639, -- Army of the Light
-		48642, -- Argussian Reach
-		48641, -- Armies of Legionfall
-		43179 -- Kirin Tor
-	},
-	[8] = {
-		50604,                          -- Tortollan Seekers
-		50562,                          -- Champions of Azeroth
-		{ id = 50599, faction = "Alliance" }, -- Proudmoore Admiralty
-		{ id = 50600, faction = "Alliance" }, -- Order of Embers
-		{ id = 50601, faction = "Alliance" }, -- Storm's Wake
-		{ id = 50605, faction = "Alliance" }, -- 7th Legion
-		{ id = 50598, faction = "Horde" }, -- Zandalari Empire
-		{ id = 50603, faction = "Horde" }, -- Voldunai
-		{ id = 50602, faction = "Horde" }, -- Talanji's Expedition
-		{ id = 50606, faction = "Horde" }, -- The Honorbound
-		-- 8.2
-		-- 2391, -- Rustbolt Resistance
-		{ id = 56119, faction = "Alliance" }, -- Waveblade Ankoan
-		{ id = 56120, faction = "Horde" } -- The Unshackled
-	}
-}
-
-local FactionIDList = {
-	[7] = {
-		Neutral = {
-			2165,
-			2170,
-			1894, -- The Wardens
-			1900, -- Court of Farondis
-			1883, -- Dreamweavers
-			1828, -- Highmountain Tribe
-			1948, -- Valarjar
-			1859 -- The Nightfallen
-		}
-	},
-	[8] = {
-		Neutral = {
-			2164, -- Champions of Azeroth
-			2163, -- Tortollan Seekers
-			2391, -- Rustbolt Resistance
-			2417, -- Uldum Accord
-			2415 -- Rajani
-		},
-		Alliance = {
-			2160, -- Proudmoore Admiralty
-			2161, -- Order of Embers
-			2162, -- Storm's Wake
-			2159, -- 7th Legion
-			2400 -- Waveblade Ankoan
-		},
-		Horde = {
-			2103, -- Zandalari Empire
-			2156, -- Talanji's Expedition
-			2158, -- Voldunai
-			2157, -- The Honorbound
-			2373 -- The Unshackled
-		}
-	},
-	[9] = {
-		Neutral = {
-			2413, -- Court of Harvesters
-			2470, -- Death's Advance
-			2407, -- The Ascended
-			2478, -- The Enlightened
-			2410, -- The Undying Army
-			2465, -- The Wild Hunt
-			2432 -- Ve'nari
-		}
-	},
-	[10] = {
-		Neutral = {
-			2615, -- Azerothian Archives
-			2507, -- Dragonscale Expedition
-			2574, -- Dream Wardens
-			2511, -- Iskaara Tuskarr
-			2564, -- Loamm Niffen
-			2503, -- Maruuk Centaur
-			2510 -- Valdrakken Accord
-		}
-	},
-	[11] = {
-		Neutral = {
-			2594, -- The Assembly of the Deeps
-			2570, -- Hallowfall Arathi
-			2600, -- The Severed Threads
-			2590 -- Council of Dornogal
-		}
-	},
-	[12] = {
-		Neutral = {
-			2710, -- Silvermoon Court
-			2696, -- Amani Tribe
-			2704, -- Hara'ti
-			2699, -- The Singularity
-			2770, -- Slayer's Duellum
-			2772, -- Zul'jarra's Forces
-			2773, -- Captain Tokka
-			2792 -- Ritual Sites
-		}
-	}
-}
+local RuntimeData = WQA.RuntimeData
+local CurrencyIDList = RuntimeData.CurrencyIDsByExpansion
+local worldQuestType = RuntimeData.WorldQuestTypesByLabel
+local EmissaryQuestIDList = RuntimeData.EmissaryQuestIDsByExpansion
+local FactionIDList = RuntimeData.FactionIDsByExpansion
 
 local newOrder
 do
@@ -228,9 +37,9 @@ local TRACKING_GROUP_ORDER = {
 
 local BULK_TRACKING_VALUES = {
 	mixed = "Mixed / choose setting",
-	disabled = L["tracking_disabled"],
-	default = L["tracking_default"],
-	always = L["tracking_always"]
+	[TrackingMode.Disabled] = L["tracking_disabled"],
+	[TrackingMode.Default] = L["tracking_default"],
+	[TrackingMode.Always] = L["tracking_always"]
 }
 
 local function GetSortedExpansionIDs(expansionList, minID, maxID)
@@ -244,6 +53,24 @@ local function GetSortedExpansionIDs(expansionList, minID, maxID)
 		return a > b
 	end)
 	return ids
+end
+
+local function CreateHideMaxedReputationsOption()
+	return {
+		order = 1,
+		type = "toggle",
+		name = "Hide Exalted / max Renown reputations",
+		desc = "Hide finished reputations from these lists and ignore them when matching reputation rewards. This includes classic Exalted reputations and Major Factions at maximum Renown.",
+		width = "full",
+		get = function()
+			return WQA.db.profile.options.hideExaltedReputations
+		end,
+		set = function(_, value)
+			WQA.db.profile.options.hideExaltedReputations = value
+			LibStub("AceConfigRegistry-3.0"):NotifyChange("WQATurbo")
+			WQA:ScheduleOptionsRefresh()
+		end
+	}
 end
 
 function WQA:UpdateOptions()
@@ -527,9 +354,9 @@ function WQA:UpdateOptions()
 								L["IsActive:\nUse this as a last resort. Works for some daily quests.\n\nIsQuestFlaggedCompleted:\nUse this for quests, that are always active.\n\nQuest Pin:\nUse this, if the daily is marked with a quest pin on the world map.\n\nWorld Quest:\nUse this, if you want to track a world quest."],
 								type = "select",
 								values = {
-									WORLD_QUEST = L["World Quest"],
-									QUEST_PIN = L["Quest Pin"],
-									QUEST_FLAG = L["IsQuestFlaggedCompleted"],
+									[TaskType.WorldQuest] = L["World Quest"],
+									[CriteriaType.QuestPin] = L["Quest Pin"],
+									[CriteriaType.QuestFlag] = L["IsQuestFlaggedCompleted"],
 									IsActive = L["IsActive"]
 								},
 								set = function(info, val)
@@ -588,7 +415,7 @@ function WQA:UpdateOptions()
 									local mapId = self.data.custom.mapID
 									local questID = self.data.custom.wqID
 									return (questID == nil or questID == "") or
-										(self.data.custom.questType == "QUEST_PIN" and (mapId == nil or mapId == ""))
+										(self.data.custom.questType == CriteriaType.QuestPin and (mapId == nil or mapId == ""))
 								end
 							},
 							-- Configure
@@ -948,7 +775,7 @@ function WQA:UpdateOptions()
 						end,
 						order = newOrder()
 					},
-					
+
 WorldQuestTracker = {
 						type = "toggle",
 						name = L["Use World Quest Tracker"],
@@ -1165,21 +992,7 @@ WorldQuestTracker = {
 						desc = "Track World Quests that award reputation with the selected factions.",
 						type = "group",
 						args = {
-							hideMaxed = {
-								order = 1,
-								type = "toggle",
-								name = "Hide Exalted / max Renown reputations",
-								desc = "Hide finished reputations from these lists and ignore them when matching reputation rewards. This includes classic Exalted reputations and Major Factions at maximum Renown.",
-								width = "full",
-								get = function()
-									return WQA.db.profile.options.hideExaltedReputations
-								end,
-								set = function(_, value)
-									WQA.db.profile.options.hideExaltedReputations = value
-									LibStub("AceConfigRegistry-3.0"):NotifyChange("WQATurbo")
-									WQA:ScheduleOptionsRefresh()
-								end
-							}
+							hideMaxed = CreateHideMaxedReputationsOption()
 						}
 					}
 					for _, factionGroup in ipairs({ "Neutral", UnitFactionGroup("player") }) do
@@ -1221,7 +1034,7 @@ WorldQuestTracker = {
 							racingRewardContainers = {
 								type = "toggle",
 								name = "Racing reward containers",
-								desc = "Track Dragonflight racing World Quests that reward Dragon Racer's Purse, Reach Racer's Purse, Cavern Racer's Purse, or Dream Racer's Purse. These containers can contain Drakewatcher's Manuscripts.",
+								desc = "Track Dragonflight racing World Quests that reward Dragon Racer's Purse, Reach Racer's Purse, Cavern Racer's Purse, or Dream Racer's Purse. A purse is hidden after all of its possible Drakewatcher's Manuscripts are collected.",
 								width = "full",
 								get = function()
 									return WQA.db.profile.options.reward[10].racingRewardContainers
@@ -1237,14 +1050,14 @@ WorldQuestTracker = {
 				end
 
 				-- Emissary
-				if self.EmissaryQuestIDList[i] then
+				if EmissaryQuestIDList[i] then
 					rewardArgs.emissary = {
 						order = 40,
 						name = L["Emissary Quests"],
 						type = "group",
 						args = {}
 					}
-					for _, questEntry in ipairs(self.EmissaryQuestIDList[i]) do
+					for _, questEntry in ipairs(EmissaryQuestIDList[i]) do
 						if not (type(questEntry) == "table" and questEntry.faction ~= self.faction) then
 							local questID = type(questEntry) == "table" and questEntry.id or questEntry
 							local capturedQuestID = questID
@@ -1404,7 +1217,9 @@ WorldQuestTracker = {
 						order = 20,
 						name = L["Reputation"],
 						type = "group",
-						args = {}
+						args = {
+							hideMaxed = CreateHideMaxedReputationsOption()
+						}
 					}
 					for _, factionGroup in ipairs({ "Neutral", UnitFactionGroup("player") }) do
 						if FactionIDList[i][factionGroup] then
@@ -1666,13 +1481,12 @@ function WQA:SetTrackingValue(groupName, id, value, suppressRefresh)
 		return
 	end
 
-	WQA.db.profile[groupName][id] = value
-	if value == "exclusive" then
+	local currentCharacter
+	if value == TrackingMode.Exclusive then
 		local name, server = UnitFullName("player")
-		WQA.db.profile[groupName].exclusive[id] = name .. "-" .. server
-	elseif WQA.db.profile[groupName].exclusive[id] then
-		WQA.db.profile[groupName].exclusive[id] = nil
+		currentCharacter = name .. "-" .. server
 	end
+	TrackingPolicy.SetValue(WQA.db.profile[groupName], id, value, currentCharacter)
 
 	if not suppressRefresh then
 		self:ScheduleOptionsRefresh()
@@ -1756,20 +1570,9 @@ function WQA:IsTrackedObjectCompleted(groupName, id)
 	if groupName == "achievements" then
 		return select(4, GetAchievementInfo(id)) or false
 	elseif groupName == "mounts" then
-		for _, mountID in pairs(C_MountJournal.GetMountIDs()) do
-			local _, spellID, _, _, _, _, _, _, _, _, isCollected = C_MountJournal.GetMountInfoByID(mountID)
-			if spellID == id then
-				return isCollected or false
-			end
-		end
+		return self:IsMountCollectedBySpellID(id)
 	elseif groupName == "pets" then
-		local total = C_PetJournal.GetNumPets()
-		for i = 1, total do
-			local _, _, owned, _, _, _, _, _, _, _, companionID = C_PetJournal.GetPetInfoByIndex(i)
-			if companionID == id then
-				return owned or false
-			end
-		end
+		return self:IsPetOwnedByCreatureID(id)
 	elseif groupName == "toys" then
 		return PlayerHasToy(id) or false
 	end
@@ -1798,11 +1601,11 @@ function WQA:AddTrackedObjectRow(args, groupName, object, keyPrefix, order)
 	}
 
 	local trackingValues = {
-		disabled = L["tracking_disabled"],
-		default = L["tracking_default"],
-		always = L["tracking_always"],
-		wasEarnedByMe = L["tracking_wasEarnedByMe"],
-		exclusive = L["tracking_exclusive"]
+		[TrackingMode.Disabled] = L["tracking_disabled"],
+		[TrackingMode.Default] = L["tracking_default"],
+		[TrackingMode.Always] = L["tracking_always"],
+		[TrackingMode.WasEarnedByMe] = L["tracking_wasEarnedByMe"],
+		[TrackingMode.Exclusive] = L["tracking_exclusive"]
 	}
 
 	args[optionKey] = {
@@ -1816,7 +1619,7 @@ function WQA:AddTrackedObjectRow(args, groupName, object, keyPrefix, order)
 		get = function()
 			trackingValues.other = nil
 			local value = WQA.db.profile[groupName][id]
-			if value == "exclusive" then
+			if value == TrackingMode.Exclusive then
 				local name, server = UnitFullName("player")
 				local currentCharacter = name .. "-" .. server
 				local owner = WQA.db.profile[groupName].exclusive[id]
@@ -1841,7 +1644,7 @@ function WQA:GetBulkTrackingState(objects, groupName)
 		local id = self:GetTrackedObjectID(object)
 		if id then
 			local value = WQA.db.profile[groupName][id]
-			if value ~= "disabled" and value ~= "default" and value ~= "always" then
+			if not TrackingPolicy.IsBulkMode(value) then
 				return "mixed"
 			end
 			if not found then
@@ -1857,7 +1660,7 @@ function WQA:GetBulkTrackingState(objects, groupName)
 end
 
 function WQA:SetTrackingForCategory(objects, groupName, value, suppressRefresh)
-	if value ~= "disabled" and value ~= "default" and value ~= "always" then
+	if not TrackingPolicy.IsBulkMode(value) then
 		return
 	end
 
@@ -1882,7 +1685,7 @@ function WQA:GetExpansionBulkTrackingState(expansionData)
 			local id = self:GetTrackedObjectID(object)
 			if id then
 				local value = WQA.db.profile[groupName][id]
-				if value ~= "disabled" and value ~= "default" and value ~= "always" then
+				if not TrackingPolicy.IsBulkMode(value) then
 					return "mixed"
 				end
 				if not found then
@@ -2126,9 +1929,9 @@ function WQA:UpdateCustomQuests()
 			L["IsActive:\nUse this as a last resort. Works for some daily quests.\n\nIsQuestFlaggedCompleted:\nUse this for quests, that are always active.\n\nQuest Pin:\nUse this, if the daily is marked with a quest pin on the world map.\n\nWorld Quest:\nUse this, if you want to track a world quest."],
 			type = "select",
 			values = {
-				WORLD_QUEST = L["World Quest"],
-				QUEST_PIN = L["Quest Pin"],
-				QUEST_FLAG = L["IsQuestFlaggedCompleted"],
+				[TaskType.WorldQuest] = L["World Quest"],
+				[CriteriaType.QuestPin] = L["Quest Pin"],
+				[CriteriaType.QuestFlag] = L["IsQuestFlaggedCompleted"],
 				IsActive = L["IsActive"]
 			},
 			width = .8,
