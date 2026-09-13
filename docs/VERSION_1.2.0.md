@@ -351,6 +351,28 @@ and reward-classifier suites also pass in comparison mode against the
 pre-cleanup `bb51a8c` source, confirming the intended behavior differences.
 The developer reports all four corrections working in game.
 
+## Pre-release container completion enhancement
+
+Status: IMPLEMENTED; local validation complete, focused in-game verification
+pending.
+
+- Added fixed collectible pools for all four Dragonflight racing purses and all
+  nine Nazjatar Benthic armor tokens.
+- Racing purse completion uses the account-wide hidden quest flags recorded by
+  Blizzard when each Drakewatcher's Manuscript is learned. Each purse is
+  evaluated independently; Reach Racer's Purse has the expected four-item
+  pool.
+- Benthic completion uses Blizzard item-modified appearance source IDs and
+  checks visual appearance ownership for the current character's armor type.
+- Missing or unavailable collection data fails open: the container remains
+  visible and transmog-source lookups request a scanner retry.
+- Azerite Armor Cache and generic faction equipment caches remain category
+  tracked. Their possible contents vary with the reward link modifier,
+  faction, zone and character, so this change does not infer completion from a
+  combined static pool.
+- Added classifier regression coverage for incomplete, complete and unavailable
+  container collection states.
+
 ## Non-goals for 1.2 Refactor
 
 Unless separately requested:

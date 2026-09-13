@@ -49,10 +49,12 @@ REQUIRED_PROJECT_FILES = (
     "Core.lua",
     "Constants.lua",
     "Tracking/TrackingPolicy.lua",
+    "Tracking/ContainerCompletion.lua",
     "Tracking/Achievements.lua",
     "Tracking/CollectionCache.lua",
     "Data/Expansions/Legion.lua",
     "Data/RuntimeData.lua",
+    "Data/ContainerCollectibles.lua",
     "Utilities.lua",
     "WQATurbo.lua",
     "Scanning/RewardScanner.lua",
@@ -77,7 +79,9 @@ REQUIRED_PACKAGE_ITEMS = (
     "WQATurbo/WQATurbo.toc",
     "WQATurbo/Constants.lua",
     "WQATurbo/Tracking/TrackingPolicy.lua",
+    "WQATurbo/Tracking/ContainerCompletion.lua",
     "WQATurbo/Data/RuntimeData.lua",
+    "WQATurbo/Data/ContainerCollectibles.lua",
     "WQATurbo/Scanning/RewardScanner.lua",
     "WQATurbo/Runtime/Runtime.lua",
     "WQATurbo/UI/Options.lua",
@@ -240,6 +244,20 @@ def validate_toc(validation: Validation) -> None:
                 validation.error(
                     f"TOC must load {runtime_data} before {consumer}."
                 )
+
+    container_data = "Data/ContainerCollectibles.lua"
+    container_owner = "Tracking/ContainerCompletion.lua"
+    container_consumer = "WQATurbo.lua"
+    for source in (container_data, container_owner, container_consumer):
+        if source not in sources:
+            validation.error(f"TOC must load {source}.")
+    if all(source in sources for source in (container_data, container_owner, container_consumer)):
+        positions = [sources.index(source) for source in (container_data, container_owner, container_consumer)]
+        if positions != sorted(positions):
+            validation.error(
+                "TOC must load container collectible data, completion logic, "
+                "then WQATurbo.lua."
+            )
 
     for source in sources:
         key = source.lower()

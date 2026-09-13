@@ -144,6 +144,15 @@ Responsibilities include:
 
 This is generally where a new ordinary reward-item category belongs.
 
+### `WQA:IsContainerCollectibleComplete(itemID)`
+
+Owned by `Tracking/ContainerCompletion.lua`. Evaluates fixed container pools
+using account-wide quest flags or Blizzard transmog appearance state.
+
+Returns `complete, retry`. Unknown containers return `false, false`; an
+unavailable transmog source returns `false, true`, so classification keeps the
+container visible while the scanner retries.
+
 ### `WQA:CheckCurrencies(questID, isEmissary)`
 
 Processes quest currencies and gold.

@@ -251,14 +251,19 @@ With Armor Cache enabled, test an active Nazjatar WQ rewarding one of IDs 169477
 
 Expected:
 
-- token appears as reward;
+- token appears while at least one appearance for the current character's
+  armor type is uncollected;
+- token disappears when every appearance in its fixed pool is collected;
+- a missing/uncached transmog source keeps the token visible and is retried;
 - no requirement that it upgrade current gear.
 
 ## 15. 1.1.0 Dragonflight racing purses
 
 With Racing reward containers enabled:
 
-- active racing WQ with recognized purse → show.
+- active racing WQ with at least one uncollected manuscript from that purse → show;
+- active racing WQ whose purse-specific manuscript pool is complete → hide;
+- completing Reach Racer's four manuscripts must not hide any other purse.
 
 Disable:
 

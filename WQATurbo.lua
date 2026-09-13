@@ -896,9 +896,15 @@ function WQA:CheckItems(questID, isEmissary)
 end
 
 local function ClassifyContainerReward(self, questID, isEmissary, itemID, itemLink)
+	local retry = false
+
 	-- Benthic armor tokens
 	if benthicArmorToken[itemID] and self.db.profile.options.reward.gear.armorCache then
-		self:AddRewardToQuest(questID, RewardType.Item, { itemLink = itemLink }, isEmissary)
+		local complete
+		complete, retry = self:IsContainerCollectibleComplete(itemID)
+		if not complete then
+			self:AddRewardToQuest(questID, RewardType.Item, { itemLink = itemLink }, isEmissary)
+		end
 	end
 
 	-- Dragonflight racing reward containers
@@ -906,8 +912,14 @@ local function ClassifyContainerReward(self, questID, isEmissary, itemID, itemLi
 		racingRewardContainer[itemID]
 		and self.db.profile.options.reward[10].racingRewardContainers
 	then
-		self:AddRewardToQuest(questID, RewardType.Item, { itemLink = itemLink }, isEmissary)
+		local complete
+		complete, retry = self:IsContainerCollectibleComplete(itemID)
+		if not complete then
+			self:AddRewardToQuest(questID, RewardType.Item, { itemLink = itemLink }, isEmissary)
+		end
 	end
+
+	return retry
 end
 
 local function ClassifyGearUpgradeReward(self, questID, isEmissary, itemLink, itemEquipLoc)
@@ -1296,7 +1308,7 @@ function WQA:CheckReward(questID, isEmissary, rewardIndex)
 	local expacID = self:GetExpansionByQuestID(questID)
 	local retry = false
 
-	ClassifyContainerReward(self, questID, isEmissary, itemID, itemLink)
+	retry = ClassifyContainerReward(self, questID, isEmissary, itemID, itemLink) or retry
 	retry = ClassifyGearUpgradeReward(self, questID, isEmissary, itemLink, itemEquipLoc) or retry
 	retry = ClassifyEquipmentCacheReward(self, questID, isEmissary, itemID, itemLink) or retry
 	retry = ClassifyTransmogReward(self, questID, isEmissary, itemLink, itemClassID) or retry

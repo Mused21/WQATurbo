@@ -186,9 +186,11 @@ Azerite/equipment cache eligibility must not silently depend on modern-character
 
 Upgrade calculations are display metadata.
 
-### 30. Racing purse setting tracks the purse
+### 30. Racing purse completion is purse-specific
 
-Do not claim WQA knows whether every possible manuscript inside the container is already owned unless a reliable Blizzard API is implemented.
+Each purse must be hidden only after every account-wide manuscript quest flag
+in that purse's fixed pool is complete. Completion of one purse must not affect
+another purse.
 
 ### 31. Consolidated runtime methods have one owner
 
@@ -199,6 +201,12 @@ only by `Tracking/CollectionCache.lua`, and `CheckWQ()` is owned only by
 `Runtime/TaskResolver.lua`. `Reward()` is owned only by
 `Scanning/RewardScanner.lua`. `CreateQuestList()` is owned only by
 `WQATurbo.lua`. The validator enforces this ownership.
+
+### 32. Container completion fails open
+
+Unknown containers, unknown character armor types and unavailable Blizzard
+collection data must keep a container visible. Do not infer completion from a
+partial or combined loot pool.
 
 ## Review technique
 

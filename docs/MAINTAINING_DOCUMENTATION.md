@@ -30,6 +30,7 @@ Any PR that changes one of the following must update docs in the same PR:
 | `Runtime/Display.lua` | `ARCHITECTURE.md`, `FUNCTIONAL_REFERENCE.md` |
 | `Runtime/Runtime.lua` | `ARCHITECTURE.md`, `COMMANDS_AND_DIAGNOSTICS.md` |
 | `Tracking/CollectionCache.lua` | `SCANNING_AND_PERFORMANCE.md`, `DATA_MODEL.md` |
+| `Tracking/ContainerCompletion.lua` | `FUNCTIONAL_REFERENCE.md`, `DATA_MODEL.md`, invariants if needed |
 | `UI/Tooltip.lua` | `FUNCTIONAL_REFERENCE.md`, invariants |
 | `UI/Options.lua` | `SETTINGS_REFERENCE.md`, `FUNCTIONAL_REFERENCE.md` |
 | `Migration.lua` | `ARCHITECTURE.md`, `FUNCTIONAL_REFERENCE.md` |

@@ -30,6 +30,9 @@ Data/Expansions/*
 Data/Expansions.lua
 Data/Zones.lua
 Data/RuntimeData.lua
+Data/ContainerCollectibles.lua
+
+Tracking/ContainerCompletion.lua
 
 Criterias/*
 Rewards/*
@@ -160,6 +163,18 @@ Owns stable lookup metadata shared by runtime and Settings code:
 It loads before `Utilities.lua`, `WQATurbo.lua` and `UI/Options.lua` so none of
 those consumers depends on Settings initialization. `WQA.EmissaryQuestIDList`
 remains an alias to the canonical emissary table for compatibility.
+
+### `Data/ContainerCollectibles.lua`
+
+Owns fixed collectible outcome data for racing purses and Benthic armor
+tokens. It is loaded before `Tracking/ContainerCompletion.lua` and the reward
+classifiers.
+
+### `Tracking/ContainerCompletion.lua`
+
+Resolves fixed-pool container completion with Blizzard's account quest and
+transmog appearance APIs. It fails open when data is absent so the classifier
+cannot hide a reward based on an incomplete lookup.
 
 ### `Tracking/Achievements.lua`
 

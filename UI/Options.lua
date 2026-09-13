@@ -1034,7 +1034,7 @@ WorldQuestTracker = {
 							racingRewardContainers = {
 								type = "toggle",
 								name = "Racing reward containers",
-								desc = "Track Dragonflight racing World Quests that reward Dragon Racer's Purse, Reach Racer's Purse, Cavern Racer's Purse, or Dream Racer's Purse. These containers can contain Drakewatcher's Manuscripts.",
+								desc = "Track Dragonflight racing World Quests that reward Dragon Racer's Purse, Reach Racer's Purse, Cavern Racer's Purse, or Dream Racer's Purse. A purse is hidden after all of its possible Drakewatcher's Manuscripts are collected.",
 								width = "full",
 								get = function()
 									return WQA.db.profile.options.reward[10].racingRewardContainers

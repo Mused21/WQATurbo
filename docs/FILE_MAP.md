@@ -41,6 +41,11 @@ Loaded immediately after `Core.lua`; content and SavedVariables values stay stab
 Shared tracking-mode flags, bulk-mode eligibility and exclusive-owner updates.
 No collection API calls, scanning or refresh scheduling.
 
+### `Tracking/ContainerCompletion.lua`
+
+Evaluates fixed container pools through Blizzard quest and transmog collection
+APIs. Unknown containers and unavailable collection data remain visible.
+
 ### `WQATurbo.lua`
 
 Large compatibility/core implementation.
@@ -237,6 +242,12 @@ Stable shared lookup tables for currency IDs, reputation faction IDs,
 emissary quest IDs and localized World Quest type labels. Loaded before all
 runtime and Settings consumers. Preserves `WQA.EmissaryQuestIDList` as an alias
 to the canonical emissary table.
+
+### `Data/ContainerCollectibles.lua`
+
+Fixed collectible pools for racing purses and Benthic armor tokens. Stores
+account-wide manuscript quest IDs and Benthic item-modified appearance source
+IDs; it contains no collection API calls.
 
 ## Criterias
 

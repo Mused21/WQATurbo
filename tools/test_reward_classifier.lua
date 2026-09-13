@@ -14,6 +14,7 @@ local inventoryLevels = {}
 local installedAddons = {}
 
 C_QuestLog = { IsQuestFlaggedCompleted = noop }
+C_QuestLog.IsQuestFlaggedCompletedOnAccount = function() return false end
 C_TaskQuest = {}
 C_CurrencyInfo = {}
 C_Item = {
@@ -26,8 +27,23 @@ C_AzeriteEmpoweredItem = {
 C_Soulbinds = {
     IsItemConduitByItemInfo = function() return false end
 }
+local transmogAppearances = {}
+local transmogAppearanceSources = {}
+local transmogSourceInfo = {}
+C_TransmogCollection = {
+    GetAppearanceInfoBySource = function(sourceID)
+        return transmogAppearances[sourceID]
+    end,
+    GetAllAppearanceSources = function(appearanceID)
+        return transmogAppearanceSources[appearanceID]
+    end,
+    GetAppearanceSourceInfo = function(sourceID)
+        return transmogSourceInfo[sourceID]
+    end
+}
 Enum = { QuestTagType = {}, GarrisonType = {} }
 UnitFullName = function() return "Tester", "Realm" end
+UnitClass = function() return "Mage", "MAGE", 8 end
 PlayerHasToy = function() return false end
 wipe = function(target) for key in pairs(target) do target[key] = nil end end
 
@@ -79,7 +95,16 @@ local WQA = WQATurbo
 dofile("Constants.lua")
 dofile("Tracking/TrackingPolicy.lua")
 dofile("Data/RuntimeData.lua")
+dofile("Data/ContainerCollectibles.lua")
+dofile("Tracking/ContainerCompletion.lua")
 dofile(arg[1] or "WQATurbo.lua")
+
+assert(#WQA.data.containerCollectibles[199192].questIDs == 10)
+assert(#WQA.data.containerCollectibles[204359].questIDs == 4)
+assert(#WQA.data.containerCollectibles[205226].questIDs == 8)
+assert(#WQA.data.containerCollectibles[210549].questIDs == 8)
+assert(#WQA.data.containerCollectibles[169478].transmogSources.cloth == 6)
+assert(#WQA.data.containerCollectibles[169485].transmogSources.plate == 5)
 
 local function NewOptions()
     return {
@@ -131,6 +156,11 @@ local function Reset(itemID)
     PawnGetItemData = nil
     C_AzeriteEmpoweredItem.IsAzeriteEmpoweredItemByID = function() return false end
     C_Soulbinds.IsItemConduitByItemInfo = function() return false end
+    C_QuestLog.IsQuestFlaggedCompleted = noop
+    C_QuestLog.IsQuestFlaggedCompletedOnAccount = function() return false end
+    transmogAppearances = {}
+    transmogAppearanceSources = {}
+    transmogSourceInfo = {}
     WQA.db = {
         profile = { options = NewOptions(), custom = { worldQuestReward = {} } },
         global = { custom = { worldQuestReward = {} } }
@@ -167,13 +197,59 @@ assert(AssertReward(1, WQA.Constants.RewardType.Item).itemLink == fallbackItemLi
 
 Reset(169477)
 WQA.db.profile.options.reward.gear.armorCache = true
+transmogAppearances[104107] = { appearanceID = 5001 }
+transmogAppearanceSources[5001] = { 104107 }
+transmogSourceInfo[104107] = { isCollected = false }
 assert(WQA:CheckReward(1000, false, 1) == false)
 assert(AssertReward(1, WQA.Constants.RewardType.Item).itemLink == scannedItemLink)
+
+Reset(169479)
+WQA.db.profile.options.reward.gear.armorCache = true
+transmogAppearances[104104] = { appearanceID = 5002 }
+transmogAppearanceSources[5002] = { 104104, 999999 }
+transmogSourceInfo[104104] = { isCollected = false }
+transmogSourceInfo[999999] = { isCollected = true }
+assert(WQA:CheckReward(1000, false, 1) == false)
+assert(#rewards == 0)
+
+Reset(169479)
+WQA.db.profile.options.reward.gear.armorCache = true
+assert(WQA:CheckReward(1000, false, 1) == true)
+assert(AssertReward(1, WQA.Constants.RewardType.Item).itemLink == scannedItemLink)
+
+Reset(169479)
+WQA.db.profile.options.reward.gear.armorCache = true
+C_TransmogCollection.GetAppearanceInfoBySource = nil
+assert(WQA:CheckReward(1000, false, 1) == false)
+assert(AssertReward(1, WQA.Constants.RewardType.Item).itemLink == scannedItemLink)
+C_TransmogCollection.GetAppearanceInfoBySource = function(sourceID)
+    return transmogAppearances[sourceID]
+end
 
 Reset(199192)
 WQA.db.profile.options.reward[10].racingRewardContainers = true
 assert(WQA:CheckReward(1000, false, 1) == false)
 AssertReward(1, WQA.Constants.RewardType.Item)
+
+Reset(204359)
+WQA.db.profile.options.reward[10].racingRewardContainers = true
+local reachQuestIDs = WQA.data.containerCollectibles[204359].questIDs
+local completedReachQuests = {
+    [reachQuestIDs[1]] = true,
+    [reachQuestIDs[2]] = true,
+    [reachQuestIDs[3]] = true
+}
+C_QuestLog.IsQuestFlaggedCompleted = function(questID)
+    return completedReachQuests[questID] == true
+end
+assert(WQA:CheckReward(1000, false, 1) == false)
+AssertReward(1, WQA.Constants.RewardType.Item)
+C_QuestLog.IsQuestFlaggedCompletedOnAccount = function(questID)
+    return questID == reachQuestIDs[4]
+end
+rewards = {}
+assert(WQA:CheckReward(1000, false, 1) == false)
+assert(#rewards == 0)
 
 Reset(152957)
 WQA.db.profile.options.reward.reputation[2165] = true

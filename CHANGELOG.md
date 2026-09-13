@@ -3,6 +3,7 @@
 ## 1.2.0
 
 ### Improved
+- Racing reward purses and Benthic armor tokens now stop making a World Quest relevant after every collectible outcome available from that specific container is owned.
 - Reorganized internal modules by data, tracking, scanning, runtime, and UI responsibility to make future changes safer.
 - Consolidated runtime entry points so each behavior has one authoritative implementation.
 - Reused mount and pet journal snapshots in Settings instead of rescanning an entire journal for every tracked entry.

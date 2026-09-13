@@ -98,6 +98,27 @@ Faction-restricted entries keep the existing `{ id = ..., faction = ... }`
 shape. `WQA.EmissaryQuestIDList` aliases the canonical emissary table so
 existing integrations retain the same access path.
 
+### `WQA.data.containerCollectibles`
+
+Fixed collectible pools keyed by container item ID:
+
+```lua
+containerCollectibles[containerItemID] = {
+    questIDs = {...},
+    transmogSources = {
+        all = {...},
+        cloth = {...},
+        leather = {...},
+        mail = {...},
+        plate = {...}
+    }
+}
+```
+
+Racing purses use account-wide hidden quest IDs. Benthic tokens use
+item-modified appearance source IDs grouped by the armor type that the token
+can produce. A container may use either ownership representation.
+
 ### `WQA.questList`
 
 Current relevance model keyed by quest ID.

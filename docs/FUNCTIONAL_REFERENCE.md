@@ -274,6 +274,12 @@ Tracked IDs:
 
 They are slot-specific container/token rewards rather than generic random-slot caches, so they are tracked directly through Armor Cache without pretending their usefulness depends on the character's modern item level.
 
+For 1.2.0, each token is checked against the fixed appearance pool for the
+current character's armor type. The token stops making the World Quest
+relevant after every appearance in that pool is collected. Cloak tokens use
+their shared four-appearance pool. If Blizzard has not made a source available
+to the transmog API yet, the token stays visible and the scanner retries.
+
 ## 14. Dragonflight racing reward containers — 1.1.0
 
 Settings path:
@@ -295,9 +301,15 @@ Recognized purse IDs:
 210549 Dream Racer's Purse
 ```
 
-The addon tracks the purse itself because it can contain Drakewatcher's Manuscripts.
+The addon tracks the purse while at least one Drakewatcher's Manuscript from
+that purse remains uncollected. Each purse has its own fixed pool, so completing
+Reach Racer's Purse does not hide Dragon Racer's Purse, Cavern Racer's Purse or
+Dream Racer's Purse. Collection state comes from the account-wide hidden quest
+flag recorded when each customization is learned.
 
-WQA Turbo does not claim to know that every possible manuscript inside the container has been collected.
+Azerite Armor Cache and generic faction equipment caches remain category
+tracked because their possible gear varies with the reward link's modifier,
+faction, zone and character. They are not hidden using an unsafe combined pool.
 
 ## 15. Gold
 

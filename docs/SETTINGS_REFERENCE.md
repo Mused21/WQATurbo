@@ -235,6 +235,10 @@ Recognized items:
 
 Changing the toggle schedules the standard debounced settings refresh.
 
+An enabled purse is shown only while its own fixed manuscript pool contains an
+uncollected customization. This completion filtering is automatic and does not
+add another profile option.
+
 ## 8. Benthic gear — 1.1.0
 
 No new Benthic-specific option is introduced.
@@ -246,6 +250,10 @@ Rewards > Gear > Armor Cache
 ```
 
 This keeps the user model simple: these are equipment-container/token rewards.
+
+For 1.2.0, a Benthic token is automatically hidden when all appearances it can
+produce for the current character's armor type are collected. A missing
+transmog API result keeps the token visible.
 
 ## 9. Reputation
 
