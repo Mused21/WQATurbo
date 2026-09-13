@@ -4,6 +4,7 @@ local function noop() end
 
 local activeQuests = {}
 local timers = {}
+local poiInfoByKey = {}
 
 C_TaskQuest = {
 	IsActive = function(questID)
@@ -28,7 +29,14 @@ C_Timer = {
 	end
 }
 
+C_AreaPoiInfo = {
+	GetAreaPOIInfo = function(mapID, poiID)
+		return poiInfoByKey[tostring(mapID) .. ":" .. tostring(poiID)]
+	end
+}
+
 WQATurbo = {
+	Criterias = {},
 	Constants = {
 		TaskType = {
 			WorldQuest = "WORLD_QUEST",
@@ -39,9 +47,12 @@ WQATurbo = {
 }
 
 local WQA = WQATurbo
+dofile("Criterias/AreaPoi.lua")
+local AreaPoiCriteria = WQA.Criterias.AreaPoi
 dofile("Runtime/TaskResolver.lua")
 
 local rewardLinksReady = false
+local missionDataPending = true
 local chatPublications = {}
 local popupPublications = {}
 local ldbPublications = {}
@@ -110,7 +121,7 @@ WQA.GetRewardLinkByID = function(_, questID)
 end
 WQA.SetRewardLinkByID = noop
 WQA.CheckMissions = function()
-	return { [201] = true, [202] = true }
+    return { [201] = true, [202] = true }, missionDataPending
 end
 WQA.GetRewardLinkByMissionID = function(_, missionID)
 	if missionID == 202 and not rewardLinksReady then
@@ -169,6 +180,7 @@ assert(#timers == 1)
 
 -- A normal successful pass cancels an outstanding retry.
 rewardLinksReady = true
+missionDataPending = false
 WQA:CheckWQ("settings")
 assert(timers[1].cancelled == true)
 assert(WQA._wqaTurboCheckRetryTimer == nil)
@@ -200,4 +212,42 @@ assert(openPopupRefreshes == refreshesBeforePopup)
 WQA:CheckWQ("LDB")
 assert(#ldbPublications == 1)
 
-print("Task resolver regression checks passed (progressive readiness, retries, filtering and display modes).")
+-- Area POI readiness is isolated per POI. One missing reward link or missing
+-- POI payload must not publish that POI or block a separate ready POI.
+local allPoiRewardsReady = false
+local cachedPoiLinks = {}
+AreaPoiCriteria.list = {
+	[301] = { [401] = { reward = { chance = { { id = 1 }, { id = 2 } } } } },
+	[302] = { [402] = { reward = { gold = 100 } } },
+	[303] = { [403] = { reward = { custom = true } } }
+}
+AreaPoiCriteria.watched = {}
+poiInfoByKey = {
+	["401:301"] = { name = "Pending rewards" },
+	["403:303"] = { name = "Ready POI" }
+}
+WQA.GetRewardLinkByID = function(_, poiID, _, _, index)
+	if poiID == 301 and index == 1 and not allPoiRewardsReady then
+		return nil
+	end
+	return "poi-reward-link"
+end
+WQA.SetRewardLinkByID = function(_, poiID, _, _, index)
+	cachedPoiLinks[tostring(poiID) .. ":" .. tostring(index)] = true
+end
+
+local poiResult = AreaPoiCriteria:Check()
+assert(poiResult.retry == true)
+assert(poiResult.active[301] == nil, "A partly ready POI must remain pending")
+assert(poiResult.active[302] == nil, "Missing POI information must remain pending")
+assert(poiResult.active[303][403] == true, "A ready POI must publish independently")
+assert(cachedPoiLinks["301:2"] == true, "Ready links should be cached during a partial pass")
+
+allPoiRewardsReady = true
+poiInfoByKey["402:302"] = { name = "POI metadata ready" }
+poiResult = AreaPoiCriteria:Check()
+assert(poiResult.retry == false)
+assert(poiResult.active[301][401] and poiResult.active[302][402] and poiResult.active[303][403])
+assert(poiResult.new[301][401] and poiResult.new[302][402] and poiResult.new[303][403])
+
+print("Task resolver regression checks passed (progressive task and Area POI readiness, retries, filtering and display modes).")

@@ -9,7 +9,7 @@ local scheduled = {}
 local repeating = {}
 local shown = {}
 local loadedAddons = {}
-local missionChecks = 0
+local taskResolverSchedules = 0
 local deferredRefreshes = 0
 
 local eventFrame = {
@@ -103,8 +103,8 @@ WQATurbo = {
 	Show = function(_, mode, auto)
 		shown[#shown + 1] = { mode = mode, auto = auto }
 	end,
-	CheckMissions = function()
-		missionChecks = missionChecks + 1
+	ScheduleTaskResolverCheck = function()
+		taskResolverSchedules = taskResolverSchedules + 1
 	end,
 	ResumeDeferredRefresh = function()
 		deferredRefreshes = deferredRefreshes + 1
@@ -171,6 +171,6 @@ eventFrame.onEvent(eventFrame, "WAR_MODE_STATUS_UPDATE")
 assert(#shown == 2 and shown[2].mode == "new" and shown[2].auto == true)
 
 eventFrame.onEvent(eventFrame, "GARRISON_MISSION_LIST_UPDATE")
-assert(missionChecks == 1)
+assert(taskResolverSchedules == 1)
 
 print("Runtime lifecycle regression checks passed (options, category ID, events, startup scheduling, combat, War Mode and missions).")

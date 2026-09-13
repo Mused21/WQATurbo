@@ -1783,28 +1783,38 @@ local LE_GARRISON_TYPE = {
 
 function WQA:CheckMissions()
 	local activeMissions = {}
-	local retry
+	local retry = false
 	for i in pairs(WQA.ExpansionList) do
 		local type = LE_GARRISON_TYPE[i]
 		if type and C_Garrison.HasGarrison(type) then
 			local followerType = GetPrimaryGarrisonFollowerType(type)
 			local missions = C_Garrison.GetAvailableMissions(followerType)
+			if not missions then
+				retry = true
+				missions = {}
+			end
+
 			-- Add Shipyard Missions
 			if i == 6 and C_Garrison.HasShipyard() then
-				for missionID, mission in ipairs(C_Garrison.GetAvailableMissions(Enum.GarrisonFollowerType.FollowerType_6_0_Boat)) do
-					mission.followerType = Enum.GarrisonFollowerType.FollowerType_6_0_Boat
-					missions[#missions + 1] = mission
+				local shipyardMissions = C_Garrison.GetAvailableMissions(Enum.GarrisonFollowerType.FollowerType_6_0_Boat)
+				if shipyardMissions then
+					for _, mission in ipairs(shipyardMissions) do
+						mission.followerType = Enum.GarrisonFollowerType.FollowerType_6_0_Boat
+						missions[#missions + 1] = mission
+					end
+				else
+					retry = true
 				end
 			end
 
-			if missions then
+			if #missions > 0 then
 				for _, mission in ipairs(missions) do
 					local missionID = mission.missionID
 					local addMission = false
 					if self.missionList[missionID] then
 						addMission = true
 					end
-					for _, reward in ipairs(mission.rewards) do
+					for _, reward in ipairs(mission.rewards or {}) do
 						if reward.currencyID then
 							if reward.currencyID ~= 0 then
 								local currencyID = reward.currencyID
@@ -1911,11 +1921,7 @@ function WQA:CheckMissions()
 		end
 	end
 
-	if retry then
-		return nil
-	else
-		return activeMissions
-	end
+	return activeMissions, retry
 end
 
 function WQA:isQuestPinActive(questID)

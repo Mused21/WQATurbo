@@ -43,7 +43,7 @@ local function cancelCheckRetry(self)
 	self._wqaTurboCheckRetryTimer = nil
 end
 
-local function scheduleCheckRetry(self)
+function WQA:ScheduleTaskResolverCheck()
 	-- Coalesce all unresolved task/link retries into one timer.
 	if self._wqaTurboCheckRetryTimer then
 		return
@@ -211,7 +211,7 @@ function WQA:CheckWQ(mode, fromRetry)
 	-- Dynamic Reward() is background-only in Turbo. EmissaryReward() is still
 	-- upstream code, so allow it to finish without blocking ordinary WQs.
 	if self.emissaryRewards ~= true then
-		scheduleCheckRetry(self)
+		self:ScheduleTaskResolverCheck()
 	end
 
 	local activeQuests = {}
@@ -233,7 +233,7 @@ function WQA:CheckWQ(mode, fromRetry)
 		end
 	end
 
-	local activeMissions = self:CheckMissions()
+	local activeMissions, missionsNeedRetry = self:CheckMissions()
 	local readyMissions = {}
 	local newMissions = {}
 
@@ -251,6 +251,10 @@ function WQA:CheckWQ(mode, fromRetry)
 		end
 	else
 		activeMissions = {}
+		needsRetry = true
+	end
+
+	if missionsNeedRetry then
 		needsRetry = true
 	end
 
@@ -377,7 +381,7 @@ function WQA:CheckWQ(mode, fromRetry)
 	self:UpdateLDBText(next(self.activeTasks), next(self.newTasks))
 
 	if needsRetry then
-		scheduleCheckRetry(self)
+		self:ScheduleTaskResolverCheck()
 	else
 		cancelCheckRetry(self)
 	end

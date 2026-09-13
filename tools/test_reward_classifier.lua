@@ -17,6 +17,7 @@ local questRewardCurrencies = {}
 local taskNames = {}
 local areaPoiNames = {}
 local availableMissions = {}
+local activeGarrisons = {}
 
 C_QuestLog = {
     IsQuestFlaggedCompleted = noop,
@@ -42,7 +43,7 @@ C_AreaPoiInfo = {
 }
 C_Garrison = {
     GetMissionName = function(missionID) return taskNames[missionID] end,
-    HasGarrison = function(garrisonType) return availableMissions[garrisonType] ~= nil end,
+    HasGarrison = function(garrisonType) return activeGarrisons[garrisonType] == true end,
     GetAvailableMissions = function(followerType) return availableMissions[followerType] end,
     HasShipyard = function() return false end
 }
@@ -213,6 +214,7 @@ local function Reset(itemID)
     taskNames = {}
     areaPoiNames = {}
     availableMissions = {}
+    activeGarrisons = {}
     PawnIsItemAnUpgrade = nil
     PawnGetItemData = nil
     C_AzeriteEmpoweredItem.IsAzeriteEmpoweredItemByID = function() return false end
@@ -476,6 +478,7 @@ Reset(200000)
 WQA.ExpansionList = { [8] = "Battle for Azeroth" }
 WQA.missionList = {}
 WQA.db.profile.options.missionTable.reward.reputation[2164] = true
+activeGarrisons[8] = true
 availableMissions[8] = {
     {
         missionID = 500,
@@ -488,13 +491,40 @@ WQA.AddRewardToMission = function(self, missionID, rewardType, value)
     self.missionList[missionID] = self.missionList[missionID] or { reward = {} }
     self.missionList[missionID].reward[rewardType] = value
 end
-local activeMissions = WQA:CheckMissions()
+local activeMissions, missionRetry = WQA:CheckMissions()
 assert(activeMissions[500] == true, "A reputation-currency-only mission must be active")
+assert(missionRetry == false)
 
 WQA.missionList = {}
 WQA.db.profile.options.hideExaltedReputations = true
 factionReaction = 8
 activeMissions = WQA:CheckMissions()
 assert(activeMissions[500] == nil, "A maxed reputation mission must be hidden")
+
+-- Pending mission payloads and items request another pass without suppressing
+-- an unrelated ready mission.
+Reset(200000)
+WQA.ExpansionList = { [8] = "Battle for Azeroth" }
+WQA.missionList = {}
+WQA.db.profile.options.missionTable.reward.gold = true
+activeGarrisons[8] = true
+availableMissions[8] = {
+    { missionID = 501, rewards = { { currencyID = 0, quantity = 10000 } } },
+    { missionID = 502, rewards = { { itemID = 999 } } }
+}
+local getItemInfo = GetItemInfo
+GetItemInfo = function(item)
+    if item == 999 then
+        return nil
+    end
+    return getItemInfo(item)
+end
+activeMissions, missionRetry = WQA:CheckMissions()
+assert(activeMissions[501] == true, "A ready mission must survive another mission's pending item")
+assert(activeMissions[502] == nil and missionRetry == true)
+
+availableMissions[8] = nil
+activeMissions, missionRetry = WQA:CheckMissions()
+assert(next(activeMissions) == nil and missionRetry == true, "A missing mission payload must request retry")
 
 print("Reward classifier regression checks passed (links, retries, containers, caches, sorting, reputation, missions, recipes, custom and legacy rewards).")

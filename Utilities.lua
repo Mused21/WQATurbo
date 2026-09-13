@@ -200,6 +200,7 @@ function WQA:GetTaskLink(task)
     elseif task.type == TaskType.Mission then
         return C_Garrison.GetMissionLink(task.id)
     elseif task.type == TaskType.AreaPoi then
-        return C_AreaPoiInfo.GetAreaPOIInfo(task.mapId, task.id).name
+        local poiInfo = C_AreaPoiInfo.GetAreaPOIInfo(task.mapId, task.id)
+        return poiInfo and poiInfo.name
     end
 end

@@ -119,6 +119,32 @@ function WQA:RefreshVisibleQTip()
     return self:RebuildQTip("LDB")
 end
 
+local function IsTaskAttached(tooltip, task)
+    if task.type == TaskType.WorldQuest then
+        return tooltip.quests[task.id] == true
+    elseif task.type == TaskType.Mission then
+        return tooltip.missions[task.id] == true
+    elseif task.type == TaskType.AreaPoi then
+        local maps = tooltip.pois[task.id]
+        return type(maps) == "table" and maps[task.mapId] == true
+    end
+
+    return false
+end
+
+local function AttachTask(tooltip, task)
+    if task.type == TaskType.WorldQuest then
+        tooltip.quests[task.id] = true
+    elseif task.type == TaskType.Mission then
+        tooltip.missions[task.id] = true
+    elseif task.type == TaskType.AreaPoi then
+        if type(tooltip.pois[task.id]) ~= "table" then
+            tooltip.pois[task.id] = {}
+        end
+        tooltip.pois[task.id][task.mapId] = true
+    end
+end
+
 function WQA:UpdateQTip(tasks)
     local tooltip = self.tooltip
     if next(tasks) == nil then
@@ -132,10 +158,7 @@ function WQA:UpdateQTip(tasks)
         local expansion, zoneID
         for _, task in ipairs(tasks) do
             local id = task.id
-            if
-                (task.type == TaskType.WorldQuest and not tooltip.quests[id]) or (task.type == TaskType.Mission and not tooltip.missions[id]) or
-                (task.type == TaskType.AreaPoi and not tooltip.pois[id])
-            then
+            if not IsTaskAttached(tooltip, task) then
                 local j = 1
 
                 local expansionCollapsed = false
@@ -215,11 +238,7 @@ function WQA:UpdateQTip(tasks)
                     j = j + 1
                 end
 
-                if task.type == TaskType.WorldQuest then
-                    tooltip.quests[id] = true
-                elseif task.type == TaskType.Mission then
-                    tooltip.missions[id] = true
-                end
+                AttachTask(tooltip, task)
 
                 local link = self:GetTaskLink(task)
                 tooltip:SetCell(i, j, link)

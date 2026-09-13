@@ -429,6 +429,10 @@ as `WQA.Criterias.CriteriaType`. Declarative data retains its existing strings.
 - active/new results;
 - link readiness/retry state.
 
+Readiness is evaluated independently for each `(AreaPoiId, MapId)` pair. Every
+required reward link must be ready before that POI is published; another ready
+POI can still publish during the same pass.
+
 Achievement criteria are dispatched by `Tracking/Achievements.lua` using these constants.
 
 ## 11. Collection caches

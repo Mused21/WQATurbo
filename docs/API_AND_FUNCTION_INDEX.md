@@ -108,7 +108,9 @@ Registers relevance for an Area POI/map pair.
 
 ### `WQA.Criterias.AreaPoi:Check()`
 
-Evaluates current POI availability/readiness and returns active/new/retry information.
+Evaluates current POI availability/readiness and returns active/new/retry
+information. Missing POI metadata or any missing required reward link keeps
+only that POI pending.
 
 ## Reward scanner
 
@@ -227,7 +229,8 @@ Checks whether a known emissary quest is currently in the quest log/active model
 
 ### `WQA:CheckMissions()`
 
-Inspects supported mission tables and builds relevant mission state.
+Inspects supported mission tables and returns both the ready mission set and a
+retry flag for unavailable mission/item data.
 
 Supports configured currencies/reputation, custom items, transmog and legacy reward categories.
 
@@ -244,6 +247,11 @@ The Turbo implementation:
 - publishes ready tasks without waiting for every unresolved task;
 - populates `activeTasks` and `newTasks`;
 - routes to chat/popup/LDB behavior by mode.
+
+### `WQA:ScheduleTaskResolverCheck()`
+
+Coalesces readiness retries and mission-list event updates behind the existing
+TaskResolver timer before calling `CheckWQ("new", true)`.
 
 ### `WQA:Show(...)`
 

@@ -156,6 +156,12 @@ Even after relevance exists, WQA may still need:
 `TaskResolver` prepares each task individually.
 
 A task that is ready can be published even if another task needs a link retry.
+Area POI metadata and all rewards are likewise checked per `(POI, map)` pair,
+so one incomplete POI does not suppress another ready POI.
+Mission discovery returns ready missions together with an aggregate pending
+flag. A missing mission payload or item therefore schedules another readiness
+pass without discarding unrelated ready missions. Mission-list update events
+use the same coalesced TaskResolver path and republish the task cache.
 
 The readiness retry is coalesced through a timer rather than spawning uncontrolled timers.
 

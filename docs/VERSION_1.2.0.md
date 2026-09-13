@@ -374,8 +374,7 @@ Status: COMPLETED; local validation and focused in-game verification pass.
 
 ## Release-candidate correctness follow-up
 
-Status: IMPLEMENTED; local validation complete, focused in-game verification
-pending.
+Status: COMPLETED; local validation and focused in-game verification pass.
 
 - Rebuilds the collectible source-item index on every `CreateQuestList()` pass
   so disabling or collecting a pet/toy cannot leave its source item tracked
@@ -392,6 +391,37 @@ pending.
   is pending, and retries only the supplemental upgrade calculation.
 - Expanded tracking, classifier, scanner and runtime-lifecycle coverage for the
   corrected paths.
+
+## Area POI readiness follow-up
+
+Status: IMPLEMENTED; local validation complete, focused in-game verification
+pending.
+
+- Keeps a POI pending when its Blizzard metadata is unavailable instead of
+  silently omitting it until an unrelated refresh.
+- Requires every link-bearing reward on a POI to be ready before publishing
+  that POI, while continuing to publish unrelated ready POIs.
+- Caches links that are already available during a partial POI pass.
+- Tracks tooltip attachment by both POI ID and map ID, preventing exact
+  duplicates without merging distinct map instances.
+- Makes Area POI task-link lookup tolerate metadata disappearing between
+  readiness and rendering.
+- Extends task-resolver and tooltip regression coverage for these cases.
+
+## Mission readiness and event follow-up
+
+Status: IMPLEMENTED; local validation complete, focused in-game verification
+pending.
+
+- Returns ready missions even when another mission payload, item link or
+  transmog result still needs a retry.
+- Treats missing primary and Shipyard mission lists as pending data instead of
+  iterating a nil result.
+- Accepts missions with no reward array without raising an error.
+- Routes `GARRISON_MISSION_LIST_UPDATE` through the coalesced TaskResolver check
+  so changes republish `activeTasks` and an open popup.
+- Extends classifier, TaskResolver and runtime-lifecycle tests for partial
+  mission readiness and event routing.
 
 ## Non-goals for 1.2 Refactor
 

@@ -10,6 +10,7 @@ local function NewQTip(name)
         name = name,
         scripts = {},
         columns = 2,
+        lines = 0,
         released = false
     }
 
@@ -17,10 +18,18 @@ local function NewQTip(name)
     function tooltip:AddColumn() self.columns = self.columns + 1 end
     function tooltip:GetColumnCount() return self.columns end
     function tooltip:AddHeader() return 1 end
+    function tooltip:AddLine()
+        self.lines = self.lines + 1
+        return self.lines
+    end
+    function tooltip:GetLineCount() return self.lines end
     function tooltip:SetCell() end
+    function tooltip:SetCellScript() end
+    function tooltip:SetLineScript() end
     function tooltip:SetFrameStrata() end
     function tooltip:SetFrameLevel() end
     function tooltip:AddSeparator() end
+    function tooltip:Show() end
 
     return tooltip
 end
@@ -53,7 +62,13 @@ LibStub = function(name)
 end
 
 WQATurbo = {
-    Constants = { TaskType = {} },
+    Constants = {
+        TaskType = {
+            WorldQuest = "WORLD_QUEST",
+            Mission = "MISSION",
+            AreaPoi = "AREA_POI"
+        }
+    },
     L = setmetatable({}, { __index = function(_, key) return key end }),
     db = {
         profile = {
@@ -135,4 +150,29 @@ assert(shownMode == "LDB")
 assert(WQA:RebuildQTip("invalid") == false)
 assert(WQA.tooltip == fourth and fourth.released == false)
 
-print("Tooltip lifecycle regression checks passed (ownership, stale callbacks, idempotent release and rebuilds).")
+-- POI attachment keys include the map ID: the same POI ID on two maps gets
+-- two rows, while an exact duplicate is ignored.
+assert(WQA:ReleaseQTip(fourth) == true)
+WQA:CreateQTip()
+local poiTooltip = WQA.tooltip
+WQA.Criterias = {
+    AreaPoi = {
+        list = {
+            [300] = {
+                [400] = { reward = { custom = true } },
+                [401] = { reward = { custom = true } }
+            }
+        }
+    }
+}
+WQA.GetTaskLink = function(_, task) return "POI " .. tostring(task.mapId) end
+WQA.GetRewardTextByID = function() return nil end
+WQA:UpdateQTip({
+    { id = 300, mapId = 400, type = WQA.Constants.TaskType.AreaPoi },
+    { id = 300, mapId = 401, type = WQA.Constants.TaskType.AreaPoi },
+    { id = 300, mapId = 400, type = WQA.Constants.TaskType.AreaPoi }
+})
+assert(poiTooltip.lines == 2)
+assert(poiTooltip.pois[300][400] and poiTooltip.pois[300][401])
+
+print("Tooltip lifecycle regression checks passed (ownership, stale callbacks, idempotent release, rebuilds and POI deduplication).")
