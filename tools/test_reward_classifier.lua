@@ -23,6 +23,7 @@ local mapBounties = {}
 local emissaryTimers = {}
 local questDataReady = true
 local questRewardDataReady = true
+local playerClassID = 8
 
 C_QuestLog = {
     IsQuestFlaggedCompleted = noop,
@@ -96,7 +97,7 @@ Enum = {
     GarrisonFollowerType = { FollowerType_6_0_Boat = 60 }
 }
 UnitFullName = function() return "Tester", "Realm" end
-UnitClass = function() return "Mage", "MAGE", 8 end
+UnitClass = function() return "Test", "TEST", playerClassID end
 PlayerHasToy = function() return false end
 wipe = function(target) for key in pairs(target) do target[key] = nil end end
 GetPrimaryGarrisonFollowerType = function(garrisonType) return garrisonType end
@@ -167,6 +168,23 @@ assert(#WQA.data.containerCollectibles[205226].questIDs == 8)
 assert(#WQA.data.containerCollectibles[210549].questIDs == 8)
 assert(#WQA.data.containerCollectibles[169478].transmogSources.cloth == 6)
 assert(#WQA.data.containerCollectibles[169485].transmogSources.plate == 5)
+for itemID = 169477, 169485 do
+    assert(not WQA.data.containerCollectibles[itemID].allArmorTypes)
+end
+
+WQA.data.factionPruneFixture = {
+    records = {
+        metadata = true,
+        sameFaction = { faction = "Alliance" },
+        otherFaction = { faction = "Horde" }
+    }
+}
+WQA:PruneOtherFactionData("Alliance")
+assert(WQA.data.factionPruneFixture.records.metadata == true)
+assert(WQA.data.factionPruneFixture.records.sameFaction)
+assert(WQA.data.factionPruneFixture.records.otherFaction == nil)
+assert(WQA.data.containerCollectibles[169477].transmogSources.plate)
+WQA.data.factionPruneFixture = nil
 
 local function NewOptions()
     return {
@@ -238,6 +256,7 @@ local function Reset(itemID)
     emissaryTimers = {}
     questDataReady = true
     questRewardDataReady = true
+    playerClassID = 8
     PawnIsItemAnUpgrade = nil
     PawnGetItemData = nil
     C_AzeriteEmpoweredItem.IsAzeriteEmpoweredItemByID = function() return false end
@@ -249,6 +268,7 @@ local function Reset(itemID)
     transmogSourceInfo = {}
     WQA.db = {
         profile = { options = NewOptions(), custom = { worldQuestReward = {} } },
+        char = { options = { reward = { gear = { AzeriteArmorCache = true } } } },
         global = { custom = { worldQuestReward = {} } }
     }
     WQA.itemList = {}
@@ -289,8 +309,71 @@ transmogSourceInfo[104107] = { isCollected = false }
 assert(WQA:CheckReward(1000, false, 1) == false)
 assert(AssertReward(1, WQA.Constants.RewardType.Item).itemLink == scannedItemLink)
 
+local function SetContainerSourcesCollected(itemID, collected)
+    local nextAppearanceID = 6000
+    for _, sourceIDs in pairs(WQA.data.containerCollectibles[itemID].transmogSources) do
+        for _, sourceID in ipairs(sourceIDs) do
+            nextAppearanceID = nextAppearanceID + 1
+            transmogAppearances[sourceID] = { appearanceID = nextAppearanceID }
+            transmogAppearanceSources[nextAppearanceID] = { sourceID }
+            transmogSourceInfo[sourceID] = { isCollected = collected }
+        end
+    end
+end
+
+-- Benthic tokens produce gear for the active loot specialization. Reproduce
+-- the reported plate-wearer case: a missing mail source must not keep the helm
+-- visible when its plate appearance is complete.
 Reset(169479)
 WQA.db.profile.options.reward.gear.armorCache = true
+playerClassID = 6
+SetContainerSourcesCollected(169479, true)
+transmogSourceInfo[104120].isCollected = false
+assert(WQA:CheckReward(1000, false, 1) == false)
+assert(#rewards == 0)
+
+-- A missing source for the current armor type keeps the token relevant.
+Reset(169479)
+WQA.db.profile.options.reward.gear.armorCache = true
+playerClassID = 6
+SetContainerSourcesCollected(169479, true)
+transmogSourceInfo[104128].isCollected = false
+assert(WQA:CheckReward(1000, false, 1) == false)
+assert(AssertReward(1, WQA.Constants.RewardType.Item).itemLink == scannedItemLink)
+
+-- Cloaks retain the shared source pool for every class.
+Reset(169481)
+WQA.db.profile.options.reward.gear.armorCache = true
+playerClassID = 6
+SetContainerSourcesCollected(169481, true)
+transmogSourceInfo[105150].isCollected = false
+assert(WQA:CheckReward(1000, false, 1) == false)
+assert(AssertReward(1, WQA.Constants.RewardType.Item).itemLink == scannedItemLink)
+
+-- A direct equipment cache only considers the active character's armor type.
+Reset(165866)
+WQA.db.profile.options.reward.gear.armorCache = true
+SetContainerSourcesCollected(165866, true)
+transmogSourceInfo[94018].isCollected = false
+assert(WQA:CheckReward(1000, false, 1) == false)
+assert(#rewards == 0, "A missing mail source must not keep the cache visible on a cloth wearer")
+
+Reset(165866)
+WQA.db.profile.options.reward.gear.armorCache = true
+SetContainerSourcesCollected(165866, true)
+transmogSourceInfo[94002].isCollected = false
+assert(WQA:CheckReward(1000, false, 1) == false)
+assert(AssertReward(1, WQA.Constants.RewardType.Item).itemLink == scannedItemLink)
+
+-- Tortollan Trader's Stock only contains rings/trinkets, not appearances.
+Reset(165785)
+WQA.db.profile.options.reward.gear.jewelryCache = true
+assert(WQA:CheckReward(1000, false, 1) == false)
+assert(#rewards == 0)
+
+Reset(169479)
+WQA.db.profile.options.reward.gear.armorCache = true
+SetContainerSourcesCollected(169479, true)
 transmogAppearances[104104] = { appearanceID = 5002 }
 transmogAppearanceSources[5002] = { 104104, 999999 }
 transmogSourceInfo[104104] = { isCollected = false }
@@ -450,6 +533,12 @@ inventoryLevels[1] = 100
 assert(WQA:CheckReward(1000, false, 1) == true)
 assert(#rewards == 1, "An uncached Azerite cache must retain its base reward")
 
+Reset(163857)
+WQA.db.profile.options.reward.gear.AzeriteArmorCache = true
+WQA.db.char.options.reward.gear.AzeriteArmorCache = false
+assert(WQA:CheckReward(1000, false, 1) == false)
+assert(#rewards == 0, "Azerite cache tracking must support a per-character override")
+
 Reset(165872)
 WQA.db.profile.options.reward.gear.weaponCache = true
 assert(WQA:CheckReward(1000, false, 1) == false)
@@ -545,10 +634,12 @@ end
 activeMissions, missionRetry = WQA:CheckMissions()
 assert(activeMissions[501] == true, "A ready mission must survive another mission's pending item")
 assert(activeMissions[502] == nil and missionRetry == true)
+assert(WQA._wqaMissionPending["mission:502@item:999"])
 
 availableMissions[8] = nil
 activeMissions, missionRetry = WQA:CheckMissions()
 assert(next(activeMissions) == nil and missionRetry == true, "A missing mission payload must request retry")
+assert(WQA._wqaMissionPending["mission-list:8"])
 
 -- Emissary retries are generation-owned, bounded, and avoid a forced retry
 -- when both bounty maps and their rewards are already available.
@@ -597,6 +688,94 @@ currentTime = 31
 currentEmissaryTimer.callback()
 assert(WQA.emissaryRewards == true and WQA._wqaEmissaryScan == nil)
 assert(#emissaryTimers == 2, "Timed-out emissary data must stop scheduling")
+assert(WQA._wqaEmissaryTimeout["emissary:701"])
 assert(emissaryTaskChecks == 12, "Ready emissary data must publish during retries and once at completion")
 
-print("Reward classifier regression checks passed (links, bounded emissary retries, containers, caches, sorting, reputation, missions, recipes, custom and legacy rewards).")
+-- Missing bounty maps have an ID even when no quest ID is available.
+currentTime = 0
+mapBounties = {}
+WQA:EmissaryReward()
+assert(WQA._wqaEmissaryTimeout == nil)
+currentTime = 31
+emissaryTimers[#emissaryTimers].callback()
+assert(WQA._wqaEmissaryTimeout["emissary-map:627"])
+assert(WQA._wqaEmissaryTimeout["emissary-map:875"])
+
+-- Exercise core Quest Pin lookup with the real progressive TaskResolver.
+local pins = { [84] = { { questID = 101 }, {} }, [86] = {} }
+local pinCalls, pinRequests = {}, {}
+C_QuestLine = {
+    GetAvailableQuestLines = function(mapID)
+        pinCalls[mapID] = (pinCalls[mapID] or 0) + 1
+        return pins[mapID]
+    end,
+    RequestQuestLinesForMap = function(mapID)
+        pinRequests[mapID] = (pinRequests[mapID] or 0) + 1
+    end
+}
+C_TaskQuest.IsActive = function() return false end
+dofile("Runtime/TaskResolver.lua")
+WQA.Debug = noop
+WQA.ShouldIncludeWorldQuestForCurrentMode = function() return true end
+WQA.EmissaryIsActive = function() return false end
+WQA.IsQuestFlaggedCompleted = function() return false end
+WQA.CheckMissions = function(self) self._wqaMissionPending = {}; return {}, false end
+WQA.Criterias.AreaPoi = { watched = {}, Check = function() return { active = {}, new = {} } end }
+WQA.GetTaskLink = function() return "quest" end
+WQA.SortQuestList = function(_, tasks) return tasks end
+local chatCalls = 0
+WQA.AnnounceChat = function() chatCalls = chatCalls + 1 end
+WQA.AnnouncePopUp = function() error("unexpected popup") end
+WQA.UpdateLDBText, WQA.TurboRefreshOpenPopup = noop, noop
+WQA.questList = { [101] = { reward = { custom = true } }, [102] = { reward = { custom = true } } }
+WQA.questPinMapList = { [84] = true, [85] = true, [86] = true }
+WQA.watched, WQA.watchedMissions = {}, {}
+WQA._wqaTurboRefreshMode = "settings"
+currentTime = 0
+WQA:ResetTaskResolverRetry()
+WQA:CheckWQ("settings")
+assert(#WQA.activeTasks == 1 and WQA.activeTasks[1].id == 101)
+assert(pinCalls[84] == 1 and pinCalls[85] == 1 and pinCalls[86] == 1)
+assert(pinRequests[85] == 1 and pinRequests[84] == nil and pinRequests[86] == nil)
+local pinTimer = WQA._wqaTurboCheckRetryTimer
+assert(pinTimer and WQA._wqaTaskPending["quest-pin-map:85"])
+WQA:CheckWQ("settings")
+assert(pinRequests[85] == 1, "coalesced publications must not spam map requests")
+assert(WQA._wqaTurboCheckRetryTimer == pinTimer)
+pins[85] = { { questID = 102 } }
+currentTime = 0.5
+pinTimer.callback()
+assert(#WQA.activeTasks == 2 and WQA._wqaTurboCheckRetryTimer == nil)
+assert(chatCalls == 0, "Settings/profile retry must remain silent")
+pins[85] = nil
+WQA:CheckWQ("settings")
+pinTimer = WQA._wqaTurboCheckRetryTimer
+local requestsBeforeExpiry = pinRequests[85]
+currentTime = 32
+pinTimer.callback()
+assert(pinRequests[85] == requestsBeforeExpiry, "deadline pass must not re-request")
+assert(WQA._wqaTurboCheckRetryTimer == nil and WQA._wqaTaskTimeout["quest-pin-map:85"])
+assert(#WQA.activeTasks == 1)
+local timedOutRequests = pinRequests[85]
+WQA:CheckWQ("settings")
+assert(pinRequests[85] == timedOutRequests, "expired maps must not re-request")
+local diagnosticPrint = print
+local diagnostics = {}
+print = function(line) diagnostics[#diagnostics + 1] = line end
+WQA:PrintReadinessStatus()
+print = diagnosticPrint
+assert(table.concat(diagnostics, "\n"):find("quest%-pin%-map:85"))
+assert(table.concat(diagnostics, "\n"):find("emissary%-map:627"))
+
+-- Fallback map names are safe but must not poison the later metadata cache.
+local mapInfo
+C_Map = { GetMapInfo = function() return mapInfo end }
+C_TaskQuest.GetQuestZoneID = function() return 84 end
+dofile("Utilities.lua")
+assert(WQA:GetMapInfo(nil).name == "Unknown")
+assert(WQA:GetQuestZoneName(101) == "Map 84")
+assert(WQA.questList[101].info.zoneName == nil)
+mapInfo = { name = "Stormwind" }
+assert(WQA:GetQuestZoneName(101) == "Stormwind")
+assert(WQA:GetTaskZoneName({ type = WQA.Constants.TaskType.AreaPoi, mapId = 84 }) == "Stormwind")
+print("Reward/core regression checks passed (classification, missions, emissaries, Quest Pin readiness and metadata recovery).")

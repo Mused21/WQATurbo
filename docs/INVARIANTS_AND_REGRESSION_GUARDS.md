@@ -186,6 +186,17 @@ Azerite/equipment cache eligibility must not silently depend on modern-character
 
 Upgrade calculations are display metadata.
 
+Verified finite appearance pools may hide a direct equipment cache after the
+shared and current armor-type sources are complete. Azerite Armor Cache uses a
+profile master setting plus an explicit per-character override because its pool
+varies by context. Armor tokens that follow loot specialization check the
+active character's armor type. Faction pruning must preserve scalar metadata
+alongside faction-tagged record tables.
+
+Pet ownership is complete after one collected copy. The Pet Journal row flag
+may be cross-checked with the species count, but the per-species copy limit must
+never become a completion target. `Always track` remains the explicit override.
+
 ### 30. Racing purse completion is purse-specific
 
 Each purse must be hidden only after every account-wide manuscript quest flag
@@ -207,6 +218,17 @@ only by `Tracking/CollectionCache.lua`, and `CheckWQ()` is owned only by
 Unknown containers, unknown character armor types and unavailable Blizzard
 collection data must keep a container visible. Do not infer completion from a
 partial or combined loot pool.
+
+### 33. Profile transitions cannot retain another profile's runtime cache
+
+Changed, copied and reset profiles must supersede old asynchronous work,
+rebind minimap settings, rebuild options and publish new-profile results silently.
+
+### 34. Transient metadata is not a permanent negative result
+
+Missing map names and POI hover metadata must not crash. Do not cache fallback
+zone names as resolved metadata. Missing Quest Pin results use bounded retries;
+ready maps and tasks continue independently.
 
 ## Review technique
 

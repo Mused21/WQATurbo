@@ -26,7 +26,7 @@ data.achievements = {
         name = "Lysikas Would Be Proud",
         id = 62105,
         criteriaType = "QUEST_SINGLE",
-        criteria = 93438 -- Special Assignment: Precision Excision
+        criteria = 94743 -- Special Assignment: Precision Excision
     },
     {
         name = "A Stack of Snacks",

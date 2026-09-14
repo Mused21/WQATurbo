@@ -17,6 +17,8 @@ local armorTypeByClassID = {
 	[13] = "mail" -- Evoker
 }
 
+local armorTypes = { "cloth", "leather", "mail", "plate" }
+
 ---Return whether every known collectible outcome from a fixed-pool container
 ---is already owned. Missing data always keeps the container visible.
 ---@param itemID number
@@ -59,13 +61,23 @@ function WQA:IsContainerCollectibleComplete(itemID)
 
 		local _, _, classID = UnitClass("player")
 		local armorType = armorTypeByClassID[classID]
-		local sourceGroups = {
-			container.transmogSources.all,
-			armorType and container.transmogSources[armorType]
-		}
+		local sourceGroups = {}
+		if container.transmogSources.all then
+			table.insert(sourceGroups, container.transmogSources.all)
+		end
+		if container.allArmorTypes then
+			for _, candidateArmorType in ipairs(armorTypes) do
+				local sources = container.transmogSources[candidateArmorType]
+				if sources then
+					table.insert(sourceGroups, sources)
+				end
+			end
+		elseif armorType and container.transmogSources[armorType] then
+			table.insert(sourceGroups, container.transmogSources[armorType])
+		end
 		local checkedSource = false
 
-		for _, sourceIDs in pairs(sourceGroups) do
+		for _, sourceIDs in ipairs(sourceGroups) do
 			checkedSource = true
 			for _, sourceID in ipairs(sourceIDs) do
 				local appearanceInfo = getAppearanceInfo(sourceID)

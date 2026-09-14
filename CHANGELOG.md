@@ -1,5 +1,31 @@
 # WQA Turbo Changelog
 
+## 1.3.0
+
+### Improved
+- Split Settings builders into custom, tracking and reward modules while preserving paths, ordering and shared refresh scheduling.
+- Added an explicit SavedVariables schema version with ordered, repeatable migrations and focused legacy-database tests.
+- Let Blizzard load its Garrison UI on demand instead of forcing the full mission-table interface to load at addon startup.
+
+### Fixed
+- Corrected the Midnight Precision Excision World Quest ID used by the Lysikas Would Be Proud achievement tracker.
+- Excluded local agent override instructions from release packages.
+- Hide Zandalari Empire Equipment Cache when its verified appearance pool is complete for the current armor type.
+- Stop treating Tortollan Trader's Stock as an appearance-bearing jewelry cache.
+- Evaluate Benthic tokens for the active character's armor type so completed slot appearances are not shown because another armor type is missing.
+- Allow Azerite Armor Cache tracking to be disabled per character while retaining the profile-wide master setting.
+- Show the full per-character Azerite setting label and description instead of trimming them in the Gear layout.
+- Treat any positive Pet Journal species count as owned even if its journal row temporarily reports otherwise.
+- Preserve scalar container metadata during faction pruning so addon initialization reaches AceDB setup.
+- Reject invalid custom IDs and duplicate additions without overwriting saved entries.
+- Store custom map IDs numerically and require a valid map for Quest Pin entries.
+- Refresh runtime results after custom adds, edits, toggles and deletes through the silent Settings debouncer.
+- Remove leftover quest type and map controls when deleting a custom quest.
+- Retry unavailable Quest Pin map data without blocking ready tasks or repeatedly querying every map for each quest.
+- Tolerate disappearing map and Area POI metadata; temporary fallback names recover when data becomes available.
+- Rebuild results and update the minimap immediately after changing, copying or resetting a profile, with silent background publication.
+- Include unresolved task and emissary IDs in on-demand scan/performance diagnostics after readiness timeouts.
+
 ## 1.2.0
 
 ### Improved

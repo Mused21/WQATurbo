@@ -13,7 +13,7 @@ Scanning/              dynamic reward discovery
 Runtime/               orchestration, display and task publication
 UI/                    tooltip and Settings UI
 Criterias/, Rewards/, Items/
-Migration.lua, Performance.lua, Utilities.lua, Locales.lua
+Migration.lua, Database.lua, Performance.lua, Utilities.lua, Locales.lua
 ```
 
 The detailed entries below follow approximate TOC load order.
@@ -95,7 +95,9 @@ Responsibilities include:
 - startup scheduling;
 - event orchestration;
 - `/wqat` command dispatch;
-- avoiding legacy broad preload behavior.
+- avoiding legacy broad preload behavior;
+- leaving `Blizzard_GarrisonUI` load-on-demand while mission scans use the
+  global `C_Garrison` API.
 
 ### `Runtime/Display.lua`
 
@@ -141,17 +143,19 @@ Responsibilities include:
 
 ### `UI/Options.lua`
 
-AceConfig settings UI.
+AceConfig tree orchestration, general Options pages, tab organization and
+coalesced runtime refresh scheduling.
 
-Responsibilities include:
+Feature owners under `UI/Options/`:
 
-- Tracking tree;
-- search;
-- bulk tracking;
-- Rewards tree;
-- Custom tree;
-- Options tree;
-- refresh scheduling in setters.
+- `Shared.lua`: shared ordering counter and expansion sorting.
+- `Tracking.lua`: tracking tree, search, bulk tracking and label retry timer.
+- `Rewards.lua`: general and expansion reward builders.
+- `Custom.lua`: custom editors, validation and mutations.
+
+`tools/load_options.lua` loads these files in TOC order for Lua tests.
+`tools/test_options_structure.lua` covers complete tree construction, search,
+scoped writes and cross-feature coalescing, with optional baseline comparison.
 
 ### `Migration.lua`
 
@@ -164,6 +168,13 @@ Responsibilities include:
 - deep-copy;
 - temporary original-addon enable/reload flow;
 - migration prompt/state.
+
+### `Database.lua`
+
+Owns the active `WQATurboDB` schema version and ordered, idempotent migrations
+that run after AceDB initialization. It currently normalizes the legacy custom
+quest and custom reward table shapes while preserving canonical entries on ID
+collisions.
 
 ### `Tracking/Achievements.lua`
 
@@ -245,9 +256,9 @@ to the canonical emissary table.
 
 ### `Data/ContainerCollectibles.lua`
 
-Fixed collectible pools for racing purses and Benthic armor tokens. Stores
-account-wide manuscript quest IDs and Benthic item-modified appearance source
-IDs; it contains no collection API calls.
+Fixed collectible pools for racing purses, Benthic armor tokens and verified
+equipment caches. Stores account-wide manuscript quest IDs and item-modified
+appearance source IDs; it contains no collection API calls.
 
 ## Criterias
 
@@ -349,7 +360,12 @@ event dispatch, combat recovery, War Mode refresh and mission updates.
 `test_task_resolver.lua` checks progressive readiness, retry ownership, final
 filtering and display-mode routing.
 `test_tooltip_lifecycle.lua` checks exact ownership, stale callbacks,
-idempotent cleanup and popup/LDB rebuild ordering.
+idempotent cleanup and popup/LDB rebuild ordering, including POI hover metadata
+loss and recovery. The core/classifier suite also covers Quest Pin readiness,
+map-name fallback recovery and emissary/mission timeout IDs. Lifecycle tests
+cover profile callbacks and minimap rebinding.
+`test_custom_options.lua` checks input validation, duplicate protection,
+control deletion and debounced refreshes through actual editor callbacks.
 
 ### `.gitignore`
 

@@ -243,6 +243,7 @@ local poiResult = AreaPoiCriteria:Check()
 assert(poiResult.retry == true)
 assert(poiResult.active[301] == nil, "A partly ready POI must remain pending")
 assert(poiResult.active[302] == nil, "Missing POI information must remain pending")
+assert(poiResult.pending["poi:301@map:401"] and poiResult.pending["poi:302@map:402"])
 assert(poiResult.active[303][403] == true, "A ready POI must publish independently")
 assert(cachedPoiLinks["301:2"] == true, "Ready links should be cached during a partial pass")
 
@@ -268,6 +269,7 @@ currentTime = 31
 boundedTimer.callback()
 assert(WQA._wqaTurboCheckRetryTimer == nil)
 assert(WQA._wqaTurboCheckRetryTimedOut == true)
+assert(WQA._wqaTaskTimeout["mission:202"])
 local timerCountAfterTimeout = #timers
 WQA:ScheduleTaskResolverCheck()
 assert(#timers == timerCountAfterTimeout, "Timed-out readiness must not keep scheduling")

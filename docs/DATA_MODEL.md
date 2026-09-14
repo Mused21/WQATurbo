@@ -8,11 +8,26 @@ Primary SavedVariables object:
 WQATurboDB
 ```
 
+The current schema version is `1`, stored at:
+
+```lua
+WQATurboDB.global.schemaVersion
+```
+
+`Database.lua` owns post-AceDB schema migrations. Migrations run in ascending
+version order, record each completed version, and must be safe to repeat. A
+database whose version is newer than this addon understands is left unchanged
+instead of being downgraded.
+
 Original addon migration source:
 
 ```text
 WQADB
 ```
+
+`Migration.lua` owns the optional one-time import from that separate legacy
+SavedVariables object. It runs before AceDB is created; this is distinct from
+the versioned migrations of the active `WQATurboDB` schema.
 
 AceDB provides three important scopes:
 
@@ -104,6 +119,7 @@ Fixed collectible pools keyed by container item ID:
 
 ```lua
 containerCollectibles[containerItemID] = {
+    allArmorTypes = true, -- only when one token can produce every armor type
     questIDs = {...},
     transmogSources = {
         all = {...},
@@ -115,9 +131,11 @@ containerCollectibles[containerItemID] = {
 }
 ```
 
-Racing purses use account-wide hidden quest IDs. Benthic tokens use
-item-modified appearance source IDs grouped by the armor type that the token
-can produce. A container may use either ownership representation.
+Racing purses use account-wide hidden quest IDs. Benthic tokens and direct
+equipment caches use item-modified appearance source IDs for the active
+character's armor type because their generated armor follows the active loot
+specialization. Shared cloak sources apply to every class. A container may use
+either ownership representation.
 
 ### `WQA.questList`
 
@@ -187,6 +205,15 @@ items cannot remain relevant from an earlier refresh.
 ### `questPinList` / `questPinMapList`
 
 State for custom/achievement quest-pin style criteria.
+
+In unreleased 1.3.0, `_wqaQuestPinsActive` is a per-readiness-pass quest-ID set;
+`_wqaQuestPinRequests` holds throttled map request times. Both reset on a full
+rebuild and are not SavedVariables.
+
+`_wqaTaskPending` and emissary scan `pending` contain unresolved diagnostic keys
+(task class plus quest/mission/POI/map IDs). `_wqaTaskTimeout` and
+`_wqaEmissaryTimeout` retain the last timeout snapshot until the next full
+refresh; they are session-only and never affect eligibility.
 
 ### `questFlagList`
 

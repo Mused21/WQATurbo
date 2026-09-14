@@ -24,7 +24,10 @@ local function NewQTip(name)
     end
     function tooltip:GetLineCount() return self.lines end
     function tooltip:SetCell() end
-    function tooltip:SetCellScript() end
+    function tooltip:SetCellScript(row, column, event, callback)
+        self.cellScripts = self.cellScripts or {}
+        self.cellScripts[row .. ":" .. event] = callback
+    end
     function tooltip:SetLineScript() end
     function tooltip:SetFrameStrata() end
     function tooltip:SetFrameLevel() end
@@ -175,4 +178,15 @@ WQA:UpdateQTip({
 assert(poiTooltip.lines == 2)
 assert(poiTooltip.pois[300][400] and poiTooltip.pois[300][401])
 
-print("Tooltip lifecycle regression checks passed (ownership, stale callbacks, idempotent release, rebuilds and POI deduplication).")
+-- POI metadata may disappear after publication but before hover.
+local title
+GameTooltip = { ClearLines = noop, ClearAllPoints = noop, SetPoint = noop, Show = noop }
+GameTooltip_SetDefaultAnchor = noop
+GameTooltip_SetTitle = function(_, text) title = text end
+C_AreaPoiInfo = { GetAreaPOIInfo = function() return nil end, IsAreaPOITimed = function() return false end }
+poiTooltip.cellScripts["1:OnEnter"]({})
+assert(title == "POI 300")
+C_AreaPoiInfo.GetAreaPOIInfo = function() return { name = "Recovered POI", areaPoiID = 300 } end
+poiTooltip.cellScripts["1:OnEnter"]({})
+assert(title == "Recovered POI")
+print("Tooltip lifecycle regression checks passed (ownership, stale callbacks, cleanup, POI deduplication and metadata recovery).")

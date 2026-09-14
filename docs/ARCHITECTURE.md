@@ -43,6 +43,7 @@ Locales.lua
 Utilities.lua
 UI/Tooltip.lua
 Migration.lua
+Database.lua
 
 WQATurbo.lua
 
@@ -53,6 +54,10 @@ Runtime/Display.lua
 Runtime/TaskResolver.lua
 Performance.lua
 
+UI/Options/Shared.lua
+UI/Options/Custom.lua
+UI/Options/Tracking.lua
+UI/Options/Rewards.lua
 UI/Options.lua
 ```
 
@@ -166,9 +171,9 @@ remains an alias to the canonical emissary table for compatibility.
 
 ### `Data/ContainerCollectibles.lua`
 
-Owns fixed collectible outcome data for racing purses and Benthic armor
-tokens. It is loaded before `Tracking/ContainerCompletion.lua` and the reward
-classifiers.
+Owns fixed collectible outcome data for racing purses, Benthic armor tokens and
+verified equipment caches such as Zandalari Empire Equipment Cache. It is
+loaded before `Tracking/ContainerCompletion.lua` and the reward classifiers.
 
 ### `Tracking/ContainerCompletion.lua`
 
@@ -242,6 +247,8 @@ Instead of repeatedly asking the mount/pet journals while walking each
 expansion's data, collection state is indexed once per refresh and reused.
 Settings completion grouping reads the same ownership indexes, so constructing
 one row per tracked mount or pet does not rescan the corresponding journal.
+Mapped pet lookups cross-check an unowned journal row with the species count and
+cache that result for the current snapshot.
 The module is the sole owner of `AddMounts()` and `AddPets()`.
 
 ### `Scanning/RewardScanner.lua`
@@ -263,6 +270,18 @@ Owns optimized runtime orchestration.
 It is the sole owner of `OnEnable()` and its startup/event schedule.
 
 It avoids the old startup behavior that synchronously preloaded/scanned every map and provides the modern `/wqat` command flow.
+
+It registers `GARRISON_MISSION_LIST_UPDATE` without loading
+`Blizzard_GarrisonUI`. Mission scanning uses the global `C_Garrison` API, while
+Blizzard remains responsible for loading its mission-table frames when a
+player opens that UI.
+
+The unreleased 1.3.0 profile callback handles changed, copied and reset profiles.
+It detaches the exact old tooltip, clears watched sets, rebinds LibDBIcon to the
+current profile, and immediately rebuilds through `RefreshFromOptions(true)`.
+This explicit user action bypasses automatic combat deferral to prevent showing
+another profile's cache. The normal refresh sequence supersedes old scanner,
+emissary and TaskResolver generations. Settings controls are then notified.
 
 ### `Runtime/Display.lua`
 
@@ -298,7 +317,18 @@ and transient LDB rebuilding.
 
 ### `UI/Options.lua`
 
-Builds the AceConfig settings hierarchy.
+Orchestrates the AceConfig settings hierarchy and owns general settings, tab
+organization and the single coalesced runtime refresh timer. Feature builders
+load first in TOC order:
+
+- `UI/Options/Shared.lua`: one ordering counter and sorted expansion IDs.
+- `UI/Options/Custom.lua`: custom forms, validation and entry mutations.
+- `UI/Options/Tracking.lua`: tracking trees, search and bulk changes; its separate
+  label retry timer only notifies AceConfig when item metadata is missing.
+- `UI/Options/Rewards.lua`: general and per-expansion reward pages.
+
+All feature setters use the controller's refresh methods. The split preserves
+AceConfig paths, labels and construction order.
 
 Settings are largely generated dynamically from:
 
@@ -313,6 +343,11 @@ Settings are largely generated dynamically from:
 ### `Migration.lua`
 
 Handles import from original WQAchievements and must run early enough to copy raw SavedVariables before AceDB turns them into live DB objects.
+
+### `Database.lua`
+
+Owns the active `WQATurboDB` schema version and ordered migrations. It runs
+after AceDB initialization and before runtime consumers read the database.
 
 ### `Performance.lua`
 

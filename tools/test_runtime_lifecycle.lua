@@ -2,6 +2,7 @@
 -- lua5.1 tools/test_runtime_lifecycle.lua
 local function noop() end
 
+local callbacks = {}
 local commands = {}
 local optionTables = {}
 local settingsPages = {}
@@ -78,6 +79,9 @@ end
 
 WQATurbo = {
 	db = {
+		RegisterCallback = function(owner, event, method)
+			callbacks[event] = function() owner[method](owner) end
+		end,
 		profile = { options = { delay = 5 } },
 		global = { completed = {} }
 	},
@@ -142,7 +146,7 @@ assert(eventFrame.registered.WAR_MODE_STATUS_UPDATE)
 assert(#scheduled == 1)
 assert(scheduled[1].callback == "MaybeOfferWQAMigration")
 assert(scheduled[1].delay == 2)
-assert(loadedAddons[1] == "Blizzard_GarrisonUI")
+assert(#loadedAddons == 0, "startup must not eagerly load Blizzard_GarrisonUI")
 
 eventFrame.onEvent(eventFrame, "PLAYER_ENTERING_WORLD")
 assert(eventFrame.unregistered.PLAYER_ENTERING_WORLD)
@@ -174,6 +178,64 @@ assert(#shown == 2 and shown[2].mode == "new" and shown[2].auto == true)
 
 eventFrame.onEvent(eventFrame, "GARRISON_MISSION_LIST_UPDATE")
 assert(taskResolverSchedules == 1)
+assert(#loadedAddons == 0, "mission updates use C_Garrison without loading its UI")
 assert(taskResolverRestartWindow == true)
 
-print("Runtime lifecycle regression checks passed (options, category ID, events, startup scheduling, combat, War Mode and missions).")
+-- Execute all three profile events through real Options/Display refresh methods.
+dofile("Constants.lua")
+WQA.RuntimeData = {}
+WQA.L = setmetatable({}, { __index = function(_, key) return key end })
+C_CurrencyInfo, C_QuestLog = {}, {}
+dofile("tools/load_options.lua")()
+dofile("Runtime/Display.lua")
+UnitAffectingCombat = function() return true end
+local minimapDB, notified, rebuilds, cancelled = nil, 0, 0, {}
+libraries["LibDBIcon-1.0"] = { Refresh = function(_, name, db)
+    assert(name == "WQATurbo")
+    minimapDB = db
+end }
+libraries["AceConfigRegistry-3.0"] = { NotifyChange = function(_, name)
+    assert(name == "WQATurbo" and WQA.options == nil)
+    notified = notified + 1
+end }
+WQA.Criterias = { AreaPoi = {} }
+WQA.Debug = noop
+WQA.CancelTimer = function(_, id) cancelled[id] = true end
+WQA.UpdateMinimapIcon = function(self)
+    assert(minimapDB == self.db.profile.options.LibDBIcon)
+end
+WQA.ReleaseQTip = function(self, tooltip)
+    assert(tooltip == self.tooltip)
+    self.tooltip = nil
+end
+WQA.CreateQuestList = function(self)
+    assert(self._wqaTurboRefreshMode == "settings")
+    assert(self.tooltip == nil)
+    assert(next(self.watched) == nil and next(self.watchedMissions) == nil)
+    assert(next(self.Criterias.AreaPoi.watched) == nil)
+    self.questList = { [self.db.profile.testID] = true }
+    rebuilds = rebuilds + 1
+end
+WQA.CheckWQ = function(self, mode)
+    assert(mode == "settings")
+    self.activeTasks = { self.db.profile.testID }
+end
+for index, event in ipairs({ "OnProfileChanged", "OnProfileCopied", "OnProfileReset" }) do
+    WQA.options = { old = true }
+    WQA.tooltip = {}
+    WQA.watched, WQA.watchedMissions = { old = true }, { old = true }
+    WQA.Criterias.AreaPoi.watched = { old = true }
+    WQA:ScheduleOptionsRefresh()
+    local timerID = #scheduled
+    WQA.db.profile = { testID = index, options = {
+        delayCombat = true, LibDBIcon = { hide = index == 2, minimapPos = index * 45 }
+    } }
+    WQA._wqaTurboPendingRefresh = { mode = "new", auto = true }
+    assert(callbacks[event], "missing callback: " .. event)()
+    assert(cancelled[timerID], "old settings timer must be cancelled")
+    assert(WQA.activeTasks[1] == index and WQA.questList[index])
+    assert(WQA._wqaTurboPendingRefresh == nil, "profile rebuild supersedes combat deferral")
+    assert(minimapDB == WQA.db.profile.options.LibDBIcon)
+end
+assert(rebuilds == 3 and notified == 3)
+print("Runtime lifecycle regression checks passed (startup, events, profile callbacks, immediate silent rebuild and minimap rebinding).")

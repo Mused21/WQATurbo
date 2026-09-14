@@ -16,6 +16,7 @@ Before modifying code, read:
 - `docs/ARCHITECTURE.md`
 - `docs/INVARIANTS_AND_REGRESSION_GUARDS.md`
 - `docs/SCANNING_AND_PERFORMANCE.md`
+- `docs/ROADMAP.md`
 - `docs/VERSION_1.2.0.md`
 
 Read additional files under `docs/` when relevant to the task.
@@ -26,19 +27,25 @@ update the appropriate documentation as part of the change.
 
 ## Current Development
 
-Current development target: WQA Turbo 1.2.0.
+Current development target: WQA Turbo 1.3.0.
 
 1.1.0 functionality is the behavioral baseline.
 
-1.2.0 is primarily an architecture, maintainability, and code-quality
-refactor. Unless explicitly requested otherwise, preserve existing
-user-visible behavior.
+1.3.0 combines the tested post-release hardening with maintainability,
+performance, feature and data work from the roadmap. Preserve existing
+behavior except for explicitly planned fixes and features.
 
-The completed 1.2.0 plan and release preparation are documented in:
+The active work queue, current milestone, and completion criteria are
+documented in:
+
+`docs/ROADMAP.md`
+
+Always inspect that file before planning or starting follow-up work, and
+update its status when a roadmap item is completed or reprioritized.
+
+The completed 1.2.0 plan and release preparation remain documented in:
 
 `docs/VERSION_1.2.0.md`
-
-Always inspect that file before release preparation or follow-up work.
 
 ## Critical Architecture Rule
 
@@ -121,11 +128,13 @@ manually constructing parallel quest reward structures.
 
 - Dragonflight racing reward containers are supported.
 
-- Nazjatar Benthic tokens are handled by Armor Cache tracking.
+- Nazjatar Benthic tokens are handled by Armor Cache tracking and remain
+  relevant while the active character's armor type has a missing appearance.
 
-- Azerite Armor Cache and recognized Armor/Weapon/Jewelry caches are tracked
+- Azerite Armor Cache and recognized Armor/Weapon caches are tracked
   when their category is enabled, regardless of whether their obsolete item
-  level is an upgrade.
+  level is an upgrade. Azerite Armor Cache also has an explicit per-character
+  override; Tortollan Trader's Stock is not an appearance cache.
 
 Upgrade calculations are supplemental metadata, not cache eligibility.
 
@@ -197,7 +206,9 @@ git status
 Architecture, behavior, settings, data-model, release, or invariant changes
 must update the corresponding file under docs/.
 
-Update docs/VERSION_1.2.0.md as refactor steps are completed.
+Update docs/ROADMAP.md as roadmap items are completed or reprioritized.
+Treat released version plans such as docs/VERSION_1.2.0.md as historical
+records rather than active checklists.
 
 Do not put transient experiments into the architecture docs as shipped
 functionality. Clearly mark research-only or unshipped behavior.

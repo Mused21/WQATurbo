@@ -13,11 +13,12 @@ Custom
 Options
 ```
 
-Settings are built dynamically in `UI/Options.lua`.
+Settings are built dynamically by `UI/Options.lua` and the feature builders in
+`UI/Options/` (Custom, Tracking and Rewards), sharing one ordering counter.
 
 Stable currency, reputation, emissary and World Quest type lookup metadata is
-owned by `Data/RuntimeData.lua`. `UI/Options.lua` reads those tables while building
-the UI; loading Settings is not required to initialize runtime metadata.
+owned by `Data/RuntimeData.lua`. `UI/Options/Rewards.lua` reads those tables
+while building the UI; loading Settings is not required to initialize runtime metadata.
 
 Most setters call a debounced refresh scheduler so that configuration changes become visible without requiring `/reload`.
 
@@ -102,7 +103,8 @@ Completed entries remain hoverable.
 
 Mount and pet completion grouping uses the shared `Tracking/CollectionCache.lua`
 ownership indexes. Building the Settings tree does not perform one complete
-journal walk per collectible row.
+journal walk per collectible row. For pets, any positive species count means
+collected; owning three copies is not required.
 
 Achievement tooltips use achievement hyperlinks.
 
@@ -168,7 +170,8 @@ General behavior includes concepts such as:
 - minimum gold;
 - World Quest type filtering.
 
-The actual Settings label structure should be verified in `UI/Options.lua`.
+The actual Settings label structure should be verified in `UI/Options.lua`
+and its feature builders under `UI/Options/`.
 
 ## 5. World Quest types
 
@@ -186,9 +189,9 @@ Gear settings include:
 - minimum percentage;
 - StatWeightScore;
 - Azerite Armor Cache;
+- Azerite Armor Cache on this character;
 - Armor Cache;
 - Weapon Cache;
-- Jewelry Cache;
 - Unknown appearance;
 - Unknown source;
 - Azerite traits;
@@ -207,6 +210,15 @@ It no longer means:
 > track this cache only if the old contents are an upgrade for my current gear
 
 Upgrade calculations remain supplemental metadata.
+
+`Azerite Armor Cache` is the profile-wide master setting. Its adjacent
+`Azerite Armor Cache on this character` toggle is stored per character and is
+enabled by default. Disable the character toggle when that character's armor
+type is complete while leaving the master setting enabled for another armor
+type. Both settings must be enabled for the cache to match.
+
+Tortollan Trader's Stock is not tracked as a cache because its ring and trinket
+outcomes do not provide collectible appearances.
 
 ## 7. Dragonflight Containers — 1.1.0
 
@@ -251,9 +263,11 @@ Rewards > Gear > Armor Cache
 
 This keeps the user model simple: these are equipment-container/token rewards.
 
-For 1.2.0, a Benthic token is automatically hidden when all appearances it can
-produce for the current character's armor type are collected. A missing
-transmog API result keeps the token visible.
+A Benthic token is automatically hidden when the appearances it can produce
+for the active character's armor type are collected. A missing appearance for
+another armor type does not keep the token visible because generated armor
+follows the active loot specialization. A missing transmog API result for the
+relevant pool keeps the token visible.
 
 ## 9. Reputation
 
@@ -304,6 +318,22 @@ Possible task forms include:
 
 Custom reward item IDs can also be tracked.
 
+For the unreleased 1.3.0 hardening change, saved editor values must be
+positive integer IDs. Blank mission reward IDs remain optional; other invalid
+values are rejected without changing the saved entry. Duplicate adds report an
+error and preserve the existing entry, including its tracking toggle.
+
+Supplied map IDs are stored as numbers and must resolve through
+`C_Map.GetMapInfo()`. Quest Pin requires a map: set a valid map before changing
+an existing entry to Quest Pin. Other quest types may leave the map blank.
+Invalid edits report an error in chat and retain the previous saved value.
+
+Successful adds, edits, toggles and deletes use the existing 0.30-second silent
+Settings refresh debouncer. Rapid changes coalesce into one runtime rebuild;
+an open popup updates as results become ready. Opening the editor does not
+refresh runtime state. Deleting a quest removes its type and map controls too.
+Existing SavedVariables are not migrated by this editor fix.
+
 ## 13. Options
 
 General UI/output options include behavior such as:
@@ -335,6 +365,15 @@ WQA:ScheduleOptionsRefresh()
 rather than directly starting multiple full scans.
 
 The debouncer is intended to collapse rapid changes into one refresh.
+
+### Profile changes
+
+For unreleased 1.3.0, changing, copying or resetting an AceDB profile immediately
+rebuilds results silently, clears old watched state and refreshes the minimap's
+visibility and position from the new profile. An open popup is rebuilt; a closed
+popup stays closed. The profile action supersedes queued Settings refreshes and
+combat-deferred refreshes. Unlike automatic settings refreshes, this explicit
+profile action rebuilds even in combat so the previous profile is not displayed.
 
 ## 15. Blizzard Settings category
 

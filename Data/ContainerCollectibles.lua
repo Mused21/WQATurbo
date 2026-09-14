@@ -7,6 +7,19 @@ local WQA = WQATurbo
 -- hidden quests. Benthic tokens use item-modified appearance source IDs so
 -- the scanner can ask Blizzard whether the visual appearance is collected.
 WQA.data.containerCollectibles = {
+	-- Zandalari Empire Equipment Cache. Unlike Benthic tokens, this cache
+	-- resolves directly to armor for the current loot specialization, so only
+	-- the active character's armor type is relevant.
+	[165866] = {
+		transmogSources = {
+			all = { 94217 }, -- Loa-Pledged Drape
+			cloth = { 94002, 93997, 94001, 93999, 93996 },
+			leather = { 94010, 94005, 94009, 94007, 94004 },
+			mail = { 94018, 94013, 94017, 94015, 94012 },
+			plate = { 94027, 94021, 94026, 94024, 94020 }
+		}
+	},
+
 	-- Dragon Racer's Purse
 	[199192] = {
 		questIDs = {
@@ -33,7 +46,8 @@ WQA.data.containerCollectibles = {
 		}
 	},
 
-	-- Benthic Girdle
+	-- Benthic Girdle. Each armor token resolves for the active loot
+	-- specialization, so only the current character's armor type is relevant.
 	[169477] = {
 		transmogSources = {
 			cloth = { 104107, 105514 },

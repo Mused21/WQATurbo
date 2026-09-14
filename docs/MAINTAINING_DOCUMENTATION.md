@@ -32,8 +32,9 @@ Any PR that changes one of the following must update docs in the same PR:
 | `Tracking/CollectionCache.lua` | `SCANNING_AND_PERFORMANCE.md`, `DATA_MODEL.md` |
 | `Tracking/ContainerCompletion.lua` | `FUNCTIONAL_REFERENCE.md`, `DATA_MODEL.md`, invariants if needed |
 | `UI/Tooltip.lua` | `FUNCTIONAL_REFERENCE.md`, invariants |
-| `UI/Options.lua` | `SETTINGS_REFERENCE.md`, `FUNCTIONAL_REFERENCE.md` |
+| `UI/Options.lua`, `UI/Options/` | `SETTINGS_REFERENCE.md`, `FUNCTIONAL_REFERENCE.md` |
 | `Migration.lua` | `ARCHITECTURE.md`, `FUNCTIONAL_REFERENCE.md` |
+| `Database.lua` | `ARCHITECTURE.md`, `DATA_MODEL.md`, `API_AND_FUNCTION_INDEX.md` |
 | `Rewards/*` | `DATA_MODEL.md`; functional docs if semantics changed |
 | `Criterias/*` | `DATA_MODEL.md`, `DEVELOPMENT_GUIDE.md` |
 | `Data/*` shape | `DATA_MODEL.md`, `DEVELOPMENT_GUIDE.md` |

@@ -21,6 +21,10 @@ Responsibilities include:
 - legacy custom-data normalization;
 - minimap icon registration.
 
+Faction pruning delegates to `WQA:PruneOtherFactionData(faction)`. That helper
+examines only table records for faction tags so scalar data metadata survives
+initialization.
+
 Important ordering rule:
 
 ```text
@@ -82,7 +86,9 @@ sources using one shared Mount Journal snapshot per refresh.
 ### `WQA:AddPets(pets)`
 
 Owned only by `Tracking/CollectionCache.lua`. Registers relevant mapped pet
-sources using one shared Pet Journal snapshot per refresh.
+sources using one shared Pet Journal snapshot per refresh. Mapped ownership
+cross-checks the journal row with the per-species collected count; one copy is
+sufficient.
 
 ### `WQA:AddToys(toys)`
 
@@ -396,6 +402,12 @@ Applies captured original SavedVariables before AceDB initialization.
 Starts interactive/reload-assisted migration.
 
 Exact helper names around migration prompts/state should be confirmed in `Migration.lua`.
+
+### `WQA:ApplyDatabaseSchemaMigrations()`
+
+Applies missing `WQATurboDB` schema migrations in ascending order after AceDB
+initialization. It returns whether a migration ran and leaves databases with a
+newer schema version unchanged.
 
 ## Settings
 

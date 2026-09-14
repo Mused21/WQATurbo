@@ -70,14 +70,14 @@ WQA.ZoneIDList = {
     },
     [12] = {
         2395, -- Eversong Woods
-        2413, -- Harrandar
+        2413, -- Harandar
         2437, -- Zul'Aman
         2405, -- Voidstorm
         2393, -- Silvermoon City
         2424, -- Isle of Quel'Danas
         2541, -- The Arcantina
         2444, -- Slayer's Rise
-            2536, -- Atal'Aman
+        2536, -- Atal'Aman
         2576, -- The Den
         2599, -- Val
         2600, -- Naigtal

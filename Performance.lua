@@ -132,6 +132,7 @@ function WQA:PrintPerfSummary()
 	end
 
 	printRewardScannerSummary(self)
+	self:PrintReadinessStatus()
 end
 
 ---Slash command:

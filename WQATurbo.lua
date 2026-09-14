@@ -204,25 +204,36 @@ local dataobj =
 
 local icon = LibStub("LibDBIcon-1.0")
 
-function WQA:OnInitialize()
-	-- Remove data for the other faction
-	local faction = UnitFactionGroup("player")
+function WQA:PruneOtherFactionData(faction)
 	for k, v in pairs(self.data) do
 		for kk, vv in pairs(v) do
 			if type(vv) == "table" then
 				for kkk, vvv in pairs(vv) do
-					if vvv.faction and not (vvv.faction == faction) then
+					if type(vvv) == "table" and vvv.faction and vvv.faction ~= faction then
 						self.data[k][kk][kkk] = nil
 					end
 				end
 			end
 		end
 	end
+end
+
+function WQA:OnInitialize()
+	-- Remove data for the other faction
+	local faction = UnitFactionGroup("player")
+	self:PruneOtherFactionData(faction)
 	self.faction = faction
 
 	-- Defaults
 	local defaults = {
 		char = {
+			options = {
+				reward = {
+					gear = {
+						AzeriteArmorCache = true
+					}
+				}
+			},
 			["*"] = {
 				["profession"] = {
 					["*"] = {
@@ -294,6 +305,7 @@ function WQA:OnInitialize()
 			["*"] = { ["*"] = true }
 		},
 		global = {
+			schemaVersion = 0,
 			completed = { ["*"] = false },
 			custom = {
 				["*"] = { ["*"] = false }
@@ -302,23 +314,8 @@ function WQA:OnInitialize()
 	}
 	self:ApplyPendingWQAMigrationBeforeAceDB()
 
-self.db = LibStub("AceDB-3.0"):New("WQATurboDB", defaults, true)
-
-	-- copy old data
-	if type(self.db.global.custom) == "table" then
-		for k, v in pairs(self.db.global.custom) do
-			if type(k) == "number" then
-				self.db.global.custom.worldQuest[k] = v
-				self.db.global.custom[k] = nil
-			end
-		end
-	end
-	if type(self.db.global.customReward) == "table" then
-		for k, v in pairs(self.db.global.customReward) do
-			self.db.global.custom.worldQuestReward[k] = true
-		end
-		self.db.global.customReward = nil
-	end
+	self.db = LibStub("AceDB-3.0"):New("WQATurboDB", defaults, true)
+	self:ApplyDatabaseSchemaMigrations()
 
 	-- Minimap Icon
 	icon:Register("WQATurbo", dataobj, self.db.profile.options.LibDBIcon)
@@ -349,6 +346,8 @@ function WQA:CreateQuestList()
 	self.questList = {}
 	self.questPinList = {}
 	self.questPinMapList = {}
+	self._wqaQuestPinsActive = nil
+	self._wqaQuestPinRequests = {}
 	self.missionList = {}
 	wipe(self.itemList)
 	self.questFlagList = {}
@@ -771,9 +770,6 @@ local armorCache = {
 	[165864] = true, -- Voldunai Equipment Cache
 	[165866] = true -- Zandalari Empire Equipment Cache
 }
-local jewelryCache = {
-	[165785] = true -- Tortollan Trader's Stock
-}
 
 local benthicArmorToken = {
 	[169477] = true, -- Benthic Girdle
@@ -1088,7 +1084,11 @@ local function ClassifyEquipmentCacheReward(self, questID, isEmissary, itemID, i
 	local retry = false
 
 	-- Azerite Armor Cache
-	if itemID == 163857 and self.db.profile.options.reward.gear.AzeriteArmorCache then
+	if
+		itemID == 163857
+		and self.db.profile.options.reward.gear.AzeriteArmorCache
+		and self.db.char.options.reward.gear.AzeriteArmorCache
+	then
 		-- Enabling the option tracks the cache itself.
 		-- Upgrade calculations below are only supplemental metadata.
 		self:AddRewardToQuest(questID, RewardType.Item, { itemLink = itemLink }, isEmissary)
@@ -1130,9 +1130,14 @@ local function ClassifyEquipmentCacheReward(self, questID, isEmissary, itemID, i
 	-- Equipment Cache
 	if
 		(weaponCache[itemID] and self.db.profile.options.reward.gear.weaponCache) or
-		(armorCache[itemID] and self.db.profile.options.reward.gear.armorCache) or
-		(jewelryCache[itemID] and self.db.profile.options.reward.gear.jewelryCache)
+		(armorCache[itemID] and self.db.profile.options.reward.gear.armorCache)
 	then
+		local complete, completionRetry = self:IsContainerCollectibleComplete(itemID)
+		if complete then
+			return false
+		end
+		retry = completionRetry or retry
+
 		-- Enabling a cache category tracks the cache itself.
 		-- Upgrade calculations below are only supplemental metadata.
 		self:AddRewardToQuest(questID, RewardType.Item, { itemLink = itemLink }, isEmissary)
@@ -1195,31 +1200,6 @@ local function ClassifyEquipmentCacheReward(self, questID, isEmissary, itemID, i
 						else
 							retry = true
 						end
-					end
-				end
-			end
-		end
-
-		if jewelryCache[itemID] then
-			for i = 11, 14 do
-				if GetInventoryItemID("player", i) then
-					local itemLink1 = GetInventoryItemLink("player", i)
-					if itemLink1 then
-						local itemLevel1 = GetDetailedItemLevelInfo(itemLink1)
-						if itemLevel1 then
-							n = n + 1
-							upgrade = itemLevel - itemLevel1
-							if upgrade >= self.db.profile.options.reward.gear.itemLevelUpgradeMin then
-								upgradeNum = upgradeNum + 1
-								if upgrade > upgradeMax then
-									upgradeMax = upgrade
-								end
-							end
-						else
-							retry = true
-						end
-					else
-						retry = true
 					end
 				end
 			end
@@ -1576,6 +1556,7 @@ function WQA:EmissaryReward(state)
 			retryTimer = nil
 		}
 		self._wqaEmissaryScan = state
+		self._wqaEmissaryTimeout = nil
 	elseif
 		self._wqaEmissaryScan ~= state
 		or self._wqaEmissaryGeneration ~= state.generation
@@ -1586,10 +1567,13 @@ function WQA:EmissaryReward(state)
 	self.emissaryRewards = false
 	local retry = false
 	local relevanceMayHaveChanged = false
+	local pending = {}
+	state.pending = pending
 
 	for _, mapID in ipairs(EMISSARY_MAP_IDS) do
 		local bounties = GetBountiesForMapID(mapID)
 		if not bounties then
+			pending["emissary-map:" .. tostring(mapID)] = true
 			retry = true
 		else
 			for _, emissary in ipairs(bounties) do
@@ -1599,9 +1583,12 @@ function WQA:EmissaryReward(state)
 					self:AddEmissaryReward(questID, RewardType.Custom, nil, true)
 				end
 				if HaveQuestData(questID) and HaveQuestRewardData(questID) then
-					retry = self:CheckItems(questID, true) or retry
+					local itemsPending = self:CheckItems(questID, true)
+					if itemsPending then pending["emissary:" .. tostring(questID)] = true end
+					retry = itemsPending or retry
 					self:CheckCurrencies(questID, true)
 				else
+					pending["emissary:" .. tostring(questID)] = true
 					retry = true
 				end
 			end
@@ -1631,6 +1618,7 @@ function WQA:EmissaryReward(state)
 	end
 
 	CancelEmissaryRetry(state)
+	if retry then self._wqaEmissaryTimeout = pending end
 	if self._wqaEmissaryScan == state then
 		self._wqaEmissaryScan = nil
 		self.emissaryRewards = true
@@ -1838,12 +1826,15 @@ local LE_GARRISON_TYPE = {
 function WQA:CheckMissions()
 	local activeMissions = {}
 	local retry = false
+	local pending = {}
+	self._wqaMissionPending = pending
 	for i in pairs(WQA.ExpansionList) do
 		local type = LE_GARRISON_TYPE[i]
 		if type and C_Garrison.HasGarrison(type) then
 			local followerType = GetPrimaryGarrisonFollowerType(type)
 			local missions = C_Garrison.GetAvailableMissions(followerType)
 			if not missions then
+				pending["mission-list:" .. tostring(followerType)] = true
 				retry = true
 				missions = {}
 			end
@@ -1857,6 +1848,7 @@ function WQA:CheckMissions()
 						missions[#missions + 1] = mission
 					end
 				else
+					pending["mission-list:" .. tostring(Enum.GarrisonFollowerType.FollowerType_6_0_Boat)] = true
 					retry = true
 				end
 			end
@@ -1920,6 +1912,7 @@ function WQA:CheckMissions()
 							itemSubClassID = GetItemInfo(itemID)
 
 							if not itemLink then
+								pending["mission:" .. tostring(missionID) .. "@item:" .. tostring(itemID)] = true
 								retry = true
 							else
 								-- Custom Mission Reward
@@ -1947,6 +1940,7 @@ function WQA:CheckMissions()
 									if itemClassID == 2 or itemClassID == 4 then
 										local transmog, transmogRetry = self:GetTrackedTransmogIcon(itemLink)
 										if transmogRetry then
+											pending["mission:" .. tostring(missionID) .. "@item:" .. tostring(itemID)] = true
 											retry = true
 										elseif transmog then
 											local item = { itemLink = itemLink, transmog = transmog }
@@ -1978,15 +1972,33 @@ function WQA:CheckMissions()
 	return activeMissions, retry
 end
 
-function WQA:isQuestPinActive(questID)
-	for mapID in pairs(self.questPinMapList) do
-		for _, questPin in pairs(C_QuestLine.GetAvailableQuestLines(mapID)) do
-			if questPin.questID == questID then
-				return true
+-- One map query per readiness pass, rather than per candidate quest.
+function WQA:RefreshQuestPins(requestPending)
+	local active, pending = {}, {}
+	local now = GetTime()
+	self._wqaQuestPinRequests = self._wqaQuestPinRequests or {}
+	local requests = self._wqaQuestPinRequests
+	for mapID in pairs(self.questPinMapList or {}) do
+		local pins = C_QuestLine.GetAvailableQuestLines(mapID)
+		if type(pins) ~= "table" then
+			pending["quest-pin-map:" .. tostring(mapID)] = true
+			if requestPending ~= false and (not requests[mapID] or now - requests[mapID] >= 1.5) then
+				requests[mapID] = now
+				C_QuestLine.RequestQuestLinesForMap(mapID)
+			end
+		else
+			for _, pin in pairs(pins) do
+				if pin.questID then active[pin.questID] = true end
 			end
 		end
 	end
-	return false
+	self._wqaQuestPinsActive = active
+	return pending
+end
+
+function WQA:isQuestPinActive(questID)
+	if not self._wqaQuestPinsActive then self:RefreshQuestPins() end
+	return self._wqaQuestPinsActive[questID] == true
 end
 
 function WQA:IsQuestFlaggedCompleted(questID)

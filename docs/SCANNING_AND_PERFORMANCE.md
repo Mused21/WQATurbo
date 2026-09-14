@@ -167,6 +167,17 @@ The readiness retry is coalesced through a timer rather than spawning
 uncontrolled timers. A full refresh owns a new retry generation and limits its
 readiness window to 30 seconds. Superseded callbacks are inert, while a later
 mission-list event can start a fresh bounded window for newly available data.
+Settings/profile generations keep their silent mode through readiness retries.
+
+In unreleased 1.3.0, `RefreshQuestPins()` in `WQATurbo.lua` indexes quest-line
+results once per map per readiness pass. A missing result marks that map pending
+and uses the same bounded TaskResolver timer; other ready maps still publish.
+Requests are throttled to at most one per 1.5 seconds per pending map during the
+retry window. An empty table means no available pins and does not cause retries.
+This follows the generated API contract, which declares a table return and no
+quest-line readiness event; nil handling is defensive rather than a claim that
+empty tables signal loading. See [Blizzard API definitions](https://github.com/Gethe/wow-ui-source/blob/live/Interface/AddOns/Blizzard_APIDocumentationGenerated/QuestLineInfoDocumentation.lua).
+No reward scanner or all-map reward rescan is started by these retries.
 
 Emissary reward discovery uses the same ownership model. It queries each bounty
 map once per pass, publishes partial ready data, cancels timers from superseded

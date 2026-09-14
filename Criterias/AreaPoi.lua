@@ -31,6 +31,7 @@ function criteria:Check()
     local active = {}
     local new = {}
     local retry = false
+    local pending = {}
 
     for poiId, mapIds in pairs(self.list) do
         for mapId, poi in pairs(mapIds) do
@@ -88,13 +89,17 @@ function criteria:Check()
                     end
                 end
             end
+            if not (active[poiId] and active[poiId][mapId]) then
+                pending["poi:" .. tostring(poiId) .. "@map:" .. tostring(mapId)] = true
+            end
         end
     end
 
     return {
         active = active,
         new = new,
-        retry = retry
+        retry = retry,
+        pending = pending
     }
 end
 

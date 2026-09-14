@@ -66,8 +66,9 @@ writes. Do not move collection API calls or refresh scheduling into this module.
 Run `lua5.1 tools/test_tracking_policy.lua` after changing tracking rules.
 
 Stable currency, reputation, emissary and World Quest type lookup metadata
-belongs in `Data/RuntimeData.lua`. Keep `UI/Options.lua` focused on AceConfig tree
-construction and UI-only ordering/label metadata. When adding a runtime-data
+belongs in `Data/RuntimeData.lua`. Keep `UI/Options.lua` and its feature modules
+under `UI/Options/` focused on AceConfig tree construction and UI-only
+ordering/label metadata. When adding a runtime-data
 consumer, keep `Data/RuntimeData.lua` earlier in TOC load order.
 
 ## 3. Adding a new achievement mapping

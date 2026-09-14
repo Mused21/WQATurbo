@@ -20,7 +20,16 @@ lua5.1 tools/test_reward_scanner.lua
 lua5.1 tools/test_runtime_lifecycle.lua
 lua5.1 tools/test_task_resolver.lua
 lua5.1 tools/test_tooltip_lifecycle.lua
+lua5.1 tools/test_custom_options.lua
+lua5.1 tools/test_database_schema.lua
+lua5.1 tools/test_options_structure.lua
 ```
+
+The options structure suite builds representative expansion, tracking, reward
+and custom pages using TOC load order, then checks search, settings scope and
+shared refresh coalescing. An optional path to a pre-split `Options.lua` compares
+generated metadata (function types, not callback identity), excluding generated
+order numbers and intentional Gear-setting additions/removals.
 
 In the local Windows workspace, Lua 5.1.5 is installed at:
 
@@ -37,7 +46,8 @@ missing quest-pin criterion IDs, exclusive owner cleanup, bulk state and one
 refresh per bulk operation. It also checks that repeated registration and
 Settings completion queries reuse journal snapshots, and that
 `CreateQuestList()` invalidates both snapshots exactly once without a load-order
-wrapper.
+wrapper. Pet cases also cover inconsistent row ownership: species counts of
+1/3 and 3/3 both count as owned and suppress Default tracking.
 
 The reward-classifier test covers authoritative item-link fallback, missing
 data retries, containers, gear upgrades, StatWeightScore dual-slot selection,
@@ -56,7 +66,10 @@ asserts that `Scanning/RewardScanner.lua` supplies `Reward()`.
 The runtime-lifecycle test exercises the canonical `OnEnable()` owner. It
 checks Settings registration, startup-delay capping, recurring refreshes,
 numeric Blizzard Settings category-ID capture, combat recovery, quest
-completion, War Mode refresh and mission updates.
+completion, War Mode refresh and mission updates. It also invokes all three
+AceDB profile callbacks through the real Options/Display refresh path, checking
+queued refresh cancellation, silent immediate rebuild, watched-state reset and
+LibDBIcon rebinding even with combat deferral enabled.
 
 The task-resolver test exercises the canonical `CheckWQ()` owner. It checks
 per-task readiness, retry coalescing/cancellation, final filtering and
@@ -64,7 +77,27 @@ Settings/popup/LDB publication modes.
 
 The tooltip-lifecycle test checks exact-object ownership, stale `OnHide`
 callbacks, idempotent release, attached-task cleanup and popup/LDB rebuild
-ordering against the actual lifecycle helpers.
+ordering against the actual lifecycle helpers. POI hover tests remove metadata
+after row creation and then restore it, checking fallback and recovery.
+
+The reward/core suite additionally exercises real Quest Pin lookup with the
+TaskResolver: nil and empty map results, independent ready-map publication,
+per-pass lookup count, throttled requests, retry expiry and silent Settings
+publication. Map-name tests verify fallback values are not cached permanently.
+Task, POI, mission/item and emissary timeout diagnostics retain identifiable IDs.
+
+The custom-editor test checks rejected IDs and duplicate adds, numeric map
+storage, required Quest Pin maps, optional mission rewards, deletion cleanup,
+and silent refresh coalescing through the actual Settings callbacks and timer.
+Building the editor alone must not schedule a refresh.
+
+The database-schema test covers a fresh database, representative legacy custom
+tables, malformed containers, duplicate legacy/canonical IDs, idempotent repeat
+application and protection from downgrading a future schema.
+
+The runtime lifecycle test also guards against eagerly loading
+`Blizzard_GarrisonUI` at startup while preserving mission-list update
+scheduling through the `C_Garrison` scan path.
 
 This is separate from `luac5.1 -p`, which checks syntax without running code.
 All checks run in GitHub Actions; in-game smoke testing is still required.
@@ -225,6 +258,7 @@ Precondition:
 
 ```text
 Rewards > Gear > Azerite Armor Cache = enabled
+Rewards > Gear > Azerite Armor Cache on this character = enabled
 ```
 
 Use active BfA WQ rewarding item 163857.
@@ -237,13 +271,22 @@ Disable option:
 
 - disappears unless another reason matches.
 
+Leave the profile-wide option enabled and disable only the per-character option:
+
+- the cache disappears on that character;
+- it remains enabled on another character using the same profile.
+
 ## 13. 1.1.0 generic cache semantics
 
-For recognized Armor/Weapon/Jewelry cache:
+For recognized Armor/Weapon cache:
 
 - option enabled → cache itself makes WQ relevant;
 - upgrade metadata can still appear;
 - option disabled → no cache-category relevance.
+
+For Zandalari Empire Equipment Cache, verify it remains visible with a missing
+shared/current-armor appearance and disappears when that finite pool is
+complete. Tortollan Trader's Stock must not match a cache category.
 
 ## 14. 1.1.0 Benthic tokens
 
@@ -251,9 +294,10 @@ With Armor Cache enabled, test an active Nazjatar WQ rewarding one of IDs 169477
 
 Expected:
 
-- token appears while at least one appearance for the current character's
-  armor type is uncollected;
-- token disappears when every appearance in its fixed pool is collected;
+- token appears while an appearance for the active character's armor type is
+  uncollected;
+- token disappears when that armor-type pool is complete, even if another
+  armor type is missing;
 - a missing/uncached transmog source keeps the token visible and is retried;
 - no requirement that it upgrade current gear.
 
