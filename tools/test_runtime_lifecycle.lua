@@ -146,7 +146,7 @@ assert(eventFrame.registered.WAR_MODE_STATUS_UPDATE)
 assert(#scheduled == 1)
 assert(scheduled[1].callback == "MaybeOfferWQAMigration")
 assert(scheduled[1].delay == 2)
-assert(loadedAddons[1] == "Blizzard_GarrisonUI")
+assert(#loadedAddons == 0, "startup must not eagerly load Blizzard_GarrisonUI")
 
 eventFrame.onEvent(eventFrame, "PLAYER_ENTERING_WORLD")
 assert(eventFrame.unregistered.PLAYER_ENTERING_WORLD)
@@ -178,6 +178,7 @@ assert(#shown == 2 and shown[2].mode == "new" and shown[2].auto == true)
 
 eventFrame.onEvent(eventFrame, "GARRISON_MISSION_LIST_UPDATE")
 assert(taskResolverSchedules == 1)
+assert(#loadedAddons == 0, "mission updates use C_Garrison without loading its UI")
 assert(taskResolverRestartWindow == true)
 
 -- Execute all three profile events through real Options/Display refresh methods.

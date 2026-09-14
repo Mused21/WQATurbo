@@ -42,6 +42,7 @@ Locales.lua
 Utilities.lua
 UI\Tooltip.lua
 Migration.lua
+Database.lua
 
 WQATurbo.lua
 Tracking\CollectionCache.lua

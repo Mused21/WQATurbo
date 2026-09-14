@@ -8,11 +8,26 @@ Primary SavedVariables object:
 WQATurboDB
 ```
 
+The current schema version is `1`, stored at:
+
+```lua
+WQATurboDB.global.schemaVersion
+```
+
+`Database.lua` owns post-AceDB schema migrations. Migrations run in ascending
+version order, record each completed version, and must be safe to repeat. A
+database whose version is newer than this addon understands is left unchanged
+instead of being downgraded.
+
 Original addon migration source:
 
 ```text
 WQADB
 ```
+
+`Migration.lua` owns the optional one-time import from that separate legacy
+SavedVariables object. It runs before AceDB is created; this is distinct from
+the versioned migrations of the active `WQATurboDB` schema.
 
 AceDB provides three important scopes:
 

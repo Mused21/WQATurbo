@@ -43,6 +43,7 @@ Locales.lua
 Utilities.lua
 UI/Tooltip.lua
 Migration.lua
+Database.lua
 
 WQATurbo.lua
 
@@ -270,6 +271,11 @@ It is the sole owner of `OnEnable()` and its startup/event schedule.
 
 It avoids the old startup behavior that synchronously preloaded/scanned every map and provides the modern `/wqat` command flow.
 
+It registers `GARRISON_MISSION_LIST_UPDATE` without loading
+`Blizzard_GarrisonUI`. Mission scanning uses the global `C_Garrison` API, while
+Blizzard remains responsible for loading its mission-table frames when a
+player opens that UI.
+
 The unreleased 1.3.0 profile callback handles changed, copied and reset profiles.
 It detaches the exact old tooltip, clears watched sets, rebinds LibDBIcon to the
 current profile, and immediately rebuilds through `RefreshFromOptions(true)`.
@@ -337,6 +343,11 @@ Settings are largely generated dynamically from:
 ### `Migration.lua`
 
 Handles import from original WQAchievements and must run early enough to copy raw SavedVariables before AceDB turns them into live DB objects.
+
+### `Database.lua`
+
+Owns the active `WQATurboDB` schema version and ordered migrations. It runs
+after AceDB initialization and before runtime consumers read the database.
 
 ### `Performance.lua`
 

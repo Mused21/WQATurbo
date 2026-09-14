@@ -6,7 +6,7 @@
 >
 > **Current milestone:** 1.3.0 consolidated release
 >
-> **Current item:** Release-blocking reward and pet eligibility fixes (In progress)
+> **Current item:** 1.3.0 release candidate (Done; release PR pending)
 >
 > **Last reviewed:** 2026-09-14
 
@@ -26,9 +26,11 @@ historical records and must not be reused as active checklists.
 ## 1.3.0: completed correctness and runtime hardening
 
 There will be no separate 1.2.1 release. Version 1.3.0 includes the tested
-hardening below plus every maintainability, performance, feature and data item
-listed in this roadmap. The developer approved this consolidated scope and
-reported the hardening batch working in game on 2026-09-13.
+hardening below, the release-blocking reward corrections, SavedVariables
+schema protection, the current-patch data correction, and the safe startup
+performance fix. The developer approved this consolidated scope and reported
+the first two in-game batches working on 2026-09-13 and 2026-09-14. The final
+release-candidate batch passed in-game verification on 2026-09-14.
 
 Work in reviewable increments, with related changes bundled for in-game testing
 when useful. Run local validation and inspect each diff before presenting it.
@@ -36,10 +38,10 @@ Research items are part of the 1.3.0 work queue, but their implementation remain
 conditional on current API/content evidence; record findings and any explicit
 scope decision rather than promising unsupported behavior.
 
-Implementation order: finish the options split, then reduce the compatibility
-core and strengthen migration/tests/tooling; proceed through performance work,
-then feature and data work. Evidence-gated items retain their research status
-until the necessary API, content or profiling evidence is available.
+Broader core refactors, speculative performance changes, new feature work, and
+dependency-source changes move to 1.4.0. Keeping them out of the release
+candidate avoids expanding runtime and packaging risk after release bugs have
+been fixed and tested.
 
 | Status | Priority | Work item | Completion criteria |
 |---|---:|---|---|
@@ -55,7 +57,7 @@ Custom editor validation and refresh correctness is implemented locally.
 Project validation (zero errors/warnings), all seven Lua regression suites,
 Lua 5.1 syntax checks and diff whitespace checks pass. The developer reported
 the in-game result as good on 2026-09-13; this item is **Done**.
-This tested checkpoint is approved for a local commit; push/release is not authorized.
+This tested checkpoint was committed as part of the consolidated 1.3.0 branch.
 
 Focused in-game checks:
 
@@ -111,14 +113,25 @@ the combined in-game test works on 2026-09-13; all five hardening items are
 - The focused in-game checklist for every changed runtime path passes.
 - Version, changelog, packaging, and release documentation are consistent.
 
+A local full-library `1.3.0-local` preview package passes package validation,
+including version substitution and development-file exclusions. The automated
+BigWigs external checkout remains part of the final release workflow after the
+release candidate is approved, merged, and tagged.
+
+The final local gate passes all nine Lua regression suites, Lua 5.1 syntax
+checks for 47 Lua files, the project and preview-package validators, and
+`git diff --check`. The developer reported the complete release candidate
+working in game on 2026-09-14 and approved it for commit, push, and a release PR.
+
 ## 1.3.0: release-blocking reward corrections
 
 | Status | Priority | Work item | Completion criteria |
 |---|---:|---|---|
-| **In progress** | P0 | Reward and pet eligibility fixes | Legacy caches and Benthic tokens use the corrected appearance rules without interrupting startup; Azerite Armor Cache has a readable per-character override; any positive Pet Journal species count suppresses ordinary pet tracking; automated and in-game checks pass. |
+| **Done** | P0 | Reward and pet eligibility fixes | Legacy caches and Benthic tokens use the corrected appearance rules without interrupting startup; Azerite Armor Cache has a readable per-character override; any positive Pet Journal species count suppresses ordinary pet tracking; automated and in-game checks pass. |
 
-Implementation and focused automated coverage are local. In-game verification
-is still required before this item can be marked **Done**.
+Implementation and focused automated coverage are committed in `6c5c379`. The
+developer reported the combined in-game checks working on 2026-09-14; this item
+is **Done**.
 
 Focused release checks:
 
@@ -133,7 +146,7 @@ Focused release checks:
 The tested hardening and consolidated release plan are committed as `01e10e3`
 on `feature/1.3.0`. No push or release has been performed.
 
-The options split is implemented locally and awaits in-game verification.
+The options split is committed and verified in game.
 `UI/Options/` owns shared ordering, custom editors, tracking/search and rewards;
 `UI/Options.lua` retains tree orchestration, general settings and the single
 runtime refresh debouncer. Existing callbacks and construction order are preserved.
@@ -143,7 +156,8 @@ to compare the split against that baseline while excluding the two intentional
 Gear-setting changes and generated order numbers. Relative ordering, dynamic
 pages, search, scoped writes and coalesced refresh remain covered directly.
 Project validation, all eight Lua suites, Lua syntax checks and diff whitespace
-checks pass. The item remains **In progress** pending in-game verification.
+checks passed before commit. The developer reported the combined Settings and
+reward batch working on 2026-09-14; the item is **Done**.
 
 Focused in-game checks for this increment:
 
@@ -157,32 +171,41 @@ Focused in-game checks for this increment:
 
 | Status | Priority | Work item | Completion criteria |
 |---|---:|---|---|
-| **In progress** | P1 | Split the options implementation by feature area | Custom, tracking, and reward option builders have clear owners and preserve AceConfig paths, labels, ordering, and refresh behavior. |
-| Queued | P1 | Reduce the compatibility core | Move cohesive remaining responsibilities out of `WQATurbo.lua` only when ownership and TOC ordering are explicit; retain one source owner for every consolidated runtime method. |
-| Queued | P1 | SavedVariables schema and migration tests | Document a schema version, make migrations idempotent, and cover fresh installs plus representative legacy databases with automated fixtures. |
-| Queued | P2 | Utilities and options tests | Add focused tests for map fallbacks, custom data validation, profile changes, and refresh coalescing without mirroring implementation details. |
-| Queued | P2 | Remove obsolete compatibility debris | Audit commented-out code, unused stubs, duplicate locale keys, and stale migration scaffolding; remove only after proving no runtime or upgrade dependency remains. |
-| Queued | P2 | Pin packaged dependency revisions | Replace floating external-library revisions in `.pkgmeta` with reviewed stable revisions and validate packaged addon startup. |
-| Queued | P2 | Add a consistent Lua lint/format check | Select Lua 5.1-compatible tooling, document exceptions for WoW globals, and add a deterministic CI check. |
+| **Done** | P1 | Split the options implementation by feature area | Custom, tracking, and reward option builders have clear owners and preserve AceConfig paths, labels, ordering, and refresh behavior. |
+| **Done** | P1 | SavedVariables schema and migration tests | Schema version 1 and idempotent migrations cover fresh installs, representative legacy databases, collisions, malformed containers, and future schema protection; automated and in-game checks pass. |
 
 ## 1.3.0: performance work
 
 | Status | Priority | Work item | Completion criteria |
 |---|---:|---|---|
-| Queued | P1 | Lazy-load Blizzard Garrison UI | Mission UI code loads only when mission-table functionality needs it; startup, login, and mission scanning remain reliable across supported expansions. |
-| Queued | P2 | Precompute task and expansion lookup indexes | Replace repeated linear lookups only where `/wqat perf` or profiling shows useful savings; rebuild indexes when their source data changes. |
-| Queued | P2 | Preserve useful dynamic cache results during refresh | Explore stale-while-revalidate behavior so cached dynamic rewards remain visible while fresh data is pending, without publishing invalid or cross-profile state. |
+| **Done** | P1 | Lazy-load Blizzard Garrison UI | The eager startup load is removed; lifecycle coverage preserves mission-update scheduling; login and mission-table behavior pass in-game verification. |
 
 ## 1.3.0: feature and data work
 
 | Status | Priority | Work item | Completion criteria |
 |---|---:|---|---|
-| Research | P1 | Current-patch content audit | Verify Midnight and subsequent Retail maps, factions, emissaries, reward types, currencies, and profession data against current authoritative sources before adding mappings. |
-| Queued | P2 | Command and diagnostics audit | Make `/wqat` help and diagnostic output concise, complete, and consistent with the documented command surface. |
-| Queued | P2 | Expand settings search coverage | Index dynamic expansion, reputation, mission-table, and custom-option labels while preserving responsive option construction. |
-| Queued | P2 | Explain why a task matched | Add an optional concise tooltip explanation using canonical classification results, with no extra reward scans. |
-| Research | P2 | Remaining container completion rules | Add hide-when-complete rules only for containers with a verified finite collectible pool and authoritative collection-state checks. |
-| Queued | P3 | Localization coverage | Consolidate duplicate keys, expose remaining hard-coded user-facing text, and update supported locale tables without changing fallback behavior. |
+| **Done** | P1 | Current-patch content audit | Source review is recorded in `CURRENT_PATCH_AUDIT_1.3.0.md`; the incorrect Midnight quest ID is corrected; the affected achievement and representative 12.1 behavior pass in-game verification. |
+
+## 1.4.0 backlog
+
+These items were explicitly moved out of 1.3.0 on 2026-09-14. They are useful,
+but none addresses a confirmed release blocker, and each broadens runtime,
+Settings, localization, or packaging scope after the release fixes were tested.
+
+| Status | Priority | Work item | Scope decision |
+|---|---:|---|---|
+| Next | P1 | Reduce the compatibility core | Continue only in ownership-defined increments after 1.3.0; a broad move now would add regression risk. |
+| Queued | P2 | Utilities and options tests | Existing focused suites cover the changed 1.3.0 paths; add more tests alongside future behavior changes. |
+| Queued | P2 | Remove obsolete compatibility debris | Removal requires a separate upgrade/runtime audit and offers no release behavior fix. |
+| Queued | P2 | Pin packaged dependency revisions | The current WowAce externals use Subversion sources and have already produced the tested library set. Change and pin sources in a dedicated packaging increment with a packaged in-game test. |
+| Queued | P2 | Add a consistent Lua lint/format check | Tool selection and the WoW-global policy deserve an isolated CI change. |
+| Research | P2 | Precompute task and expansion lookup indexes | `/wqat perf` has not shown a release-relevant saving that justifies new invalidation paths. |
+| Research | P2 | Preserve useful dynamic cache results during refresh | Stale-while-revalidate semantics can expose invalid cross-profile data unless designed and tested separately. |
+| Queued | P2 | Command and diagnostics audit | Current commands cover release diagnosis; wording cleanup can ship without blocking fixes. |
+| Queued | P2 | Expand settings search coverage | Dynamic indexing changes option-build cost and should be profiled independently. |
+| Queued | P2 | Explain why a task matched | This is a new tooltip feature and needs its own UI/performance design. |
+| Research | P2 | Remaining container completion rules | No additional finite loot pools have enough authoritative evidence for safe completion rules. |
+| Queued | P3 | Localization coverage | Consolidation can invalidate locale keys and should not be mixed into the release candidate. |
 
 ## Research constraints
 

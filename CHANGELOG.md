@@ -1,11 +1,15 @@
 # WQA Turbo Changelog
 
-## Unreleased - 1.3.0
+## 1.3.0
 
 ### Improved
 - Split Settings builders into custom, tracking and reward modules while preserving paths, ordering and shared refresh scheduling.
+- Added an explicit SavedVariables schema version with ordered, repeatable migrations and focused legacy-database tests.
+- Let Blizzard load its Garrison UI on demand instead of forcing the full mission-table interface to load at addon startup.
 
 ### Fixed
+- Corrected the Midnight Precision Excision World Quest ID used by the Lysikas Would Be Proud achievement tracker.
+- Excluded local agent override instructions from release packages.
 - Hide Zandalari Empire Equipment Cache when its verified appearance pool is complete for the current armor type.
 - Stop treating Tortollan Trader's Stock as an appearance-bearing jewelry cache.
 - Keep account-bound Benthic tokens visible while any armor type still has an uncollected appearance.

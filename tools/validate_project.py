@@ -26,6 +26,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 TOC = ROOT / "WQATurbo.toc"
 PKGMETA = ROOT / ".pkgmeta"
+CHANGELOG = ROOT / "CHANGELOG.md"
+ROADMAP = ROOT / "docs" / "ROADMAP.md"
 
 ALLOWED_CRITERIA_TYPES = {
     "ACHIEVEMENT",
@@ -56,6 +58,8 @@ REQUIRED_PROJECT_FILES = (
     "Data/RuntimeData.lua",
     "Data/ContainerCollectibles.lua",
     "Utilities.lua",
+    "Migration.lua",
+    "Database.lua",
     "WQATurbo.lua",
     "Scanning/RewardScanner.lua",
     "Runtime/Runtime.lua",
@@ -78,6 +82,7 @@ REQUIRED_PROJECT_FILES = (
     "tools/test_task_resolver.lua",
     "tools/test_tooltip_lifecycle.lua",
     "tools/test_custom_options.lua",
+    "tools/test_database_schema.lua",
     "tools/load_options.lua",
     "tools/test_options_structure.lua",
 )
@@ -89,6 +94,7 @@ REQUIRED_PACKAGE_ITEMS = (
     "WQATurbo/Tracking/ContainerCompletion.lua",
     "WQATurbo/Data/RuntimeData.lua",
     "WQATurbo/Data/ContainerCollectibles.lua",
+    "WQATurbo/Database.lua",
     "WQATurbo/Scanning/RewardScanner.lua",
     "WQATurbo/Runtime/Runtime.lua",
     "WQATurbo/UI/Options/Shared.lua",
@@ -117,6 +123,7 @@ FORBIDDEN_PACKAGE_PREFIXES = (
 
 FORBIDDEN_PACKAGE_ITEMS = (
     "WQATurbo/AGENTS.md",
+    "WQATurbo/AGENTS.override.md",
     "WQATurbo/.travis.yml",
 )
 
@@ -263,6 +270,17 @@ def validate_toc(validation: Validation) -> None:
                     f"TOC must load {runtime_data} before {consumer}."
                 )
 
+    database_order = ("Migration.lua", "Database.lua", "WQATurbo.lua")
+    for source in database_order:
+        if source not in sources:
+            validation.error(f"TOC must load {source}.")
+    if all(source in sources for source in database_order):
+        positions = [sources.index(source) for source in database_order]
+        if positions != sorted(positions):
+            validation.error(
+                "TOC must load Migration.lua, Database.lua, then WQATurbo.lua."
+            )
+
     options_order = (
         "Performance.lua", "UI/Options/Shared.lua", "UI/Options/Custom.lua",
         "UI/Options/Tracking.lua", "UI/Options/Rewards.lua", "UI/Options.lua",
@@ -338,12 +356,37 @@ def validate_pkgmeta(validation: Validation) -> None:
         return
 
     ignored = parse_pkgmeta_ignore(text)
-    required_ignored = {".git", ".github", "tools", "dist", "docs", "AGENTS.md"}
+    required_ignored = {
+        ".git",
+        ".github",
+        "tools",
+        "dist",
+        "docs",
+        "AGENTS.md",
+        "AGENTS.override.md",
+    }
 
     for path in sorted(required_ignored - ignored):
         validation.error(
             f".pkgmeta ignore list must contain '{path}' so development "
             "files do not ship in release packages."
+        )
+
+
+def validate_release_documentation(validation: Validation) -> None:
+    roadmap = read_text(ROADMAP, validation)
+    changelog = read_text(CHANGELOG, validation)
+    target = re.search(r"\*\*Current release target:\*\*\s+([0-9]+\.[0-9]+\.[0-9]+)", roadmap)
+
+    if not target:
+        validation.error("docs/ROADMAP.md must declare a semantic current release target.")
+        return
+
+    heading = f"## {target.group(1)}"
+    if heading not in changelog.splitlines():
+        validation.error(
+            f"CHANGELOG.md must contain the exact release heading '{heading}' "
+            "required by the release workflow."
         )
 
 
@@ -566,6 +609,7 @@ def main() -> int:
     validate_required_files(validation)
     validate_toc(validation)
     validate_pkgmeta(validation)
+    validate_release_documentation(validation)
     validate_repository_hygiene(validation)
     validate_static_data(validation)
     validate_namespace_identity(validation)

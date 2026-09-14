@@ -13,7 +13,7 @@ Scanning/              dynamic reward discovery
 Runtime/               orchestration, display and task publication
 UI/                    tooltip and Settings UI
 Criterias/, Rewards/, Items/
-Migration.lua, Performance.lua, Utilities.lua, Locales.lua
+Migration.lua, Database.lua, Performance.lua, Utilities.lua, Locales.lua
 ```
 
 The detailed entries below follow approximate TOC load order.
@@ -95,7 +95,9 @@ Responsibilities include:
 - startup scheduling;
 - event orchestration;
 - `/wqat` command dispatch;
-- avoiding legacy broad preload behavior.
+- avoiding legacy broad preload behavior;
+- leaving `Blizzard_GarrisonUI` load-on-demand while mission scans use the
+  global `C_Garrison` API.
 
 ### `Runtime/Display.lua`
 
@@ -166,6 +168,13 @@ Responsibilities include:
 - deep-copy;
 - temporary original-addon enable/reload flow;
 - migration prompt/state.
+
+### `Database.lua`
+
+Owns the active `WQATurboDB` schema version and ordered, idempotent migrations
+that run after AceDB initialization. It currently normalizes the legacy custom
+quest and custom reward table shapes while preserving canonical entries on ID
+collisions.
 
 ### `Tracking/Achievements.lua`
 

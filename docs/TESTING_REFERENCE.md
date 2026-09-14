@@ -21,6 +21,7 @@ lua5.1 tools/test_runtime_lifecycle.lua
 lua5.1 tools/test_task_resolver.lua
 lua5.1 tools/test_tooltip_lifecycle.lua
 lua5.1 tools/test_custom_options.lua
+lua5.1 tools/test_database_schema.lua
 lua5.1 tools/test_options_structure.lua
 ```
 
@@ -89,6 +90,14 @@ The custom-editor test checks rejected IDs and duplicate adds, numeric map
 storage, required Quest Pin maps, optional mission rewards, deletion cleanup,
 and silent refresh coalescing through the actual Settings callbacks and timer.
 Building the editor alone must not schedule a refresh.
+
+The database-schema test covers a fresh database, representative legacy custom
+tables, malformed containers, duplicate legacy/canonical IDs, idempotent repeat
+application and protection from downgrading a future schema.
+
+The runtime lifecycle test also guards against eagerly loading
+`Blizzard_GarrisonUI` at startup while preserving mission-list update
+scheduling through the `C_Garrison` scan path.
 
 This is separate from `luac5.1 -p`, which checks syntax without running code.
 All checks run in GitHub Actions; in-game smoke testing is still required.

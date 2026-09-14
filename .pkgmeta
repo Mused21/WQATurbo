@@ -24,5 +24,6 @@ ignore:
   - dist
   - docs
   - AGENTS.md
+  - AGENTS.override.md
   - RELEASE_CHECKLIST.md
   - CURSEFORGE_DESCRIPTION.md

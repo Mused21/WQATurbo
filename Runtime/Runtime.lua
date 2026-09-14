@@ -98,15 +98,12 @@ function WQA:OnEnable()
 		elseif eventName == "WAR_MODE_STATUS_UPDATE" then
 			self:Show("new", true)
 
-
-elseif eventName == "GARRISON_MISSION_LIST_UPDATE" then
+		elseif eventName == "GARRISON_MISSION_LIST_UPDATE" then
 			self:ScheduleTaskResolverCheck(true)
 		end
 	end)
 
 	self:ScheduleTimer("MaybeOfferWQAMigration", 2)
-
-C_AddOns.LoadAddOn("Blizzard_GarrisonUI")
 end
 
 -- A user-selected profile must replace the old cache immediately, even in

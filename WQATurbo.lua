@@ -305,6 +305,7 @@ function WQA:OnInitialize()
 			["*"] = { ["*"] = true }
 		},
 		global = {
+			schemaVersion = 0,
 			completed = { ["*"] = false },
 			custom = {
 				["*"] = { ["*"] = false }
@@ -313,23 +314,8 @@ function WQA:OnInitialize()
 	}
 	self:ApplyPendingWQAMigrationBeforeAceDB()
 
-self.db = LibStub("AceDB-3.0"):New("WQATurboDB", defaults, true)
-
-	-- copy old data
-	if type(self.db.global.custom) == "table" then
-		for k, v in pairs(self.db.global.custom) do
-			if type(k) == "number" then
-				self.db.global.custom.worldQuest[k] = v
-				self.db.global.custom[k] = nil
-			end
-		end
-	end
-	if type(self.db.global.customReward) == "table" then
-		for k, v in pairs(self.db.global.customReward) do
-			self.db.global.custom.worldQuestReward[k] = true
-		end
-		self.db.global.customReward = nil
-	end
+	self.db = LibStub("AceDB-3.0"):New("WQATurboDB", defaults, true)
+	self:ApplyDatabaseSchemaMigrations()
 
 	-- Minimap Icon
 	icon:Register("WQATurbo", dataobj, self.db.profile.options.LibDBIcon)

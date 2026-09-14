@@ -403,6 +403,12 @@ Starts interactive/reload-assisted migration.
 
 Exact helper names around migration prompts/state should be confirmed in `Migration.lua`.
 
+### `WQA:ApplyDatabaseSchemaMigrations()`
+
+Applies missing `WQATurboDB` schema migrations in ascending order after AceDB
+initialization. It returns whether a migration ran and leaves databases with a
+newer schema version unchanged.
+
 ## Settings
 
 ### `WQA:GetOptions()`
