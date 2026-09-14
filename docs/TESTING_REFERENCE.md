@@ -294,8 +294,10 @@ With Armor Cache enabled, test an active Nazjatar WQ rewarding one of IDs 169477
 
 Expected:
 
-- token appears while at least one appearance in any armor type is uncollected;
-- token disappears when every appearance across all armor types is collected;
+- token appears while an appearance for the active character's armor type is
+  uncollected;
+- token disappears when that armor-type pool is complete, even if another
+  armor type is missing;
 - a missing/uncached transmog source keeps the token visible and is retried;
 - no requirement that it upgrade current gear.
 

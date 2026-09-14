@@ -46,9 +46,9 @@ WQA.data.containerCollectibles = {
 		}
 	},
 
-	-- Benthic Girdle
+	-- Benthic Girdle. Each armor token resolves for the active loot
+	-- specialization, so only the current character's armor type is relevant.
 	[169477] = {
-		allArmorTypes = true,
 		transmogSources = {
 			cloth = { 104107, 105514 },
 			leather = { 104115, 105515 },
@@ -58,7 +58,6 @@ WQA.data.containerCollectibles = {
 	},
 	-- Benthic Bracers
 	[169478] = {
-		allArmorTypes = true,
 		transmogSources = {
 			cloth = { 104108, 105247, 105359, 105379, 105457, 105478 },
 			leather = { 104116, 105248, 105360, 105378, 105456, 105477 },
@@ -68,7 +67,6 @@ WQA.data.containerCollectibles = {
 	},
 	-- Benthic Helm
 	[169479] = {
-		allArmorTypes = true,
 		transmogSources = {
 			cloth = { 104104 },
 			leather = { 104112 },
@@ -78,7 +76,6 @@ WQA.data.containerCollectibles = {
 	},
 	-- Benthic Chestguard
 	[169480] = {
-		allArmorTypes = true,
 		transmogSources = {
 			cloth = { 104129 },
 			leather = { 104109 },
@@ -88,14 +85,12 @@ WQA.data.containerCollectibles = {
 	},
 	-- Benthic Cloak
 	[169481] = {
-		allArmorTypes = true,
 		transmogSources = {
 			all = { 105150, 105151, 105152, 105153 }
 		}
 	},
 	-- Benthic Leggings
 	[169482] = {
-		allArmorTypes = true,
 		transmogSources = {
 			cloth = { 104105, 105243, 105363 },
 			leather = { 104113, 105244, 105364 },
@@ -105,7 +100,6 @@ WQA.data.containerCollectibles = {
 	},
 	-- Benthic Treads
 	[169483] = {
-		allArmorTypes = true,
 		transmogSources = {
 			cloth = { 104102, 105263, 105395, 105518 },
 			leather = { 104110, 105262, 105396, 105519 },
@@ -115,7 +109,6 @@ WQA.data.containerCollectibles = {
 	},
 	-- Benthic Spaulders
 	[169484] = {
-		allArmorTypes = true,
 		transmogSources = {
 			cloth = { 104106 },
 			leather = { 104114 },
@@ -125,7 +118,6 @@ WQA.data.containerCollectibles = {
 	},
 	-- Benthic Gauntlets
 	[169485] = {
-		allArmorTypes = true,
 		transmogSources = {
 			cloth = { 104103, 105232, 105389, 105480, 105522 },
 			leather = { 104111, 105233, 105390, 105481, 105523 },

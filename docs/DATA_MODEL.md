@@ -119,7 +119,7 @@ Fixed collectible pools keyed by container item ID:
 
 ```lua
 containerCollectibles[containerItemID] = {
-    allArmorTypes = true, -- only for account-bound armor tokens
+    allArmorTypes = true, -- only when one token can produce every armor type
     questIDs = {...},
     transmogSources = {
         all = {...},
@@ -131,12 +131,11 @@ containerCollectibles[containerItemID] = {
 }
 ```
 
-Racing purses use account-wide hidden quest IDs. Benthic tokens use
-item-modified appearance source IDs for every armor type because the tokens are
-account-bound and can be opened by another character. Direct equipment caches,
-including Zandalari Empire Equipment Cache, check the active character's armor
-type plus shared cloak sources. A container may use either ownership
-representation.
+Racing purses use account-wide hidden quest IDs. Benthic tokens and direct
+equipment caches use item-modified appearance source IDs for the active
+character's armor type because their generated armor follows the active loot
+specialization. Shared cloak sources apply to every class. A container may use
+either ownership representation.
 
 ### `WQA.questList`
 

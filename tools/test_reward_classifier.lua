@@ -23,6 +23,7 @@ local mapBounties = {}
 local emissaryTimers = {}
 local questDataReady = true
 local questRewardDataReady = true
+local playerClassID = 8
 
 C_QuestLog = {
     IsQuestFlaggedCompleted = noop,
@@ -96,7 +97,7 @@ Enum = {
     GarrisonFollowerType = { FollowerType_6_0_Boat = 60 }
 }
 UnitFullName = function() return "Tester", "Realm" end
-UnitClass = function() return "Mage", "MAGE", 8 end
+UnitClass = function() return "Test", "TEST", playerClassID end
 PlayerHasToy = function() return false end
 wipe = function(target) for key in pairs(target) do target[key] = nil end end
 GetPrimaryGarrisonFollowerType = function(garrisonType) return garrisonType end
@@ -167,7 +168,9 @@ assert(#WQA.data.containerCollectibles[205226].questIDs == 8)
 assert(#WQA.data.containerCollectibles[210549].questIDs == 8)
 assert(#WQA.data.containerCollectibles[169478].transmogSources.cloth == 6)
 assert(#WQA.data.containerCollectibles[169485].transmogSources.plate == 5)
-assert(WQA.data.containerCollectibles[169477].allArmorTypes == true)
+for itemID = 169477, 169485 do
+    assert(not WQA.data.containerCollectibles[itemID].allArmorTypes)
+end
 
 WQA.data.factionPruneFixture = {
     records = {
@@ -180,7 +183,7 @@ WQA:PruneOtherFactionData("Alliance")
 assert(WQA.data.factionPruneFixture.records.metadata == true)
 assert(WQA.data.factionPruneFixture.records.sameFaction)
 assert(WQA.data.factionPruneFixture.records.otherFaction == nil)
-assert(WQA.data.containerCollectibles[169477].allArmorTypes == true)
+assert(WQA.data.containerCollectibles[169477].transmogSources.plate)
 WQA.data.factionPruneFixture = nil
 
 local function NewOptions()
@@ -253,6 +256,7 @@ local function Reset(itemID)
     emissaryTimers = {}
     questDataReady = true
     questRewardDataReady = true
+    playerClassID = 8
     PawnIsItemAnUpgrade = nil
     PawnGetItemData = nil
     C_AzeriteEmpoweredItem.IsAzeriteEmpoweredItemByID = function() return false end
@@ -317,11 +321,32 @@ local function SetContainerSourcesCollected(itemID, collected)
     end
 end
 
--- Account-bound Benthic tokens remain useful for other armor types.
+-- Benthic tokens produce gear for the active loot specialization. Reproduce
+-- the reported plate-wearer case: a missing mail source must not keep the helm
+-- visible when its plate appearance is complete.
 Reset(169479)
 WQA.db.profile.options.reward.gear.armorCache = true
+playerClassID = 6
 SetContainerSourcesCollected(169479, true)
 transmogSourceInfo[104120].isCollected = false
+assert(WQA:CheckReward(1000, false, 1) == false)
+assert(#rewards == 0)
+
+-- A missing source for the current armor type keeps the token relevant.
+Reset(169479)
+WQA.db.profile.options.reward.gear.armorCache = true
+playerClassID = 6
+SetContainerSourcesCollected(169479, true)
+transmogSourceInfo[104128].isCollected = false
+assert(WQA:CheckReward(1000, false, 1) == false)
+assert(AssertReward(1, WQA.Constants.RewardType.Item).itemLink == scannedItemLink)
+
+-- Cloaks retain the shared source pool for every class.
+Reset(169481)
+WQA.db.profile.options.reward.gear.armorCache = true
+playerClassID = 6
+SetContainerSourcesCollected(169481, true)
+transmogSourceInfo[105150].isCollected = false
 assert(WQA:CheckReward(1000, false, 1) == false)
 assert(AssertReward(1, WQA.Constants.RewardType.Item).itemLink == scannedItemLink)
 

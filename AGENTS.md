@@ -129,7 +129,7 @@ manually constructing parallel quest reward structures.
 - Dragonflight racing reward containers are supported.
 
 - Nazjatar Benthic tokens are handled by Armor Cache tracking and remain
-  relevant while any armor type has a missing appearance.
+  relevant while the active character's armor type has a missing appearance.
 
 - Azerite Armor Cache and recognized Armor/Weapon caches are tracked
   when their category is enabled, regardless of whether their obsolete item

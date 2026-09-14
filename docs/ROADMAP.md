@@ -127,11 +127,15 @@ working in game on 2026-09-14 and approved it for commit, push, and a release PR
 
 | Status | Priority | Work item | Completion criteria |
 |---|---:|---|---|
+| **Done** | P0 | Benthic active armor-type eligibility | Benthic armor tokens consider only appearances obtainable for the active character's armor type; shared cloaks remain shared; focused automated and in-game checks pass. |
 | **Done** | P0 | Reward and pet eligibility fixes | Legacy caches and Benthic tokens use the corrected appearance rules without interrupting startup; Azerite Armor Cache has a readable per-character override; any positive Pet Journal species count suppresses ordinary pet tracking; automated and in-game checks pass. |
 
 Implementation and focused automated coverage are committed in `6c5c379`. The
 developer reported the combined in-game checks working on 2026-09-14; this item
 is **Done**.
+
+The follow-up active armor-type correction passed focused automated coverage
+and developer in-game verification on 2026-09-14; it is **Done**.
 
 Focused release checks:
 

@@ -284,11 +284,12 @@ Tracked IDs:
 
 They are slot-specific container/token rewards rather than generic random-slot caches, so they are tracked directly through Armor Cache without pretending their usefulness depends on the character's modern item level.
 
-Each account-bound token is checked against the fixed appearance pools for all
-four armor types. The token stops making the World Quest relevant after every
-appearance it can produce is collected. Cloak tokens use their shared
-four-appearance pool. If Blizzard has not made a source available to the
-transmog API yet, the token stays visible and the scanner retries.
+Each token is checked against the fixed appearance pool for the active
+character's armor type because generated armor follows the active loot
+specialization. The token stops making the World Quest relevant when that pool
+is complete. Cloak tokens use their shared four-appearance pool. If Blizzard
+has not made a relevant source available to the transmog API yet, the token
+stays visible and the scanner retries.
 
 ## 14. Dragonflight racing reward containers — 1.1.0
 

@@ -12,7 +12,7 @@
 - Excluded local agent override instructions from release packages.
 - Hide Zandalari Empire Equipment Cache when its verified appearance pool is complete for the current armor type.
 - Stop treating Tortollan Trader's Stock as an appearance-bearing jewelry cache.
-- Keep account-bound Benthic tokens visible while any armor type still has an uncollected appearance.
+- Evaluate Benthic tokens for the active character's armor type so completed slot appearances are not shown because another armor type is missing.
 - Allow Azerite Armor Cache tracking to be disabled per character while retaining the profile-wide master setting.
 - Show the full per-character Azerite setting label and description instead of trimming them in the Gear layout.
 - Treat any positive Pet Journal species count as owned even if its journal row temporarily reports otherwise.
