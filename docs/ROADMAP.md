@@ -6,9 +6,9 @@
 >
 > **Current milestone:** 1.3.0 consolidated release
 >
-> **Current item:** Split the options implementation by feature area (Next)
+> **Current item:** Release-blocking reward and pet eligibility fixes (In progress)
 >
-> **Last reviewed:** 2026-09-13
+> **Last reviewed:** 2026-09-14
 
 This is the active work queue for WQA Turbo. Read it before planning or
 starting follow-up work. Update the current item and status in the same change
@@ -111,11 +111,53 @@ the combined in-game test works on 2026-09-13; all five hardening items are
 - The focused in-game checklist for every changed runtime path passes.
 - Version, changelog, packaging, and release documentation are consistent.
 
-## 1.3.0: maintainability and test coverage
+## 1.3.0: release-blocking reward corrections
 
 | Status | Priority | Work item | Completion criteria |
 |---|---:|---|---|
-| **Next** | P1 | Split the options implementation by feature area | Custom, tracking, and reward option builders have clear owners and preserve AceConfig paths, labels, ordering, and refresh behavior. |
+| **In progress** | P0 | Reward and pet eligibility fixes | Legacy caches and Benthic tokens use the corrected appearance rules without interrupting startup; Azerite Armor Cache has a readable per-character override; any positive Pet Journal species count suppresses ordinary pet tracking; automated and in-game checks pass. |
+
+Implementation and focused automated coverage are local. In-game verification
+is still required before this item can be marked **Done**.
+
+Focused release checks:
+
+- Reload and confirm initialization reaches Settings without Lua errors.
+- Confirm the per-character Azerite toggle and its description use the full row.
+- With pet tracking set to Default, confirm 1/3, 2/3 and 3/3 mapped pets do not
+  keep their World Quests relevant; zero-copy pets should remain relevant.
+- Confirm `Always track` still shows an owned mapped pet when explicitly selected.
+
+## 1.3.0: maintainability and test coverage
+
+The tested hardening and consolidated release plan are committed as `01e10e3`
+on `feature/1.3.0`. No push or release has been performed.
+
+The options split is implemented locally and awaits in-game verification.
+`UI/Options/` owns shared ordering, custom editors, tracking/search and rewards;
+`UI/Options.lua` retains tree orchestration, general settings and the single
+runtime refresh debouncer. Existing callbacks and construction order are preserved.
+Before the reward corrections, the full-tree regression fixture matched the
+committed monolithic implementation across 6,351 metadata values. It continues
+to compare the split against that baseline while excluding the two intentional
+Gear-setting changes and generated order numbers. Relative ordering, dynamic
+pages, search, scoped writes and coalesced refresh remain covered directly.
+Project validation, all eight Lua suites, Lua syntax checks and diff whitespace
+checks pass. The item remains **In progress** pending in-game verification.
+
+Focused in-game checks for this increment:
+
+- Open every Settings tab; confirm labels, ordering and expansion/category trees.
+- Search by name and ID; change individual and bulk tracking modes.
+- Change World Quest and Mission Table currencies/reputations, zones, emissaries,
+  profession settings and Dragonflight racing-container tracking.
+- Repeat custom quest, reward, mission and mission-reward add/edit/delete checks.
+- Make rapid changes across tabs with the popup open and closed; verify a silent
+  coalesced update. Reopen Settings, change profiles and reload to check persistence.
+
+| Status | Priority | Work item | Completion criteria |
+|---|---:|---|---|
+| **In progress** | P1 | Split the options implementation by feature area | Custom, tracking, and reward option builders have clear owners and preserve AceConfig paths, labels, ordering, and refresh behavior. |
 | Queued | P1 | Reduce the compatibility core | Move cohesive remaining responsibilities out of `WQATurbo.lua` only when ownership and TOC ordering are explicit; retain one source owner for every consolidated runtime method. |
 | Queued | P1 | SavedVariables schema and migration tests | Document a schema version, make migrations idempotent, and cover fresh installs plus representative legacy databases with automated fixtures. |
 | Queued | P2 | Utilities and options tests | Add focused tests for map fallbacks, custom data validation, profile changes, and refresh coalescing without mirroring implementation details. |

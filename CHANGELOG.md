@@ -2,7 +2,17 @@
 
 ## Unreleased - 1.3.0
 
+### Improved
+- Split Settings builders into custom, tracking and reward modules while preserving paths, ordering and shared refresh scheduling.
+
 ### Fixed
+- Hide Zandalari Empire Equipment Cache when its verified appearance pool is complete for the current armor type.
+- Stop treating Tortollan Trader's Stock as an appearance-bearing jewelry cache.
+- Keep account-bound Benthic tokens visible while any armor type still has an uncollected appearance.
+- Allow Azerite Armor Cache tracking to be disabled per character while retaining the profile-wide master setting.
+- Show the full per-character Azerite setting label and description instead of trimming them in the Gear layout.
+- Treat any positive Pet Journal species count as owned even if its journal row temporarily reports otherwise.
+- Preserve scalar container metadata during faction pruning so addon initialization reaches AceDB setup.
 - Reject invalid custom IDs and duplicate additions without overwriting saved entries.
 - Store custom map IDs numerically and require a valid map for Quest Pin entries.
 - Refresh runtime results after custom adds, edits, toggles and deletes through the silent Settings debouncer.

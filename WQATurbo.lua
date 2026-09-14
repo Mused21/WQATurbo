@@ -204,25 +204,36 @@ local dataobj =
 
 local icon = LibStub("LibDBIcon-1.0")
 
-function WQA:OnInitialize()
-	-- Remove data for the other faction
-	local faction = UnitFactionGroup("player")
+function WQA:PruneOtherFactionData(faction)
 	for k, v in pairs(self.data) do
 		for kk, vv in pairs(v) do
 			if type(vv) == "table" then
 				for kkk, vvv in pairs(vv) do
-					if vvv.faction and not (vvv.faction == faction) then
+					if type(vvv) == "table" and vvv.faction and vvv.faction ~= faction then
 						self.data[k][kk][kkk] = nil
 					end
 				end
 			end
 		end
 	end
+end
+
+function WQA:OnInitialize()
+	-- Remove data for the other faction
+	local faction = UnitFactionGroup("player")
+	self:PruneOtherFactionData(faction)
 	self.faction = faction
 
 	-- Defaults
 	local defaults = {
 		char = {
+			options = {
+				reward = {
+					gear = {
+						AzeriteArmorCache = true
+					}
+				}
+			},
 			["*"] = {
 				["profession"] = {
 					["*"] = {
@@ -773,9 +784,6 @@ local armorCache = {
 	[165864] = true, -- Voldunai Equipment Cache
 	[165866] = true -- Zandalari Empire Equipment Cache
 }
-local jewelryCache = {
-	[165785] = true -- Tortollan Trader's Stock
-}
 
 local benthicArmorToken = {
 	[169477] = true, -- Benthic Girdle
@@ -1090,7 +1098,11 @@ local function ClassifyEquipmentCacheReward(self, questID, isEmissary, itemID, i
 	local retry = false
 
 	-- Azerite Armor Cache
-	if itemID == 163857 and self.db.profile.options.reward.gear.AzeriteArmorCache then
+	if
+		itemID == 163857
+		and self.db.profile.options.reward.gear.AzeriteArmorCache
+		and self.db.char.options.reward.gear.AzeriteArmorCache
+	then
 		-- Enabling the option tracks the cache itself.
 		-- Upgrade calculations below are only supplemental metadata.
 		self:AddRewardToQuest(questID, RewardType.Item, { itemLink = itemLink }, isEmissary)
@@ -1132,9 +1144,14 @@ local function ClassifyEquipmentCacheReward(self, questID, isEmissary, itemID, i
 	-- Equipment Cache
 	if
 		(weaponCache[itemID] and self.db.profile.options.reward.gear.weaponCache) or
-		(armorCache[itemID] and self.db.profile.options.reward.gear.armorCache) or
-		(jewelryCache[itemID] and self.db.profile.options.reward.gear.jewelryCache)
+		(armorCache[itemID] and self.db.profile.options.reward.gear.armorCache)
 	then
+		local complete, completionRetry = self:IsContainerCollectibleComplete(itemID)
+		if complete then
+			return false
+		end
+		retry = completionRetry or retry
+
 		-- Enabling a cache category tracks the cache itself.
 		-- Upgrade calculations below are only supplemental metadata.
 		self:AddRewardToQuest(questID, RewardType.Item, { itemLink = itemLink }, isEmissary)
@@ -1197,31 +1214,6 @@ local function ClassifyEquipmentCacheReward(self, questID, isEmissary, itemID, i
 						else
 							retry = true
 						end
-					end
-				end
-			end
-		end
-
-		if jewelryCache[itemID] then
-			for i = 11, 14 do
-				if GetInventoryItemID("player", i) then
-					local itemLink1 = GetInventoryItemLink("player", i)
-					if itemLink1 then
-						local itemLevel1 = GetDetailedItemLevelInfo(itemLink1)
-						if itemLevel1 then
-							n = n + 1
-							upgrade = itemLevel - itemLevel1
-							if upgrade >= self.db.profile.options.reward.gear.itemLevelUpgradeMin then
-								upgradeNum = upgradeNum + 1
-								if upgrade > upgradeMax then
-									upgradeMax = upgrade
-								end
-							end
-						else
-							retry = true
-						end
-					else
-						retry = true
 					end
 				end
 			end

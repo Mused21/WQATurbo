@@ -50,7 +50,10 @@ Collection journal state is indexed through the collection cache.
 
 ### Pets
 
-Mapped pet sources are shown when the pet is not owned, subject to configured tracking mode.
+Mapped pet sources are shown when the pet is not owned, subject to configured
+tracking mode. One collected copy counts as owned; the species' maximum copy
+limit is not a completion target. The cached journal row is cross-checked with
+Blizzard's per-species collected count for mapped pets.
 
 ### Toys
 
@@ -237,9 +240,9 @@ Supported gear-related behavior includes:
 - StatWeightScore integration;
 - direct item-level upgrade detection;
 - Azerite Armor Cache;
+- a per-character Azerite Armor Cache override;
 - Armor Cache;
 - Weapon Cache;
-- Jewelry Cache;
 - unknown transmog appearance/source;
 - Azerite traits;
 - conduits where supported.
@@ -253,8 +256,13 @@ That was misleading, especially on modern characters doing old content.
 For 1.1.0:
 
 - enabling Azerite Armor Cache tracks the cache itself;
-- enabling recognized Armor/Weapon/Jewelry cache categories tracks the cache itself;
+- its per-character override can exclude characters whose armor type is complete;
+- enabling recognized Armor/Weapon cache categories tracks the cache itself;
 - legacy upgrade calculation remains supplemental display metadata.
+
+Zandalari Empire Equipment Cache is hidden after its verified shared cloak and
+current armor-type appearance pool is complete. Tortollan Trader's Stock is not
+an appearance cache and is therefore excluded.
 
 ## 13. Benthic gear — 1.1.0
 
@@ -276,11 +284,11 @@ Tracked IDs:
 
 They are slot-specific container/token rewards rather than generic random-slot caches, so they are tracked directly through Armor Cache without pretending their usefulness depends on the character's modern item level.
 
-For 1.2.0, each token is checked against the fixed appearance pool for the
-current character's armor type. The token stops making the World Quest
-relevant after every appearance in that pool is collected. Cloak tokens use
-their shared four-appearance pool. If Blizzard has not made a source available
-to the transmog API yet, the token stays visible and the scanner retries.
+Each account-bound token is checked against the fixed appearance pools for all
+four armor types. The token stops making the World Quest relevant after every
+appearance it can produce is collected. Cloak tokens use their shared
+four-appearance pool. If Blizzard has not made a source available to the
+transmog API yet, the token stays visible and the scanner retries.
 
 ## 14. Dragonflight racing reward containers — 1.1.0
 
@@ -309,9 +317,9 @@ Reach Racer's Purse does not hide Dragon Racer's Purse, Cavern Racer's Purse or
 Dream Racer's Purse. Collection state comes from the account-wide hidden quest
 flag recorded when each customization is learned.
 
-Azerite Armor Cache and generic faction equipment caches remain category
-tracked because their possible gear varies with the reward link's modifier,
-faction, zone and character. They are not hidden using an unsafe combined pool.
+Azerite Armor Cache remains category tracked because its possible gear varies
+with the reward link's modifier, faction, zone and character. It has a
+per-character override instead of an unsafe combined completion pool.
 
 ## 15. Gold
 

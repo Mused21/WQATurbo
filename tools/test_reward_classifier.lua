@@ -167,6 +167,21 @@ assert(#WQA.data.containerCollectibles[205226].questIDs == 8)
 assert(#WQA.data.containerCollectibles[210549].questIDs == 8)
 assert(#WQA.data.containerCollectibles[169478].transmogSources.cloth == 6)
 assert(#WQA.data.containerCollectibles[169485].transmogSources.plate == 5)
+assert(WQA.data.containerCollectibles[169477].allArmorTypes == true)
+
+WQA.data.factionPruneFixture = {
+    records = {
+        metadata = true,
+        sameFaction = { faction = "Alliance" },
+        otherFaction = { faction = "Horde" }
+    }
+}
+WQA:PruneOtherFactionData("Alliance")
+assert(WQA.data.factionPruneFixture.records.metadata == true)
+assert(WQA.data.factionPruneFixture.records.sameFaction)
+assert(WQA.data.factionPruneFixture.records.otherFaction == nil)
+assert(WQA.data.containerCollectibles[169477].allArmorTypes == true)
+WQA.data.factionPruneFixture = nil
 
 local function NewOptions()
     return {
@@ -249,6 +264,7 @@ local function Reset(itemID)
     transmogSourceInfo = {}
     WQA.db = {
         profile = { options = NewOptions(), custom = { worldQuestReward = {} } },
+        char = { options = { reward = { gear = { AzeriteArmorCache = true } } } },
         global = { custom = { worldQuestReward = {} } }
     }
     WQA.itemList = {}
@@ -289,8 +305,50 @@ transmogSourceInfo[104107] = { isCollected = false }
 assert(WQA:CheckReward(1000, false, 1) == false)
 assert(AssertReward(1, WQA.Constants.RewardType.Item).itemLink == scannedItemLink)
 
+local function SetContainerSourcesCollected(itemID, collected)
+    local nextAppearanceID = 6000
+    for _, sourceIDs in pairs(WQA.data.containerCollectibles[itemID].transmogSources) do
+        for _, sourceID in ipairs(sourceIDs) do
+            nextAppearanceID = nextAppearanceID + 1
+            transmogAppearances[sourceID] = { appearanceID = nextAppearanceID }
+            transmogAppearanceSources[nextAppearanceID] = { sourceID }
+            transmogSourceInfo[sourceID] = { isCollected = collected }
+        end
+    end
+end
+
+-- Account-bound Benthic tokens remain useful for other armor types.
 Reset(169479)
 WQA.db.profile.options.reward.gear.armorCache = true
+SetContainerSourcesCollected(169479, true)
+transmogSourceInfo[104120].isCollected = false
+assert(WQA:CheckReward(1000, false, 1) == false)
+assert(AssertReward(1, WQA.Constants.RewardType.Item).itemLink == scannedItemLink)
+
+-- A direct equipment cache only considers the active character's armor type.
+Reset(165866)
+WQA.db.profile.options.reward.gear.armorCache = true
+SetContainerSourcesCollected(165866, true)
+transmogSourceInfo[94018].isCollected = false
+assert(WQA:CheckReward(1000, false, 1) == false)
+assert(#rewards == 0, "A missing mail source must not keep the cache visible on a cloth wearer")
+
+Reset(165866)
+WQA.db.profile.options.reward.gear.armorCache = true
+SetContainerSourcesCollected(165866, true)
+transmogSourceInfo[94002].isCollected = false
+assert(WQA:CheckReward(1000, false, 1) == false)
+assert(AssertReward(1, WQA.Constants.RewardType.Item).itemLink == scannedItemLink)
+
+-- Tortollan Trader's Stock only contains rings/trinkets, not appearances.
+Reset(165785)
+WQA.db.profile.options.reward.gear.jewelryCache = true
+assert(WQA:CheckReward(1000, false, 1) == false)
+assert(#rewards == 0)
+
+Reset(169479)
+WQA.db.profile.options.reward.gear.armorCache = true
+SetContainerSourcesCollected(169479, true)
 transmogAppearances[104104] = { appearanceID = 5002 }
 transmogAppearanceSources[5002] = { 104104, 999999 }
 transmogSourceInfo[104104] = { isCollected = false }
@@ -449,6 +507,12 @@ rewardItemLevel = nil
 inventoryLevels[1] = 100
 assert(WQA:CheckReward(1000, false, 1) == true)
 assert(#rewards == 1, "An uncached Azerite cache must retain its base reward")
+
+Reset(163857)
+WQA.db.profile.options.reward.gear.AzeriteArmorCache = true
+WQA.db.char.options.reward.gear.AzeriteArmorCache = false
+assert(WQA:CheckReward(1000, false, 1) == false)
+assert(#rewards == 0, "Azerite cache tracking must support a per-character override")
 
 Reset(165872)
 WQA.db.profile.options.reward.gear.weaponCache = true

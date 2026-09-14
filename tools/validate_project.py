@@ -63,6 +63,10 @@ REQUIRED_PROJECT_FILES = (
     "Runtime/TaskResolver.lua",
     "Performance.lua",
     "UI/Tooltip.lua",
+    "UI/Options/Shared.lua",
+    "UI/Options/Custom.lua",
+    "UI/Options/Tracking.lua",
+    "UI/Options/Rewards.lua",
     "UI/Options.lua",
     "Rewards/Reward.lua",
     "Rewards/RewardType.lua",
@@ -74,6 +78,8 @@ REQUIRED_PROJECT_FILES = (
     "tools/test_task_resolver.lua",
     "tools/test_tooltip_lifecycle.lua",
     "tools/test_custom_options.lua",
+    "tools/load_options.lua",
+    "tools/test_options_structure.lua",
 )
 
 REQUIRED_PACKAGE_ITEMS = (
@@ -85,6 +91,10 @@ REQUIRED_PACKAGE_ITEMS = (
     "WQATurbo/Data/ContainerCollectibles.lua",
     "WQATurbo/Scanning/RewardScanner.lua",
     "WQATurbo/Runtime/Runtime.lua",
+    "WQATurbo/UI/Options/Shared.lua",
+    "WQATurbo/UI/Options/Custom.lua",
+    "WQATurbo/UI/Options/Tracking.lua",
+    "WQATurbo/UI/Options/Rewards.lua",
     "WQATurbo/UI/Options.lua",
 )
 
@@ -128,6 +138,13 @@ CONSOLIDATED_RUNTIME_METHOD_OWNERS = {
     "OnEnable": "Runtime/Runtime.lua",
     "Reward": "Scanning/RewardScanner.lua",
     "Show": "Runtime/Display.lua",
+    "CreateCustomOptions": "UI/Options/Custom.lua",
+    "CreateRewardOptions": "UI/Options/Rewards.lua",
+    "PopulateRewardOptions": "UI/Options/Rewards.lua",
+    "PopulateWorldQuestTypeOptions": "UI/Options/Rewards.lua",
+    "PopulateTrackingOptions": "UI/Options/Tracking.lua",
+    "ScheduleOptionsRefresh": "UI/Options.lua",
+    "RefreshFromOptions": "UI/Options.lua",
 }
 
 
@@ -245,6 +262,18 @@ def validate_toc(validation: Validation) -> None:
                 validation.error(
                     f"TOC must load {runtime_data} before {consumer}."
                 )
+
+    options_order = (
+        "Performance.lua", "UI/Options/Shared.lua", "UI/Options/Custom.lua",
+        "UI/Options/Tracking.lua", "UI/Options/Rewards.lua", "UI/Options.lua",
+    )
+    for source in options_order:
+        if source not in sources:
+            validation.error(f"TOC must load {source}.")
+    if all(source in sources for source in options_order):
+        positions = [sources.index(source) for source in options_order]
+        if positions != sorted(positions):
+            validation.error("TOC options modules are not in dependency order.")
 
     container_data = "Data/ContainerCollectibles.lua"
     container_owner = "Tracking/ContainerCompletion.lua"

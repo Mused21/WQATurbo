@@ -186,6 +186,16 @@ Azerite/equipment cache eligibility must not silently depend on modern-character
 
 Upgrade calculations are display metadata.
 
+Verified finite appearance pools may hide a direct equipment cache after the
+shared and current armor-type sources are complete. Azerite Armor Cache uses a
+profile master setting plus an explicit per-character override because its pool
+varies by context. Account-bound armor tokens check all armor types. Faction
+pruning must preserve scalar metadata alongside faction-tagged record tables.
+
+Pet ownership is complete after one collected copy. The Pet Journal row flag
+may be cross-checked with the species count, but the per-species copy limit must
+never become a completion target. `Always track` remains the explicit override.
+
 ### 30. Racing purse completion is purse-specific
 
 Each purse must be hidden only after every account-wide manuscript quest flag

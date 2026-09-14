@@ -22,6 +22,8 @@ end
 
 local function noop() end
 local owned, blocked = false, {}
+local petRowOwned
+local petCollectedCount
 C_QuestLog = { IsQuestFlaggedCompleted = function(id) return blocked[id] end }
 C_TaskQuest = {}
 C_CurrencyInfo = {}
@@ -46,7 +48,14 @@ C_MountJournal = {
 C_PetJournal = {
     GetNumPets = function() return 1 end,
     GetPetInfoByIndex = function()
-        return nil, nil, owned, nil, nil, nil, nil, nil, nil, nil, 100
+        local rowOwned = petRowOwned
+        if rowOwned == nil then rowOwned = owned end
+        return nil, 10, rowOwned, nil, nil, nil, nil, nil, nil, nil, 100
+    end,
+    GetNumCollectedInfo = function(speciesID)
+        assert(speciesID == 10)
+        if petCollectedCount ~= nil then return petCollectedCount, 3 end
+        return owned and 1 or 0, 3
     end
 }
 
@@ -86,7 +95,7 @@ if not arg[1] then
         "CollectionCache must not replace the core CreateQuestList owner")
 end
 loadSource("Tracking/Achievements.lua")
-loadSource("UI/Options.lua")
+dofile("tools/load_options.lua")(sourceRoot)
 
 local publications, refreshes = 0, 0
 local publishedQuestIDs = {}
@@ -118,6 +127,8 @@ local function reset(group, case)
     publishedQuestIDs = {}
     WQA.itemList = {}
     blocked = {}
+    petRowOwned = nil
+    petCollectedCount = nil
 end
 
 local collectors = {
@@ -147,6 +158,20 @@ for _, collector in ipairs(collectors) do
             assert(publications == 0, "Always must not bypass a completed tracking quest")
         end
     end
+end
+
+-- Species collection counts take precedence when a journal row temporarily
+-- reports an owned species as unowned. One copy is sufficient; the cap is not
+-- a completion target.
+for _, collectedCount in ipairs({ 1, 3 }) do
+    reset("pets", modes[1])
+    owned = false
+    petRowOwned = false
+    petCollectedCount = collectedCount
+    WQA:InvalidateCollectionCache()
+    WQA:AddPets(collectors[2].data)
+    assert(publications == 0, "Any collected copy must suppress a pet in Default mode")
+    assert(WQA:IsPetOwnedByCreatureID(100) == true)
 end
 
 -- Repeated expansion registration still builds each journal snapshot once.

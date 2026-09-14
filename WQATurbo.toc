@@ -50,4 +50,8 @@ Runtime\Runtime.lua
 Runtime\Display.lua
 Runtime\TaskResolver.lua
 Performance.lua
+UI\Options\Shared.lua
+UI\Options\Custom.lua
+UI\Options\Tracking.lua
+UI\Options\Rewards.lua
 UI\Options.lua

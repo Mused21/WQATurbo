@@ -141,17 +141,19 @@ Responsibilities include:
 
 ### `UI/Options.lua`
 
-AceConfig settings UI.
+AceConfig tree orchestration, general Options pages, tab organization and
+coalesced runtime refresh scheduling.
 
-Responsibilities include:
+Feature owners under `UI/Options/`:
 
-- Tracking tree;
-- search;
-- bulk tracking;
-- Rewards tree;
-- Custom tree;
-- Options tree;
-- refresh scheduling in setters.
+- `Shared.lua`: shared ordering counter and expansion sorting.
+- `Tracking.lua`: tracking tree, search, bulk tracking and label retry timer.
+- `Rewards.lua`: general and expansion reward builders.
+- `Custom.lua`: custom editors, validation and mutations.
+
+`tools/load_options.lua` loads these files in TOC order for Lua tests.
+`tools/test_options_structure.lua` covers complete tree construction, search,
+scoped writes and cross-feature coalescing, with optional baseline comparison.
 
 ### `Migration.lua`
 
@@ -245,9 +247,9 @@ to the canonical emissary table.
 
 ### `Data/ContainerCollectibles.lua`
 
-Fixed collectible pools for racing purses and Benthic armor tokens. Stores
-account-wide manuscript quest IDs and Benthic item-modified appearance source
-IDs; it contains no collection API calls.
+Fixed collectible pools for racing purses, Benthic armor tokens and verified
+equipment caches. Stores account-wide manuscript quest IDs and item-modified
+appearance source IDs; it contains no collection API calls.
 
 ## Criterias
 

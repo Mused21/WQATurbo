@@ -13,11 +13,12 @@ Custom
 Options
 ```
 
-Settings are built dynamically in `UI/Options.lua`.
+Settings are built dynamically by `UI/Options.lua` and the feature builders in
+`UI/Options/` (Custom, Tracking and Rewards), sharing one ordering counter.
 
 Stable currency, reputation, emissary and World Quest type lookup metadata is
-owned by `Data/RuntimeData.lua`. `UI/Options.lua` reads those tables while building
-the UI; loading Settings is not required to initialize runtime metadata.
+owned by `Data/RuntimeData.lua`. `UI/Options/Rewards.lua` reads those tables
+while building the UI; loading Settings is not required to initialize runtime metadata.
 
 Most setters call a debounced refresh scheduler so that configuration changes become visible without requiring `/reload`.
 
@@ -102,7 +103,8 @@ Completed entries remain hoverable.
 
 Mount and pet completion grouping uses the shared `Tracking/CollectionCache.lua`
 ownership indexes. Building the Settings tree does not perform one complete
-journal walk per collectible row.
+journal walk per collectible row. For pets, any positive species count means
+collected; owning three copies is not required.
 
 Achievement tooltips use achievement hyperlinks.
 
@@ -168,7 +170,8 @@ General behavior includes concepts such as:
 - minimum gold;
 - World Quest type filtering.
 
-The actual Settings label structure should be verified in `UI/Options.lua`.
+The actual Settings label structure should be verified in `UI/Options.lua`
+and its feature builders under `UI/Options/`.
 
 ## 5. World Quest types
 
@@ -186,9 +189,9 @@ Gear settings include:
 - minimum percentage;
 - StatWeightScore;
 - Azerite Armor Cache;
+- Azerite Armor Cache on this character;
 - Armor Cache;
 - Weapon Cache;
-- Jewelry Cache;
 - Unknown appearance;
 - Unknown source;
 - Azerite traits;
@@ -207,6 +210,15 @@ It no longer means:
 > track this cache only if the old contents are an upgrade for my current gear
 
 Upgrade calculations remain supplemental metadata.
+
+`Azerite Armor Cache` is the profile-wide master setting. Its adjacent
+`Azerite Armor Cache on this character` toggle is stored per character and is
+enabled by default. Disable the character toggle when that character's armor
+type is complete while leaving the master setting enabled for another armor
+type. Both settings must be enabled for the cache to match.
+
+Tortollan Trader's Stock is not tracked as a cache because its ring and trinket
+outcomes do not provide collectible appearances.
 
 ## 7. Dragonflight Containers — 1.1.0
 
@@ -251,9 +263,9 @@ Rewards > Gear > Armor Cache
 
 This keeps the user model simple: these are equipment-container/token rewards.
 
-For 1.2.0, a Benthic token is automatically hidden when all appearances it can
-produce for the current character's armor type are collected. A missing
-transmog API result keeps the token visible.
+An account-bound Benthic token is automatically hidden only when all
+appearances it can produce across cloth, leather, mail and plate are collected.
+A missing transmog API result keeps the token visible.
 
 ## 9. Reputation
 

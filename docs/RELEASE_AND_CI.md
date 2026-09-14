@@ -22,7 +22,7 @@ The validation pipeline includes:
 2. project structure, startup load order and hygiene validation;
 3. Lua 5.1 syntax validation plus tracking-policy, reward-classifier,
    reward-scanner publication, runtime-lifecycle, task-resolver,
-   tooltip-lifecycle and custom-editor regression checks;
+   tooltip-lifecycle, custom-editor and full options-structure regression checks;
 4. BigWigs packager build with externals;
 5. validation that required runtime modules and embedded libraries exist in the ZIP;
 6. upload of PR test build artifact.

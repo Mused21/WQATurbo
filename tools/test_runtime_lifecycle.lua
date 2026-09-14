@@ -185,7 +185,7 @@ dofile("Constants.lua")
 WQA.RuntimeData = {}
 WQA.L = setmetatable({}, { __index = function(_, key) return key end })
 C_CurrencyInfo, C_QuestLog = {}, {}
-dofile("UI/Options.lua")
+dofile("tools/load_options.lua")()
 dofile("Runtime/Display.lua")
 UnitAffectingCombat = function() return true end
 local minimapDB, notified, rebuilds, cancelled = nil, 0, 0, {}

@@ -11,7 +11,7 @@ C_Map = { GetMapInfo = function(id) if id == 84 then return {} end end }
 C_Garrison = { GetMissionLink = noop }
 GetQuestLink, GetItemInfo = noop, noop
 GameTooltip = { Hide = noop }
-dofile("UI/Options.lua")
+dofile("tools/load_options.lua")()
 local timers, scheduled, refreshed = {}, 0, 0
 function WQA:ScheduleTimer(callback, delay)
     assert(delay == 0.30)

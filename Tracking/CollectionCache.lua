@@ -36,6 +36,8 @@ WQA.collectionCache = WQA.collectionCache or {
 	mountCollected = {},
 	petKnown = {},
 	petOwned = {},
+	petSpecies = {},
+	petCountChecked = {},
 	mountValid = false,
 	petValid = false,
 	mountJournalEntries = 0,
@@ -86,17 +88,20 @@ function WQA:BuildPetCollectionCache()
 
 	wipe(cache.petKnown)
 	wipe(cache.petOwned)
+	wipe(cache.petSpecies)
+	wipe(cache.petCountChecked)
 
 	local total = C_PetJournal.GetNumPets() or 0
 	cache.petJournalEntries = total
 	cache.petBuilds = cache.petBuilds + 1
 
 	for i = 1, total do
-		local _, _, owned, _, _, _, _, _, _, _, companionID =
+		local _, speciesID, owned, _, _, _, _, _, _, _, companionID =
 			C_PetJournal.GetPetInfoByIndex(i)
 
 		if companionID then
 			cache.petKnown[companionID] = true
+			cache.petSpecies[companionID] = speciesID
 
 			if owned then
 				cache.petOwned[companionID] = true
@@ -130,6 +135,23 @@ function WQA:IsPetOwnedByCreatureID(companionID)
 
 	if not cache.petValid then
 		self:BuildPetCollectionCache()
+	end
+
+	if cache.petOwned[companionID] == true then
+		return true
+	end
+
+	local speciesID = cache.petSpecies[companionID]
+	if
+		speciesID
+		and not cache.petCountChecked[companionID]
+		and C_PetJournal.GetNumCollectedInfo
+	then
+		local numCollected = C_PetJournal.GetNumCollectedInfo(speciesID)
+		if type(numCollected) == "number" then
+			cache.petCountChecked[companionID] = true
+			cache.petOwned[companionID] = numCollected > 0
+		end
 	end
 
 	return cache.petOwned[companionID] == true
@@ -198,7 +220,7 @@ function WQA:AddPets(pets)
 				self.db.profile.pets, companionID, self.playerName)
 
 			if enabled then
-				if not cache.petOwned[companionID] or forced then
+				if not self:IsPetOwnedByCreatureID(companionID) or forced then
 					if pet.emissary == true then
 						self:AddEmissaryReward(pet.questID, RewardType.Chance, pet.itemID)
 					end

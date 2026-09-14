@@ -128,11 +128,13 @@ manually constructing parallel quest reward structures.
 
 - Dragonflight racing reward containers are supported.
 
-- Nazjatar Benthic tokens are handled by Armor Cache tracking.
+- Nazjatar Benthic tokens are handled by Armor Cache tracking and remain
+  relevant while any armor type has a missing appearance.
 
-- Azerite Armor Cache and recognized Armor/Weapon/Jewelry caches are tracked
+- Azerite Armor Cache and recognized Armor/Weapon caches are tracked
   when their category is enabled, regardless of whether their obsolete item
-  level is an upgrade.
+  level is an upgrade. Azerite Armor Cache also has an explicit per-character
+  override; Tortollan Trader's Stock is not an appearance cache.
 
 Upgrade calculations are supplemental metadata, not cache eligibility.
 

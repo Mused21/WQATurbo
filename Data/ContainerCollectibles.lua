@@ -7,6 +7,19 @@ local WQA = WQATurbo
 -- hidden quests. Benthic tokens use item-modified appearance source IDs so
 -- the scanner can ask Blizzard whether the visual appearance is collected.
 WQA.data.containerCollectibles = {
+	-- Zandalari Empire Equipment Cache. Unlike Benthic tokens, this cache
+	-- resolves directly to armor for the current loot specialization, so only
+	-- the active character's armor type is relevant.
+	[165866] = {
+		transmogSources = {
+			all = { 94217 }, -- Loa-Pledged Drape
+			cloth = { 94002, 93997, 94001, 93999, 93996 },
+			leather = { 94010, 94005, 94009, 94007, 94004 },
+			mail = { 94018, 94013, 94017, 94015, 94012 },
+			plate = { 94027, 94021, 94026, 94024, 94020 }
+		}
+	},
+
 	-- Dragon Racer's Purse
 	[199192] = {
 		questIDs = {
@@ -35,6 +48,7 @@ WQA.data.containerCollectibles = {
 
 	-- Benthic Girdle
 	[169477] = {
+		allArmorTypes = true,
 		transmogSources = {
 			cloth = { 104107, 105514 },
 			leather = { 104115, 105515 },
@@ -44,6 +58,7 @@ WQA.data.containerCollectibles = {
 	},
 	-- Benthic Bracers
 	[169478] = {
+		allArmorTypes = true,
 		transmogSources = {
 			cloth = { 104108, 105247, 105359, 105379, 105457, 105478 },
 			leather = { 104116, 105248, 105360, 105378, 105456, 105477 },
@@ -53,6 +68,7 @@ WQA.data.containerCollectibles = {
 	},
 	-- Benthic Helm
 	[169479] = {
+		allArmorTypes = true,
 		transmogSources = {
 			cloth = { 104104 },
 			leather = { 104112 },
@@ -62,6 +78,7 @@ WQA.data.containerCollectibles = {
 	},
 	-- Benthic Chestguard
 	[169480] = {
+		allArmorTypes = true,
 		transmogSources = {
 			cloth = { 104129 },
 			leather = { 104109 },
@@ -71,12 +88,14 @@ WQA.data.containerCollectibles = {
 	},
 	-- Benthic Cloak
 	[169481] = {
+		allArmorTypes = true,
 		transmogSources = {
 			all = { 105150, 105151, 105152, 105153 }
 		}
 	},
 	-- Benthic Leggings
 	[169482] = {
+		allArmorTypes = true,
 		transmogSources = {
 			cloth = { 104105, 105243, 105363 },
 			leather = { 104113, 105244, 105364 },
@@ -86,6 +105,7 @@ WQA.data.containerCollectibles = {
 	},
 	-- Benthic Treads
 	[169483] = {
+		allArmorTypes = true,
 		transmogSources = {
 			cloth = { 104102, 105263, 105395, 105518 },
 			leather = { 104110, 105262, 105396, 105519 },
@@ -95,6 +115,7 @@ WQA.data.containerCollectibles = {
 	},
 	-- Benthic Spaulders
 	[169484] = {
+		allArmorTypes = true,
 		transmogSources = {
 			cloth = { 104106 },
 			leather = { 104114 },
@@ -104,6 +125,7 @@ WQA.data.containerCollectibles = {
 	},
 	-- Benthic Gauntlets
 	[169485] = {
+		allArmorTypes = true,
 		transmogSources = {
 			cloth = { 104103, 105232, 105389, 105480, 105522 },
 			leather = { 104111, 105233, 105390, 105481, 105523 },

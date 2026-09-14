@@ -21,7 +21,14 @@ lua5.1 tools/test_runtime_lifecycle.lua
 lua5.1 tools/test_task_resolver.lua
 lua5.1 tools/test_tooltip_lifecycle.lua
 lua5.1 tools/test_custom_options.lua
+lua5.1 tools/test_options_structure.lua
 ```
+
+The options structure suite builds representative expansion, tracking, reward
+and custom pages using TOC load order, then checks search, settings scope and
+shared refresh coalescing. An optional path to a pre-split `Options.lua` compares
+generated metadata (function types, not callback identity), excluding generated
+order numbers and intentional Gear-setting additions/removals.
 
 In the local Windows workspace, Lua 5.1.5 is installed at:
 
@@ -38,7 +45,8 @@ missing quest-pin criterion IDs, exclusive owner cleanup, bulk state and one
 refresh per bulk operation. It also checks that repeated registration and
 Settings completion queries reuse journal snapshots, and that
 `CreateQuestList()` invalidates both snapshots exactly once without a load-order
-wrapper.
+wrapper. Pet cases also cover inconsistent row ownership: species counts of
+1/3 and 3/3 both count as owned and suppress Default tracking.
 
 The reward-classifier test covers authoritative item-link fallback, missing
 data retries, containers, gear upgrades, StatWeightScore dual-slot selection,
@@ -241,6 +249,7 @@ Precondition:
 
 ```text
 Rewards > Gear > Azerite Armor Cache = enabled
+Rewards > Gear > Azerite Armor Cache on this character = enabled
 ```
 
 Use active BfA WQ rewarding item 163857.
@@ -253,13 +262,22 @@ Disable option:
 
 - disappears unless another reason matches.
 
+Leave the profile-wide option enabled and disable only the per-character option:
+
+- the cache disappears on that character;
+- it remains enabled on another character using the same profile.
+
 ## 13. 1.1.0 generic cache semantics
 
-For recognized Armor/Weapon/Jewelry cache:
+For recognized Armor/Weapon cache:
 
 - option enabled → cache itself makes WQ relevant;
 - upgrade metadata can still appear;
 - option disabled → no cache-category relevance.
+
+For Zandalari Empire Equipment Cache, verify it remains visible with a missing
+shared/current-armor appearance and disappears when that finite pool is
+complete. Tortollan Trader's Stock must not match a cache category.
 
 ## 14. 1.1.0 Benthic tokens
 
@@ -267,9 +285,8 @@ With Armor Cache enabled, test an active Nazjatar WQ rewarding one of IDs 169477
 
 Expected:
 
-- token appears while at least one appearance for the current character's
-  armor type is uncollected;
-- token disappears when every appearance in its fixed pool is collected;
+- token appears while at least one appearance in any armor type is uncollected;
+- token disappears when every appearance across all armor types is collected;
 - a missing/uncached transmog source keeps the token visible and is retried;
 - no requirement that it upgrade current gear.
 
