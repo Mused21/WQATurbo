@@ -6,7 +6,7 @@
 >
 > **Current milestone:** 1.3.0 consolidated release
 >
-> **Current item:** 1.3.0 release candidate (Done; release PR pending)
+> **Current item:** 1.3.0 release candidate (Done)
 >
 > **Last reviewed:** 2026-09-14
 
@@ -143,8 +143,8 @@ Focused release checks:
 
 ## 1.3.0: maintainability and test coverage
 
-The tested hardening and consolidated release plan are committed as `01e10e3`
-on `feature/1.3.0`. No push or release has been performed.
+The tested hardening and consolidated release plan were committed as `01e10e3`
+on `feature/1.3.0` before the later release-candidate work.
 
 The options split is committed and verified in game.
 `UI/Options/` owns shared ordering, custom editors, tracking/search and rewards;
