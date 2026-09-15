@@ -1,7 +1,7 @@
 ---@class WQATurbo
 local WQA = WQATurbo
 
---Locales
+-- Locales
 local locale = GetLocale()
 WQA.L = {}
 local L = WQA.L
