@@ -95,6 +95,7 @@ local L = WQA.L
 	L["World Quest"] = "World Quest"
 	L["World Quests"] = "World Quests"
 	L["Zones"] = "Zones"
+	L["Unknown"] = "Unknown"
 	L["achievements"] = "Achievements"
 	L["completed"] = "Completed"
 	L["itemID"] = "itemID"
@@ -164,6 +165,7 @@ local L = WQA.L
 	L["Enter a positive integer reward ID, or leave it blank."] = "Enter a positive integer reward ID, or leave it blank."
 
 	L["Set all tracking in %s"] = "Set all tracking in %s"
+	L["Mixed / choose setting"] = "Mixed / choose setting"
 	L["Applies Don't track, Default, or Always track to every achievement, mount, pet, and toy in this expansion."] = "Applies Don't track, Default, or Always track to every achievement, mount, pet, and toy in this expansion."
 	L["Choose a category from the tree for individual settings, or use the selector above to update the whole expansion."] = "Choose a category from the tree for individual settings, or use the selector above to update the whole expansion."
 	L["Set all %s"] = "Set all %s"
