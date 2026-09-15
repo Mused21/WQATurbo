@@ -7,6 +7,44 @@ local WQA = WQATurbo
 -- hidden quests. Benthic tokens use item-modified appearance source IDs so
 -- the scanner can ask Blizzard whether the visual appearance is collected.
 WQA.data.containerCollectibles = {
+	-- Azerite Armor Cache. The ordinary cache resolves to head, shoulder and
+	-- chest rewards from the six Battle for Azeroth leveling zones. Keep the
+	-- pool split by armor type because the generated item follows the active
+	-- character's loot specialization. Dungeon (contexts 1/2) and Warfront
+	-- (context 5) cache links resolve different pools and therefore fail open.
+	-- Verified against ATT source 74e370f and Retail 12.1.0.69382
+	-- Item/ItemModifiedAppearance data on 2026-09-15.
+	[163857] = {
+		unsupportedItemContexts = {
+			[1] = true,
+			[2] = true,
+			[5] = true
+		},
+		transmogSources = {
+			cloth = {
+				93966, 93968, 93991, 93998, 94000, 94023,
+				94030, 94032, 94055, 94062, 94064, 94087,
+				94094, 94096, 94119, 94126, 94128, 94151
+			},
+			leather = {
+				93971, 93974, 93976, 94003, 94006, 94008,
+				94035, 94038, 94040, 94067, 94070, 94072,
+				94099, 94102, 94104, 94131, 94134, 94136,
+				98582
+			},
+			mail = {
+				93979, 93982, 93984, 94011, 94014, 94016,
+				94043, 94046, 94048, 94075, 94078, 94080,
+				94107, 94110, 94112, 94139, 94142, 94144
+			},
+			plate = {
+				93987, 93990, 93993, 94019, 94022, 94025,
+				94051, 94054, 94057, 94083, 94086, 94089,
+				94115, 94118, 94121, 94147, 94150, 94153
+			}
+		}
+	},
+
 	-- Zandalari Empire Equipment Cache. Unlike Benthic tokens, this cache
 	-- resolves directly to armor for the current loot specialization, so only
 	-- the active character's armor type is relevant.

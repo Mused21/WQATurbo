@@ -200,7 +200,8 @@ For example:
 Azerite Armor Cache = enabled
 ```
 
-should track an Azerite Armor Cache reward.
+should track an Azerite Armor Cache reward while its verified appearance pool
+for the active armor type is incomplete.
 
 It should not secretly mean:
 
@@ -210,6 +211,11 @@ is an upgrade for my current Midnight character
 ```
 
 Upgrade estimates can enrich display metadata, but category eligibility and upgrade usefulness should remain separate concepts.
+
+Only hide a container when `Data/ContainerCollectibles.lua` records its finite
+pool and Blizzard APIs confirm every relevant appearance. If an item ID has
+contexts with different contents, record the unsupported contexts and fail
+open rather than applying the wrong pool.
 
 ## 10. Adding a currency
 

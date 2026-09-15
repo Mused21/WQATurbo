@@ -266,6 +266,12 @@ Use active BfA WQ rewarding item 163857.
 Expected:
 
 - appears even when obsolete item level cannot upgrade current gear.
+- appears when one appearance for the active armor type is missing;
+- disappears when the ordinary cache's active-armor pool is complete;
+- stays hidden when only another armor type has a missing appearance;
+- stays visible while Blizzard appearance data is unavailable;
+- Dungeon and Warfront item-context links stay visible because their pools
+  differ from the ordinary 73-source zone pool.
 
 Disable option:
 

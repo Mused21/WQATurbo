@@ -154,10 +154,12 @@ Responsibilities include:
 
 This is generally where a new ordinary reward-item category belongs.
 
-### `WQA:IsContainerCollectibleComplete(itemID)`
+### `WQA:IsContainerCollectibleComplete(itemID, itemLink)`
 
 Owned by `Tracking/ContainerCompletion.lua`. Evaluates fixed container pools
-using account-wide quest flags or Blizzard transmog appearance state.
+using account-wide quest flags or Blizzard transmog appearance state. The
+optional item link prevents a pool from being applied to explicitly unsupported
+item contexts.
 
 Returns `complete, retry`. Unknown containers return `false, false`; an
 unavailable transmog source returns `false, true`, so classification keeps the

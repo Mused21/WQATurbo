@@ -27,11 +27,11 @@ update the appropriate documentation as part of the change.
 
 ## Current Development
 
-Current development target: WQA Turbo 1.4.0.
+Current development target: WQA Turbo 1.4.1.
 
-1.3.0 functionality is the behavioral baseline.
+1.4.1 functionality is the behavioral baseline.
 
-1.3.0 is the released behavioral baseline. Continue 1.4.0 work from the
+1.4.1 is the released behavioral baseline. Continue follow-up work from the
 active roadmap and preserve existing behavior except for explicitly planned
 fixes and features.
 
@@ -131,10 +131,11 @@ manually constructing parallel quest reward structures.
 - Nazjatar Benthic tokens are handled by Armor Cache tracking and remain
   relevant while the active character's armor type has a missing appearance.
 
-- Azerite Armor Cache and recognized Armor/Weapon caches are tracked
-  when their category is enabled, regardless of whether their obsolete item
-  level is an upgrade. Azerite Armor Cache also has an explicit per-character
-  override; Tortollan Trader's Stock is not an appearance cache.
+- Azerite Armor Cache and recognized Armor/Weapon caches are tracked when
+  their category is enabled and a relevant verified appearance pool remains
+  incomplete, regardless of whether their obsolete item level is an upgrade.
+  Azerite Armor Cache also has an explicit per-character override; Tortollan
+  Trader's Stock is not an appearance cache.
 
 Upgrade calculations are supplemental metadata, not cache eligibility.
 

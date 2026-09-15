@@ -177,6 +177,13 @@ assert(#WQA.data.containerCollectibles[205226].questIDs == 8)
 assert(#WQA.data.containerCollectibles[210549].questIDs == 8)
 assert(#WQA.data.containerCollectibles[169478].transmogSources.cloth == 6)
 assert(#WQA.data.containerCollectibles[169485].transmogSources.plate == 5)
+assert(#WQA.data.containerCollectibles[163857].transmogSources.cloth == 18)
+assert(#WQA.data.containerCollectibles[163857].transmogSources.leather == 19)
+assert(#WQA.data.containerCollectibles[163857].transmogSources.mail == 18)
+assert(#WQA.data.containerCollectibles[163857].transmogSources.plate == 18)
+assert(WQA.data.containerCollectibles[163857].unsupportedItemContexts[1])
+assert(WQA.data.containerCollectibles[163857].unsupportedItemContexts[2])
+assert(WQA.data.containerCollectibles[163857].unsupportedItemContexts[5])
 for itemID = 169477, 169485 do
     assert(not WQA.data.containerCollectibles[itemID].allArmorTypes)
 end
@@ -531,12 +538,49 @@ assert(AssertReward(1, WQA.Constants.RewardType.Item).itemPercentUpgrade == expe
 
 Reset(163857)
 WQA.db.profile.options.reward.gear.AzeriteArmorCache = true
+SetContainerSourcesCollected(163857, true)
+transmogSourceInfo[93966].isCollected = false
 assert(WQA:CheckReward(1000, false, 1) == false)
 AssertReward(1, WQA.Constants.RewardType.Item)
 assert(AssertReward(2, WQA.Constants.RewardType.Item).AzeriteArmorCache[1] == 120)
 
+-- A complete pool for the active armor type suppresses the cache.
 Reset(163857)
 WQA.db.profile.options.reward.gear.AzeriteArmorCache = true
+SetContainerSourcesCollected(163857, true)
+assert(WQA:CheckReward(1000, false, 1) == false)
+assert(#rewards == 0)
+
+-- Missing appearances for another armor type do not make the cache relevant.
+Reset(163857)
+WQA.db.profile.options.reward.gear.AzeriteArmorCache = true
+SetContainerSourcesCollected(163857, true)
+transmogSourceInfo[93979].isCollected = false
+assert(WQA:CheckReward(1000, false, 1) == false)
+assert(#rewards == 0)
+
+-- Dungeon/Warfront item contexts use different pools and must fail open.
+for _, itemContext in ipairs({ 1, 2, 5 }) do
+    Reset(163857)
+    WQA.db.profile.options.reward.gear.AzeriteArmorCache = true
+    SetContainerSourcesCollected(163857, true)
+    scannedItemLink = "item:163857:::::::::::" .. itemContext
+    assert(WQA:CheckReward(1000, false, 1) == false)
+    AssertReward(1, WQA.Constants.RewardType.Item)
+end
+
+-- Temporarily unavailable appearance data keeps the cache visible and retries.
+Reset(163857)
+WQA.db.profile.options.reward.gear.AzeriteArmorCache = true
+SetContainerSourcesCollected(163857, true)
+transmogAppearances[93966] = nil
+assert(WQA:CheckReward(1000, false, 1) == true)
+AssertReward(1, WQA.Constants.RewardType.Item)
+
+Reset(163857)
+WQA.db.profile.options.reward.gear.AzeriteArmorCache = true
+SetContainerSourcesCollected(163857, true)
+transmogSourceInfo[93966].isCollected = false
 rewardItemLevel = nil
 inventoryLevels[1] = 100
 assert(WQA:CheckReward(1000, false, 1) == true)

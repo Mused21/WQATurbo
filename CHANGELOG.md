@@ -1,5 +1,10 @@
 # WQA Turbo Changelog
 
+## 1.4.1
+
+### Fixed
+- Hide ordinary Azerite Armor Cache rewards when every appearance for the active character's armor type is collected.
+
 ## 1.4.0
 
 ### Improved

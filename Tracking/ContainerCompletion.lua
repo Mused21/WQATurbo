@@ -19,16 +19,59 @@ local armorTypeByClassID = {
 
 local armorTypes = { "cloth", "leather", "mail", "plate" }
 
+local function GetItemLinkField(itemLink, wantedField)
+	if type(itemLink) ~= "string" then
+		return nil
+	end
+
+	local itemString = string.match(itemLink, "item:([^|]+)")
+	if not itemString then
+		return nil
+	end
+
+	local fieldStart = 1
+	for fieldIndex = 1, wantedField do
+		local separator = string.find(itemString, ":", fieldStart, true)
+		local fieldValue
+		if separator then
+			fieldValue = string.sub(itemString, fieldStart, separator - 1)
+		else
+			fieldValue = string.sub(itemString, fieldStart)
+		end
+
+		if fieldIndex == wantedField then
+			return tonumber(fieldValue)
+		end
+		if not separator then
+			return nil
+		end
+		fieldStart = separator + 1
+	end
+
+	return nil
+end
+
 ---Return whether every known collectible outcome from a fixed-pool container
 ---is already owned. Missing data always keeps the container visible.
 ---@param itemID number
+---@param itemLink string|nil
 ---@return boolean complete
 ---@return boolean retry
-function WQA:IsContainerCollectibleComplete(itemID)
+function WQA:IsContainerCollectibleComplete(itemID, itemLink)
 	local containers = self.data and self.data.containerCollectibles
 	local container = containers and containers[itemID]
 	if not container then
 		return false, false
+	end
+
+	if container.unsupportedItemContexts then
+		-- Item context is field 12 in a Retail item hyperlink. Some historical
+		-- Azerite cache contexts resolve to different finite pools; do not apply
+		-- the ordinary zone-reward pool to those links.
+		local itemContext = GetItemLinkField(itemLink, 12)
+		if itemContext and container.unsupportedItemContexts[itemContext] then
+			return false, false
+		end
 	end
 
 	if container.questIDs then

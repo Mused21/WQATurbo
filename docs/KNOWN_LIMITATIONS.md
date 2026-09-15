@@ -120,9 +120,14 @@ Blizzard Settings UI can clip long labels.
 
 Use short option labels and full-width descriptions rather than embedding explanations into the label.
 
-## 11. Current docs baseline
+## 11. Azerite Armor Cache item contexts
 
-These docs target the 1.2.0 refactor on `refactor/1.2.0`.
+Ordinary item `163857` links use the verified 73-source BfA zone-reward pool
+for automatic completion. Item contexts 1 and 2 resolve to dungeon Azerite
+armor, while context 5 resolves to Warfront armor. Those context-specific pools
+are not registered, so WQA Turbo deliberately keeps those cache links visible.
 
-Update `VERSION_1.2.0.md` and any affected architectural reference during
-release preparation or follow-up development.
+## 12. Current docs baseline
+
+These docs use released 1.4.1 behavior on `master` as the baseline. Historical
+1.2.0 refactor details remain in `VERSION_1.2.0.md`.
