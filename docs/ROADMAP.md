@@ -1,12 +1,12 @@
 # WQA Turbo Development Roadmap
 
-> **Current release target:** 1.4.0
+> **Current release target:** 1.4.1
 >
-> **Released baseline:** 1.3.0
+> **Released baseline:** 1.4.0
 >
-> **Current milestone:** 1.4.0 feature and maintenance work
+> **Current milestone:** 1.4.1 post-release correctness
 >
-> **Current item:** 1.4.0 release PR (In progress)
+> **Current item:** Azerite Armor Cache completion (In progress)
 >
 > **Last reviewed:** 2026-09-15
 
@@ -22,6 +22,12 @@ historical records and must not be reused as active checklists.
 - **Queued**: accepted work with lower priority or a dependency on earlier work.
 - **Research**: requires current API or game-data evidence before implementation.
 - **Done**: implemented, locally validated, and tested in game where applicable.
+
+## 1.4.1: post-release correctness
+
+| Status | Priority | Work item | Completion criteria |
+|---|---:|---|---|
+| **In progress** | P0 | Azerite Armor Cache completion | Ordinary item `163857` cache rewards use the verified 73-source BfA zone pool, scoped to the active character's armor type; a complete pool hides the cache, another armor type cannot keep it visible, unsupported item contexts and unavailable Blizzard collection data fail open, and focused automated and in-game checks pass. |
 
 ## 1.3.0: completed correctness and runtime hardening
 

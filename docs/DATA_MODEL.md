@@ -120,6 +120,7 @@ Fixed collectible pools keyed by container item ID:
 ```lua
 containerCollectibles[containerItemID] = {
     allArmorTypes = true, -- only when one token can produce every armor type
+    unsupportedItemContexts = { [itemContext] = true },
     questIDs = {...},
     transmogSources = {
         all = {...},
@@ -130,6 +131,11 @@ containerCollectibles[containerItemID] = {
     }
 }
 ```
+
+`unsupportedItemContexts` prevents a verified pool for one item-link context
+from being applied to another context of the same container item. Such links
+remain visible. Azerite Armor Cache uses this for its Dungeon and Warfront
+contexts while the ordinary context uses the 73-source BfA zone-reward pool.
 
 Racing purses use account-wide hidden quest IDs. Benthic tokens and direct
 equipment caches use item-modified appearance source IDs for the active

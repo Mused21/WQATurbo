@@ -223,9 +223,11 @@ Upgrade calculations remain supplemental metadata.
 
 `Azerite Armor Cache` is the profile-wide master setting. Its adjacent
 `Azerite Armor Cache on this character` toggle is stored per character and is
-enabled by default. Disable the character toggle when that character's armor
-type is complete while leaving the master setting enabled for another armor
-type. Both settings must be enabled for the cache to match.
+enabled by default. Both settings must be enabled for the cache to match.
+Ordinary item `163857` cache links then stop matching automatically when their
+verified BfA zone-reward appearance pool is complete for the active character's
+armor type. Dungeon and Warfront item contexts fail open because they use
+different pools. The character toggle remains an explicit override.
 
 Tortollan Trader's Stock is not tracked as a cache because its ring and trinket
 outcomes do not provide collectible appearances.

@@ -1014,8 +1014,15 @@ local function ClassifyEquipmentCacheReward(self, questID, isEmissary, itemID, i
 		and self.db.profile.options.reward.gear.AzeriteArmorCache
 		and self.db.char.options.reward.gear.AzeriteArmorCache
 	then
+		local complete, completionRetry = self:IsContainerCollectibleComplete(itemID, itemLink)
+		if complete then
+			return false
+		end
+		retry = completionRetry or retry
+
 		-- Enabling the option tracks the cache itself.
-		-- Upgrade calculations below are only supplemental metadata.
+		-- A verified incomplete appearance pool keeps it relevant; upgrade
+		-- calculations below are only supplemental metadata.
 		self:AddRewardToQuest(questID, RewardType.Item, { itemLink = itemLink }, isEmissary)
 		local itemLevel = GetDetailedItemLevelInfo(itemLink)
 		if not itemLevel then

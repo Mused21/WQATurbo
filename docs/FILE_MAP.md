@@ -44,7 +44,9 @@ No collection API calls, scanning or refresh scheduling.
 ### `Tracking/ContainerCompletion.lua`
 
 Evaluates fixed container pools through Blizzard quest and transmog collection
-APIs. Unknown containers and unavailable collection data remain visible.
+APIs, including context-safe ordinary Azerite cache completion. Unknown
+containers, unsupported item contexts and unavailable collection data remain
+visible.
 
 ### `WQATurbo.lua`
 
@@ -283,9 +285,10 @@ rotation anchor. Loaded before all runtime and Settings consumers. Preserves
 
 ### `Data/ContainerCollectibles.lua`
 
-Fixed collectible pools for racing purses, Benthic armor tokens and verified
-equipment caches. Stores account-wide manuscript quest IDs and item-modified
-appearance source IDs; it contains no collection API calls.
+Fixed collectible pools for racing purses, Benthic armor tokens, ordinary
+Azerite Armor Cache and verified equipment caches. Stores account-wide
+manuscript quest IDs, item-context exclusions and item-modified appearance
+source IDs; it contains no collection API calls.
 
 ## Criterias
 

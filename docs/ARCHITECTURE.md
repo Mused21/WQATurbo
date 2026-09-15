@@ -182,15 +182,18 @@ keep final per-quest eligibility cheap.
 
 ### `Data/ContainerCollectibles.lua`
 
-Owns fixed collectible outcome data for racing purses, Benthic armor tokens and
-verified equipment caches such as Zandalari Empire Equipment Cache. It is
-loaded before `Tracking/ContainerCompletion.lua` and the reward classifiers.
+Owns fixed collectible outcome data for racing purses, Benthic armor tokens,
+ordinary Azerite Armor Cache and verified equipment caches such as Zandalari
+Empire Equipment Cache. It is loaded before
+`Tracking/ContainerCompletion.lua` and the reward classifiers.
 
 ### `Tracking/ContainerCompletion.lua`
 
 Resolves fixed-pool container completion with Blizzard's account quest and
-transmog appearance APIs. It fails open when data is absent so the classifier
-cannot hide a reward based on an incomplete lookup.
+transmog appearance APIs. It also rejects item-link contexts that do not use a
+container's registered pool. It fails open when data is absent or a context is
+unsupported so the classifier cannot hide a reward from an incomplete or
+inapplicable lookup.
 
 ### `Tracking/Achievements.lua`
 

@@ -263,7 +263,8 @@ That was misleading, especially on modern characters doing old content.
 
 For 1.1.0:
 
-- enabling Azerite Armor Cache tracks the cache itself;
+- enabling Azerite Armor Cache tracks the cache itself while its verified
+  current-armor appearance pool is incomplete;
 - its per-character override can exclude characters whose armor type is complete;
 - enabling recognized Armor/Weapon cache categories tracks the cache itself;
 - legacy upgrade calculation remains supplemental display metadata.
@@ -326,9 +327,12 @@ Reach Racer's Purse does not hide Dragon Racer's Purse, Cavern Racer's Purse or
 Dream Racer's Purse. Collection state comes from the account-wide hidden quest
 flag recorded when each customization is learned.
 
-Azerite Armor Cache remains category tracked because its possible gear varies
-with the reward link's modifier, faction, zone and character. It has a
-per-character override instead of an unsafe combined completion pool.
+Ordinary Azerite Armor Cache links use the verified 73-source head, shoulder
+and chest pool from the six Battle for Azeroth leveling zones. Completion is
+checked only for the active character's armor type through Blizzard's transmog
+APIs. Dungeon and Warfront item contexts resolve different pools and remain
+visible rather than being hidden from the ordinary pool. The per-character
+override remains available for explicit character control.
 
 ## 15. Gold
 

@@ -1,10 +1,10 @@
 # WQA Turbo Developer Documentation
 
-> **Documentation baseline:** WQA Turbo **1.3.0** / `master`
+> **Documentation baseline:** WQA Turbo **1.4.0** / `master`
 >
-> **Behavioral baseline:** released WQA Turbo 1.3.0 behavior
+> **Behavioral baseline:** released WQA Turbo 1.4.0 behavior
 >
-> **Last major documentation refresh:** 2026-09-14
+> **Last major documentation refresh:** 2026-09-15
 
 This directory is the canonical architectural and functional reference for WQA Turbo.
 
@@ -107,10 +107,10 @@ When debugging or extending the addon:
 
 ## Current release direction
 
-Version **1.2.0** is released. Its completed refactor and verification history
-remain in [VERSION_1.2.0.md](VERSION_1.2.0.md). Current **1.3.0** work combines
-the tested hardening with maintainability, performance, feature and data work. See [ROADMAP.md](ROADMAP.md) for implementation and
-in-game verification status.
+Version **1.4.0** is released. The completed 1.2.0 refactor and verification
+history remain in [VERSION_1.2.0.md](VERSION_1.2.0.md). Current **1.4.1** work
+contains post-release correctness fixes. See [ROADMAP.md](ROADMAP.md) for
+implementation and in-game verification status.
 
 The preserved **1.1.0** behavior includes:
 
@@ -120,7 +120,8 @@ The preserved **1.1.0** behavior includes:
   when their appearance pool for the active character's armor type is complete.
 - Dragonflight racing purses hide independently after their own manuscript
   pools are complete.
-- Azerite Armor Cache uses a profile-wide master toggle and a per-character
-  override; generic equipment caches remain independent of obsolete upgrade value.
+- Azerite Armor Cache uses a profile-wide master toggle, a per-character
+  override and a verified current-armor appearance pool; generic equipment
+  caches remain independent of obsolete upgrade value.
 
 See [VERSION_1.1.0.md](VERSION_1.1.0.md).
