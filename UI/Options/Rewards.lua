@@ -14,8 +14,8 @@ local function CreateHideMaxedReputationsOption()
 	return {
 		order = 1,
 		type = "toggle",
-		name = "Hide Exalted / max Renown reputations",
-		desc = "Hide finished reputations from these lists and ignore them when matching reputation rewards. This includes classic Exalted reputations and Major Factions at maximum Renown.",
+		name = L["Hide Exalted / max Renown reputations"],
+		desc = L["Hide finished reputations from these lists and ignore them when matching reputation rewards. This includes classic Exalted reputations and Major Factions at maximum Renown."],
 		width = "full",
 		get = function()
 			return WQA.db.profile.options.hideExaltedReputations
@@ -388,7 +388,7 @@ function WQA:PopulateRewardOptions()
 					rewardArgs.reputation = {
 						order = 30,
 						name = L["Reputation"],
-						desc = "Track World Quests that award reputation with the selected factions.",
+						desc = L["Track World Quests that award reputation with the selected factions."],
 						type = "group",
 						args = {
 							hideMaxed = CreateHideMaxedReputationsOption()
@@ -427,13 +427,13 @@ function WQA:PopulateRewardOptions()
 				if i == 10 then
 					rewardArgs.containers = {
 						order = 35,
-						name = "Containers",
+						name = L["Containers"],
 						type = "group",
 						args = {
 							racingRewardContainers = {
 								type = "toggle",
-								name = "Racing reward containers",
-								desc = "Track Dragonflight racing World Quests that reward Dragon Racer's Purse, Reach Racer's Purse, Cavern Racer's Purse, or Dream Racer's Purse. A purse is hidden after all of its possible Drakewatcher's Manuscripts are collected.",
+								name = L["Racing reward containers"],
+								desc = L["Track Dragonflight racing World Quests that reward Dragon Racer's Purse, Reach Racer's Purse, Cavern Racer's Purse, or Dream Racer's Purse. A purse is hidden after all of its possible Drakewatcher's Manuscripts are collected."],
 								width = "full",
 								get = function()
 									return WQA.db.profile.options.reward[10].racingRewardContainers
@@ -501,10 +501,10 @@ function WQA:PopulateRewardOptions()
 				}
 
 				for _, tradeskillLineIndex in pairs({ GetProfessions() }) do
-					local professionName, _, _, _, _, _, tradeskillLineID = GetProfessionInfo(tradeskillLineIndex)
-					if tradeskillLineID then
-						local capturedTradeskillLineID = tradeskillLineID
-						rewardArgs.profession.args[capturedTradeskillLineID .. "Header"] = {
+				local professionName, _, _, _, _, _, tradeskillLineID = GetProfessionInfo(tradeskillLineIndex)
+				if tradeskillLineID then
+					local capturedTradeskillLineID = tradeskillLineID
+					rewardArgs.profession.args[capturedTradeskillLineID .. "Header"] = {
 							type = "header",
 							name = professionName,
 							order = newOrder()

@@ -299,10 +299,10 @@ end
 
 local function NewCustomID(group, value)
 	local id = CustomID(value)
-	if not id then return nil, "Enter a positive integer ID." end
+	if not id then return nil, L["Enter a positive integer ID."] end
 	local entries = WQA.db.global.custom and WQA.db.global.custom[group]
 	if entries and (entries[id] ~= nil or entries[tostring(id)] ~= nil) then
-		return nil, "This ID already exists. Edit the existing entry."
+		return nil, L["This ID already exists. Edit the existing entry."]
 	end
 	return id
 end
@@ -311,7 +311,7 @@ function WQA:CreateCustomQuest()
 	local id, err = NewCustomID("worldQuest", self.data.custom.wqID)
 	if not id then return CustomError(err) end
 	local valid, mapID = CustomMap(self.data.custom.mapID, self.data.custom.questType)
-	if not valid then return CustomError("Enter a valid map ID; Quest Pin requires a map.") end
+	if not valid then return CustomError(L["Enter a valid map ID; Quest Pin requires a map."]) end
 	if not self.db.global.custom then
 		self.db.global.custom = {}
 	end
@@ -365,7 +365,7 @@ function WQA:UpdateCustomQuests()
 			set = function(info, val)
 				local entry = self.db.global.custom.worldQuest[id]
 				local valid, mapID = CustomMap(entry.mapID, val)
-				if not valid then return CustomError("Enter a valid map ID before selecting Quest Pin.") end
+				if not valid then return CustomError(L["Enter a valid map ID before selecting Quest Pin."]) end
 				entry.questType = val
 				entry.mapID = mapID
 				self:ScheduleOptionsRefresh()
@@ -383,7 +383,7 @@ function WQA:UpdateCustomQuests()
 			set = function(info, val)
 				local entry = self.db.global.custom.worldQuest[id]
 				local valid, mapID = CustomMap(val, entry.questType)
-				if not valid then return CustomError("Enter a valid map ID; Quest Pin requires a map.") end
+				if not valid then return CustomError(L["Enter a valid map ID; Quest Pin requires a map."]) end
 				entry.mapID = mapID
 				self:ScheduleOptionsRefresh()
 			end,
@@ -512,7 +512,7 @@ function WQA:CreateCustomMission()
 	if not id then return CustomError(err) end
 	local rewardID = CustomID(self.data.custom.mission.rewardID)
 	if not CustomBlank(self.data.custom.mission.rewardID) and not rewardID then
-		return CustomError("Enter a positive integer reward ID, or leave it blank.")
+		return CustomError(L["Enter a positive integer reward ID, or leave it blank."])
 	end
 	if not self.db.global.custom then
 		self.db.global.custom = {}
@@ -559,7 +559,7 @@ function WQA:UpdateCustomMissions()
 			set = function(info, val)
 				local rewardID = CustomID(val)
 				if not CustomBlank(val) and not rewardID then
-					return CustomError("Enter a positive integer reward ID, or leave it blank.")
+					return CustomError(L["Enter a positive integer reward ID, or leave it blank."])
 				end
 				self.db.global.custom.mission[id].rewardID = rewardID
 				self:ScheduleOptionsRefresh()
@@ -572,7 +572,11 @@ function WQA:UpdateCustomMissions()
 			name = L["Reward type"],
 			order = newOrder(),
 			type = "select",
-			values = { item = "Item", achievement = "Achievement", none = "none" },
+			values = {
+				item = L["Item"],
+				achievement = L["Achievement"],
+				none = L["none"]
+			},
 			width = .6,
 			set = function(info, val)
 				self.db.global.custom.mission[id].rewardType = val

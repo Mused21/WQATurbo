@@ -147,6 +147,13 @@ FORBIDDEN_REPOSITORY_SUFFIXES = (
 CRITERIA_RE = re.compile(r'\bcriteriaType\s*=\s*"([^"]+)"')
 FACTION_RE = re.compile(r'\bfaction\s*=\s*"([^"]+)"')
 LOCALE_KEY_RE = re.compile(r'L\["([^"]+)"\]')
+LOCALE_ASSIGNMENT_RE = re.compile(
+    r'^\s*L\["([^"]+)"\]\s*=\s*"((?:\\.|[^"])*)"\s*$',
+    re.MULTILINE,
+)
+LUA_FORMAT_TOKEN_RE = re.compile(
+    r'%(?!%)(?:\d+\$)?[-+ #0]*\d*(?:\.\d+)?[cdeEfgGiouXxqs]'
+)
 
 CONSOLIDATED_RUNTIME_METHOD_OWNERS = {
     "AddCustom": "Tracking/Custom.lua",
@@ -461,6 +468,20 @@ def validate_locale_keys(validation: Validation) -> None:
         validation.error(
             f"Locales.lua overrides undeclared base key '{key}'."
         )
+
+    base_values = dict(LOCALE_ASSIGNMENT_RE.findall(base_text))
+    override_text = locale_text[len(base_text):]
+    for key, value in LOCALE_ASSIGNMENT_RE.findall(override_text):
+        base_value = base_values.get(key)
+        if base_value is None:
+            continue
+        expected = LUA_FORMAT_TOKEN_RE.findall(base_value)
+        actual = LUA_FORMAT_TOKEN_RE.findall(value)
+        if actual != expected:
+            validation.error(
+                f"Locales.lua override '{key}' must preserve format tokens "
+                f"{expected}; found {actual}."
+            )
 
     used: dict[str, set[str]] = {}
     for path in ROOT.rglob("*.lua"):

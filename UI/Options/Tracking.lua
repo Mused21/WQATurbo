@@ -16,7 +16,7 @@ local TRACKING_GROUP_ORDER = {
 }
 
 local BULK_TRACKING_VALUES = {
-	mixed = "Mixed / choose setting",
+	mixed = L["Mixed / choose setting"],
 	[TrackingMode.Disabled] = L["tracking_disabled"],
 	[TrackingMode.Default] = L["tracking_default"],
 	[TrackingMode.Always] = L["tracking_always"]
@@ -43,8 +43,8 @@ function WQA:PopulateTrackingOptions()
 			expansionOptions.args.bulkTracking = {
 				order = 1,
 				type = "select",
-				name = "Set all tracking in " .. expansionName,
-				desc = "Applies Don't track, Default, or Always track to every achievement, mount, pet, and toy in this expansion.",
+				name = string.format(L["Set all tracking in %s"], expansionName),
+				desc = L["Applies Don't track, Default, or Always track to every achievement, mount, pet, and toy in this expansion."],
 				values = BULK_TRACKING_VALUES,
 				width = "double",
 				get = function()
@@ -61,7 +61,7 @@ function WQA:PopulateTrackingOptions()
 			expansionOptions.args.bulkHint = {
 				order = 2,
 				type = "description",
-				name = "Choose a category from the tree for individual settings, or use the selector above to update the whole expansion."
+				name = L["Choose a category from the tree for individual settings, or use the selector above to update the whole expansion."]
 			}
 
 			for _, groupName in ipairs(TRACKING_GROUPS) do
@@ -121,7 +121,7 @@ end
 function WQA:GetTrackedObjectDisplayName(groupName, object)
 	local id = self:GetTrackedObjectID(object)
 	if not id then
-		return object.name or "Unknown"
+		return object.name or L["Unknown"]
 	end
 
 	if groupName == "achievements" and object.id then
@@ -334,8 +334,8 @@ function WQA:CreateGroup(options, data, groupName)
 	local args = options[groupName].args
 	args.bulkTracking = {
 		type = "select",
-		name = "Set all " .. string.lower(L[groupName] or groupName),
-		desc = "Change every entry in this category at once. Character-specific tracking modes remain available on individual entries.",
+		name = string.format(L["Set all %s"], string.lower(L[groupName] or groupName)),
+		desc = L["Change every entry in this category at once. Character-specific tracking modes remain available on individual entries."],
 		values = BULK_TRACKING_VALUES,
 		width = "double",
 		order = 1,
@@ -402,7 +402,7 @@ end
 function WQA:CreateTrackingSearch(options)
 	local searchGroup = {
 		order = 1,
-		name = "Search",
+		name = L["Search"],
 		type = "group",
 		args = {}
 	}
@@ -411,8 +411,8 @@ function WQA:CreateTrackingSearch(options)
 	searchGroup.args.query = {
 		order = 1,
 		type = "input",
-		name = "Search achievements, mounts, pets, and toys",
-		desc = "Searches all supported expansions by collectible name, primary ID, source item ID, mapped quest ID, tracking quest ID, or nested criterion. The search text is temporary and is not saved to your profile.",
+		name = L["Search achievements, mounts, pets, and toys"],
+		desc = L["Searches all supported expansions by collectible name, primary ID, source item ID, mapped quest ID, tracking quest ID, or nested criterion. The search text is temporary and is not saved to your profile."],
 		width = "full",
 		get = function()
 			return WQA.optionsSearchText or ""
@@ -430,7 +430,7 @@ function WQA:CreateTrackingSearch(options)
 		searchGroup.args.help = {
 			order = 2,
 			type = "description",
-			name = "Search by collectible name or any related achievement, item, quest, tracking, or criterion ID."
+			name = L["Search by collectible name or any related achievement, item, quest, tracking, or criterion ID."]
 		}
 		return
 	end
@@ -485,14 +485,14 @@ function WQA:CreateTrackingSearch(options)
 	searchGroup.args.resultCount = {
 		order = 3,
 		type = "description",
-		name = string.format("%d result%s", resultCount, resultCount == 1 and "" or "s")
+		name = string.format(L["%d result(s)"], resultCount)
 	}
 
 	if resultCount == 0 then
 		searchGroup.args.noResults = {
 			order = 4,
 			type = "description",
-			name = "No matching tracked collectibles were found."
+			name = L["No matching tracked collectibles were found."]
 		}
 	end
 end

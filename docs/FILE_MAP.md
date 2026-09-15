@@ -213,9 +213,11 @@ fail-open Val/Naigtal availability resolution used by scanning and publication.
 
 ### `Locales.lua`
 
-User-visible localization strings.
+User-visible localization strings, including the reorganized Settings UI and
+Traditional Chinese support.
 
-When adding/changing a UI label that uses locale lookup, update this file.
+When adding or changing a localized UI label, declare its English fallback in
+this file. Locale overrides must preserve any `string.format` placeholders.
 
 ### `Performance.lua`
 

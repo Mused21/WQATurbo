@@ -211,13 +211,16 @@ moved out of 1.3.0 and retain their previous priority.
 | **Done** | P2 | Explain why a task matched | Popup task-name hover now appends stable categories derived only from the cached reward model, with no new Blizzard API calls. Focused reason-format coverage and the full local gate pass succeed; the developer reported the bundled in-game check working on 2026-09-15. |
 | Research | P2 | Remaining container completion rules | No additional finite loot pools have enough authoritative evidence for safe completion rules. |
 | **Done** | P3 | Localization coverage | The validator now rejects missing English fallbacks, duplicate base declarations and overrides of undeclared keys. One ineffective duplicate base assignment was removed; the full local gate passes. |
+| **In progress** | P2 | Community Settings localization | PR #14 routes the reorganized Settings labels and descriptions through locale keys and adds Traditional Chinese translations. Its original and maintainer-corrected branches passed local and GitHub validation; the integrated 1.4.0 package awaits the bundled in-game smoke test. |
 
 The current local gate passes project validation with zero errors or warnings,
 all 12 Lua regression suites, Lua 5.1 syntax checks for 54 first-party files and
 `git diff --check`. The complete working-tree diff has been reviewed. The
 developer reported the bundled source checkout working in game on 2026-09-15.
 Dependency pinning remains **In progress** until the CI-generated package loads
-successfully with its packaged libraries.
+successfully with its packaged libraries. The integrated community localization
+increment remains **In progress** until the same package passes its Settings
+smoke test.
 
 Focused in-game checks for Val/Naigtal active-zone filtering:
 

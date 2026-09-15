@@ -12,6 +12,7 @@
 - Search tracked collectibles by source item, mapped quest, tracking quest and nested criterion names or IDs.
 - Explain why each task matched when its name is hovered in the popup.
 - Validate that every localized UI key has one English fallback and that locale overrides cannot introduce undeclared keys.
+- Make the reorganized Settings interface localizable and add Traditional Chinese translations.
 
 ## 1.3.0
 

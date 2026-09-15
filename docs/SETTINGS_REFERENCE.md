@@ -22,6 +22,11 @@ while building the UI; loading Settings is not required to initialize runtime me
 
 Most setters call a debounced refresh scheduler so that configuration changes become visible without requiring `/reload`.
 
+Settings page names, labels, descriptions, validation messages, bulk controls
+and search output use the shared `WQA.L` locale table. English remains the
+fallback for untranslated keys. The 1.4.0 localization expansion adds
+Traditional Chinese and extends translated coverage for the reorganized UI.
+
 ## 2. Tracking
 
 The Tracking tree is organized by expansion and collectible category.
