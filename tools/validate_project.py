@@ -81,6 +81,7 @@ REQUIRED_PROJECT_FILES = (
     "Criterias/CriteriaType.lua",
     "Criterias/AreaPoi.lua",
     "tools/test_reward_classifier.lua",
+    "tools/test_locales.lua",
     "tools/test_match_reason.lua",
     "tools/test_utilities.lua",
     "tools/test_reward_scanner.lua",

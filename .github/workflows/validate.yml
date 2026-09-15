@@ -42,6 +42,9 @@ jobs:
       - name: Test task match reasons
         run: lua5.1 tools/test_match_reason.lua
 
+      - name: Test locale coverage
+        run: lua5.1 tools/test_locales.lua
+
       - name: Test reward scanner publication
         run: lua5.1 tools/test_reward_scanner.lua
 

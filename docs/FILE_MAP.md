@@ -214,7 +214,7 @@ fail-open Val/Naigtal availability resolution used by scanning and publication.
 ### `Locales.lua`
 
 User-visible localization strings, including the reorganized Settings UI and
-Traditional Chinese support.
+Simplified and Traditional Chinese task-match explanations.
 
 When adding or changing a localized UI label, declare its English fallback in
 this file. Locale overrides must preserve any `string.format` placeholders.
@@ -386,6 +386,8 @@ Development tooling/scripts. Excluded from release package.
 availability with stubbed Blizzard APIs and runs under Lua 5.1 in the validation
 workflow. `test_reward_classifier.lua`
 checks representative reward categories, link fallbacks and retry propagation.
+`test_locales.lua` ensures Simplified and Traditional Chinese override every
+task match-reason label and retain the formatted explanation argument.
 `test_reward_scanner.lua` checks coalesced publication after initial reward
 inspection and completed item retries, including silent Settings publication
 and inactive rotating-map exclusion.

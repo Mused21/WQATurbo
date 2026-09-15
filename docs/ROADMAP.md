@@ -6,9 +6,9 @@
 >
 > **Current milestone:** 1.4.0 feature and maintenance work
 >
-> **Current item:** CI package verification (In progress)
+> **Current item:** Chinese match-reason locale verification (In progress)
 >
-> **Last reviewed:** 2026-09-14
+> **Last reviewed:** 2026-09-15
 
 This is the active work queue for WQA Turbo. Read it before planning or
 starting follow-up work. Update the current item and status in the same change
@@ -202,7 +202,7 @@ moved out of 1.3.0 and retain their previous priority.
 | **Done** | P1 | Reduce the compatibility core | Static toy registration now shares the collectible owner; custom task registration, Quest Pin/Flag availability and emissary scanning have focused owners with regression coverage. The full local gate passes and the developer reported the bundled in-game check working on 2026-09-15. |
 | **Done** | P2 | Utilities and options tests | Existing option-tree coverage protects TOC loading, organization, search, scoped setters and shared refresh scheduling. A dedicated utility-routing suite covers task-type dispatch, zone/expansion resolution, time/link routing and metadata fallback; all focused suites and the full local gate pass. |
 | **Done** | P2 | Remove obsolete compatibility debris | The audit retained active migration, command, display-state, fallback-classifier and enum compatibility paths. It removed only the unreferenced pre-options-split ordering counter, legacy `link()` helper and aliases left unused by the module moves; the full local gate passes. |
-| **In progress** | P2 | Pin packaged dependency revisions | Every external now uses the packager's structured URL/tag form with an exact stable release tag, and the validator rejects missing or moving tags. The generated CI package and packaged in-game load still require verification. |
+| **Done** | P2 | Pin packaged dependency revisions | Every external uses the packager's structured URL/tag form with an exact stable release tag, and the validator rejects missing or moving tags. The generated CI package passed validation and the developer reported the packaged in-game load working on 2026-09-15. |
 | Queued | P2 | Add a consistent Lua lint/format check | The audit found no configured local formatter or linter and mixed indentation across the existing tree. Establishing a WoW-global policy and formatting baseline remains an isolated change so this bundle does not rewrite unrelated files or add an untested CI-only gate. |
 | Research | P2 | Precompute task and expansion lookup indexes | `/wqat perf` has not shown a release-relevant saving that justifies new invalidation paths. |
 | Research | P2 | Preserve useful dynamic cache results during refresh | Stale-while-revalidate semantics can expose invalid cross-profile data unless designed and tested separately. |
@@ -210,17 +210,18 @@ moved out of 1.3.0 and retain their previous priority.
 | **Done** | P2 | Expand settings search coverage | The existing static traversal now indexes related source items, mapped quests, tracking quests and nested criteria without adding another data pass. Focused option-tree assertions and the full local gate pass succeed; the developer reported the bundled in-game check working on 2026-09-15. |
 | **Done** | P2 | Explain why a task matched | Popup task-name hover now appends stable categories derived only from the cached reward model, with no new Blizzard API calls. Focused reason-format coverage and the full local gate pass succeed; the developer reported the bundled in-game check working on 2026-09-15. |
 | Research | P2 | Remaining container completion rules | No additional finite loot pools have enough authoritative evidence for safe completion rules. |
-| **Done** | P3 | Localization coverage | The validator now rejects missing English fallbacks, duplicate base declarations and overrides of undeclared keys. One ineffective duplicate base assignment was removed; the full local gate passes. |
-| **In progress** | P2 | Community Settings localization | PR #14 routes the reorganized Settings labels and descriptions through locale keys and adds Traditional Chinese translations. Its original and maintainer-corrected branches passed local and GitHub validation; the integrated 1.4.0 package awaits the bundled in-game smoke test. |
+| **Done** | P3 | Localization coverage | The validator rejects missing English fallbacks, duplicate base declarations, overrides of undeclared keys and translated format-placeholder mismatches. One ineffective duplicate base assignment was removed; the full local gate passes. |
+| **Done** | P2 | Community Settings localization | PR #14 routes the reorganized Settings labels and descriptions through locale keys and adds Traditional Chinese translations. Its original, maintainer-corrected and integrated branches passed local and GitHub validation; the developer reported the integrated package working in game on 2026-09-15. |
+| **In progress** | P3 | Chinese match-reason translations | The PR #15 follow-up contribution translates every cached task match-reason category for Simplified and Traditional Chinese and preserves the required `%s` argument. It awaits the refreshed CI package and in-game tooltip smoke test. |
 
 The current local gate passes project validation with zero errors or warnings,
-all 12 Lua regression suites, Lua 5.1 syntax checks for 54 first-party files and
+all 13 Lua regression suites, Lua 5.1 syntax checks for 55 first-party files and
 `git diff --check`. The complete working-tree diff has been reviewed. The
 developer reported the bundled source checkout working in game on 2026-09-15.
-Dependency pinning remains **In progress** until the CI-generated package loads
-successfully with its packaged libraries. The integrated community localization
-increment remains **In progress** until the same package passes its Settings
-smoke test.
+The developer reported the CI-generated package, pinned libraries and community
+Settings localization working in game on 2026-09-15. The follow-up Chinese
+match-reason translations remain **In progress** until the refreshed package
+passes its tooltip smoke test.
 
 Focused in-game checks for Val/Naigtal active-zone filtering:
 
@@ -266,6 +267,9 @@ Focused in-game checks for the current compatibility-core increments:
   transmog reward, currency/reputation reward and a task matching more than one
   category. Confirm the added **Matched because** line is accurate and does not
   change the normal Blizzard tooltip details.
+- On a Simplified or Traditional Chinese client, hover the same popup entries
+  and confirm the **Matched because** label and every displayed reason use the
+  selected Chinese locale rather than the English fallback.
 - Download the CI-generated package, install it over a clean addon folder and
   reload. Confirm there are no missing-library errors and that Settings, the
   minimap icon, popup, profiles and the commands above load normally.
