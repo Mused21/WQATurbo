@@ -6,7 +6,7 @@
 >
 > **Current milestone:** 1.4.0 feature and maintenance work
 >
-> **Current item:** Chinese match-reason locale verification (In progress)
+> **Current item:** 1.4.0 release PR (In progress)
 >
 > **Last reviewed:** 2026-09-15
 
@@ -212,16 +212,15 @@ moved out of 1.3.0 and retain their previous priority.
 | Research | P2 | Remaining container completion rules | No additional finite loot pools have enough authoritative evidence for safe completion rules. |
 | **Done** | P3 | Localization coverage | The validator rejects missing English fallbacks, duplicate base declarations, overrides of undeclared keys and translated format-placeholder mismatches. One ineffective duplicate base assignment was removed; the full local gate passes. |
 | **Done** | P2 | Community Settings localization | PR #14 routes the reorganized Settings labels and descriptions through locale keys and adds Traditional Chinese translations. Its original, maintainer-corrected and integrated branches passed local and GitHub validation; the developer reported the integrated package working in game on 2026-09-15. |
-| **In progress** | P3 | Chinese match-reason translations | The PR #15 follow-up contribution translates every cached task match-reason category for Simplified and Traditional Chinese and preserves the required `%s` argument. It awaits the refreshed CI package and in-game tooltip smoke test. |
+| **Done** | P3 | Chinese match-reason translations | The PR #15 follow-up contribution translates every cached task match-reason category for Simplified and Traditional Chinese and preserves the required `%s` argument. The refreshed CI package passed its in-game tooltip smoke test and the developer approved it for release on 2026-09-15. |
 
 The current local gate passes project validation with zero errors or warnings,
 all 13 Lua regression suites, Lua 5.1 syntax checks for 55 first-party files and
 `git diff --check`. The complete working-tree diff has been reviewed. The
 developer reported the bundled source checkout working in game on 2026-09-15.
-The developer reported the CI-generated package, pinned libraries and community
-Settings localization working in game on 2026-09-15. The follow-up Chinese
-match-reason translations remain **In progress** until the refreshed package
-passes its tooltip smoke test.
+The developer reported the CI-generated package, pinned libraries, community
+Settings localization and follow-up Chinese match-reason translations working
+in game on 2026-09-15, and approved PR #15 for a `release:minor` release.
 
 Focused in-game checks for Val/Naigtal active-zone filtering:
 
