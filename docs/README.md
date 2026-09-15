@@ -1,8 +1,8 @@
 # WQA Turbo Developer Documentation
 
-> **Documentation baseline:** WQA Turbo **1.4.0** / `master`
+> **Documentation baseline:** WQA Turbo **1.4.1** / `master`
 >
-> **Behavioral baseline:** released WQA Turbo 1.4.0 behavior
+> **Behavioral baseline:** released WQA Turbo 1.4.1 behavior
 >
 > **Last major documentation refresh:** 2026-09-15
 
@@ -107,10 +107,9 @@ When debugging or extending the addon:
 
 ## Current release direction
 
-Version **1.4.0** is released. The completed 1.2.0 refactor and verification
-history remain in [VERSION_1.2.0.md](VERSION_1.2.0.md). Current **1.4.1** work
-contains post-release correctness fixes. See [ROADMAP.md](ROADMAP.md) for
-implementation and in-game verification status.
+Version **1.4.1** is released. The completed 1.2.0 refactor and verification
+history remain in [VERSION_1.2.0.md](VERSION_1.2.0.md). See
+[ROADMAP.md](ROADMAP.md) for follow-up work and research status.
 
 The preserved **1.1.0** behavior includes:
 

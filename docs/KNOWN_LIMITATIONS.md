@@ -129,5 +129,5 @@ are not registered, so WQA Turbo deliberately keeps those cache links visible.
 
 ## 12. Current docs baseline
 
-These docs use released 1.4.0 behavior on `master` as the baseline. Historical
+These docs use released 1.4.1 behavior on `master` as the baseline. Historical
 1.2.0 refactor details remain in `VERSION_1.2.0.md`.

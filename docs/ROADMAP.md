@@ -2,11 +2,11 @@
 
 > **Current release target:** 1.4.1
 >
-> **Released baseline:** 1.4.0
+> **Released baseline:** 1.4.1
 >
-> **Current milestone:** 1.4.1 post-release correctness
+> **Current milestone:** 1.4.1 released
 >
-> **Current item:** Azerite Armor Cache completion (In progress)
+> **Current item:** 1.4.1 release (Done)
 >
 > **Last reviewed:** 2026-09-15
 
@@ -27,7 +27,10 @@ historical records and must not be reused as active checklists.
 
 | Status | Priority | Work item | Completion criteria |
 |---|---:|---|---|
-| **In progress** | P0 | Azerite Armor Cache completion | Ordinary item `163857` cache rewards use the verified 73-source BfA zone pool, scoped to the active character's armor type; a complete pool hides the cache, another armor type cannot keep it visible, unsupported item contexts and unavailable Blizzard collection data fail open, and focused automated and in-game checks pass. |
+| **Done** | P0 | Azerite Armor Cache completion | Ordinary item `163857` cache rewards use the verified 73-source BfA zone pool, scoped to the active character's armor type; a complete pool hides the cache, another armor type cannot keep it visible, and unsupported item contexts and unavailable Blizzard collection data fail open. Focused automated checks and the CI package passed; the developer reported the in-game result working on 2026-09-15. |
+
+The developer approved the tested PR #16 package for the 1.4.1 patch release on
+2026-09-15.
 
 ## 1.3.0: completed correctness and runtime hardening
 

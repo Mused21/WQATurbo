@@ -29,9 +29,9 @@ update the appropriate documentation as part of the change.
 
 Current development target: WQA Turbo 1.4.1.
 
-1.4.0 functionality is the behavioral baseline.
+1.4.1 functionality is the behavioral baseline.
 
-1.4.0 is the released behavioral baseline. Continue 1.4.1 work from the
+1.4.1 is the released behavioral baseline. Continue follow-up work from the
 active roadmap and preserve existing behavior except for explicitly planned
 fixes and features.
 
