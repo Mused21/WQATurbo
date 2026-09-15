@@ -207,10 +207,14 @@ another purse.
 
 Once Step 8 consolidates a method, do not restore a compatibility copy earlier
 in the TOC. `Show()` is owned only by `Runtime/Display.lua`, and `OnEnable()`
-is owned only by `Runtime/Runtime.lua`. `AddMounts()` and `AddPets()` are owned
-only by `Tracking/CollectionCache.lua`, and `CheckWQ()` is owned only by
+is owned only by `Runtime/Runtime.lua`. `AddMounts()`, `AddPets()` and
+`AddToys()` are owned only by `Tracking/CollectionCache.lua`; `AddCustom()` is
+owned only by `Tracking/Custom.lua`; and `CheckWQ()` is owned only by
 `Runtime/TaskResolver.lua`. `Reward()` is owned only by
-`Scanning/RewardScanner.lua`. `CreateQuestList()` is owned only by
+`Scanning/RewardScanner.lua`. `EmissaryReward()` and `EmissaryIsActive()` are
+owned only by `Scanning/EmissaryScanner.lua`. `RefreshQuestPins()`,
+`isQuestPinActive()` and `IsQuestFlaggedCompleted()` are owned only by
+`Tracking/QuestAvailability.lua`. `CreateQuestList()` is owned only by
 `WQATurbo.lua`. The validator enforces this ownership.
 
 ### 32. Container completion fails open

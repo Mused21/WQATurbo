@@ -47,6 +47,15 @@ local RuntimeData = {
 		["LE_QUEST_TAG_TYPE_PROFESSION"] = Enum.QuestTagType.Profession,
 		["LE_QUEST_TAG_TYPE_DUNGEON"] = Enum.QuestTagType.Dungeon
 	},
+	ValNaigtalRotation = {
+		portalMapID = 2405,
+		valMapID = 2599,
+		naigtalMapID = 2600,
+		-- The first live Naigtal week ended at the June 23-25 regional
+		-- resets. Rounding those reset timestamps to Unix week 2947 gives
+		-- one region-independent parity anchor.
+		naigtalReferenceResetWeek = 2947
+	},
 	EmissaryQuestIDsByExpansion = {
 		[7] = {
 			42233, -- Highmountain Tribes

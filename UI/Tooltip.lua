@@ -319,6 +319,11 @@ function WQA:UpdateQTip(tasks)
                                 end
                             end
                         end
+                        local matchReason = WQA:GetTaskMatchReasonText(task)
+                        if matchReason then
+                            GameTooltip:AddLine(" ")
+                            GameTooltip:AddLine(matchReason, 0.35, 0.8, 1, true)
+                        end
                         GameTooltip:Show()
                     end
                 )

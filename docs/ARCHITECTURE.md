@@ -48,7 +48,10 @@ Database.lua
 WQATurbo.lua
 
 Tracking/CollectionCache.lua
+Tracking/Custom.lua
+Tracking/QuestAvailability.lua
 Scanning/RewardScanner.lua
+Scanning/EmissaryScanner.lua
 Runtime/Runtime.lua
 Runtime/Display.lua
 Runtime/TaskResolver.lua
@@ -163,11 +166,19 @@ Owns stable lookup metadata shared by runtime and Settings code:
 - currency IDs by expansion;
 - reputation faction IDs by expansion and player faction;
 - emissary quest IDs by expansion and player faction;
-- localized World Quest type labels mapped to Blizzard enum values.
+- localized World Quest type labels mapped to Blizzard enum values;
+- Val/Naigtal map IDs and the live weekly-rotation parity anchor.
 
 It loads before `Utilities.lua`, `WQATurbo.lua` and `UI/Options.lua` so none of
 those consumers depends on Settings initialization. `WQA.EmissaryQuestIDList`
 remains an alias to the canonical emissary table for compatibility.
+
+`Utilities.lua` owns `GetActiveValNaigtalMapID()` and
+`IsMapCurrentlyAvailable()`. They prefer the localized live portal Area POI
+on Voidstorm's map and use Blizzard's regional weekly-reset clock as fallback.
+If both signals are unavailable or invalid, availability fails open so
+uncertain World Quests remain eligible. The result is cached for 60 seconds to
+keep final per-quest eligibility cheap.
 
 ### `Data/ContainerCollectibles.lua`
 
@@ -224,20 +235,25 @@ Responsibilities include:
 - focused local classifiers for containers, gear upgrades, equipment caches,
   transmog, reputation items, recipes, known/custom items and legacy gear;
 - reputation item/currency mappings;
-- custom task helpers;
+- custom task draft defaults;
 - mission-table logic;
 - minimap data object;
 - miscellaneous utility behavior;
 - the sole `CreateQuestList()` implementation, including collection-cache
   invalidation at the start of each rebuild.
 
-`Tracking/CollectionCache.lua` provides the invalidation helper and owns the
-mount/pet snapshot implementation. Consolidated runtime methods have one
-source owner.
+`Tracking/Custom.lua` owns runtime registration for enabled user-defined World
+Quests and missions. `Tracking/CollectionCache.lua` provides the invalidation helper, owns the
+mount/pet snapshot implementation and registers static mount, pet and toy
+sources. Consolidated runtime methods have one source owner.
 
 `CheckReward()` owns item-link acquisition and retry aggregation. Its focused
 classifiers decide what the resolved reward means and publish through
 `AddRewardToQuest()`. They do not control scanner scheduling.
+
+`Rewards/MatchReason.lua` reads the finished reward model and produces stable,
+localized reason categories for popup task-name hover. It does not query
+Blizzard APIs or participate in classification.
 
 ### `Tracking/CollectionCache.lua`
 
@@ -249,7 +265,20 @@ Settings completion grouping reads the same ownership indexes, so constructing
 one row per tracked mount or pet does not rescan the corresponding journal.
 Mapped pet lookups cross-check an unowned journal row with the species count and
 cache that result for the current snapshot.
-The module is the sole owner of `AddMounts()` and `AddPets()`.
+The module is the sole owner of `AddMounts()`, `AddPets()` and `AddToys()`.
+Only mounts and pets require journal snapshots; toys use Blizzard's direct
+ownership query.
+
+### `Tracking/Custom.lua`
+
+Owns `AddCustom()` and registers enabled user-defined World Quests, Quest
+Flags, Quest Pins and missions during each `CreateQuestList()` rebuild.
+
+### `Tracking/QuestAvailability.lua`
+
+Owns Quest Pin map readiness, request throttling and Quest Flag completion
+checks. `Runtime/TaskResolver.lua` consumes its availability results without
+querying each configured pin separately.
 
 ### `Scanning/RewardScanner.lua`
 
@@ -259,10 +288,17 @@ Owns the optimized dynamic World Quest reward scan, including the sole
 Key design principles:
 
 - frame-budgeted initial scan;
+- exclude the inaccessible Val/Naigtal destination before map discovery;
 - per-quest pending state;
 - asynchronous reward data does not trigger a global rescan;
 - retry only unresolved quests;
 - progressively publish newly ready dynamic relevance.
+
+### `Scanning/EmissaryScanner.lua`
+
+Owns emissary discovery, reward readiness retries, timeout diagnostics and
+quest-log activity checks. A generation token prevents a superseded refresh
+from publishing stale emissary results.
 
 ### `Runtime/Runtime.lua`
 
@@ -276,7 +312,7 @@ It registers `GARRISON_MISSION_LIST_UPDATE` without loading
 Blizzard remains responsible for loading its mission-table frames when a
 player opens that UI.
 
-The unreleased 1.3.0 profile callback handles changed, copied and reset profiles.
+Since 1.3.0, the profile callback handles changed, copied and reset profiles.
 It detaches the exact old tooltip, clears watched sets, rebinds LibDBIcon to the
 current profile, and immediately rebuilds through `RefreshFromOptions(true)`.
 This explicit user action bypasses automatic combat deferral to prevent showing

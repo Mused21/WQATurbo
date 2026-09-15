@@ -69,7 +69,17 @@ A wall-clock frame budget protects UI responsiveness better than "N quests per f
 
 ### Initial scan
 
-The scanner walks enabled maps incrementally.
+The scanner walks enabled maps incrementally. For the weekly Val/Naigtal
+portal rotation, map construction excludes the inaccessible destination before
+calling `C_TaskQuest.GetQuestsOnMap()`. Other maps and user zone settings keep
+their existing behavior.
+
+`WQA:IsMapCurrentlyAvailable()` prefers the localized live portal Area POI and
+uses Blizzard's regional weekly-reset clock as fallback. It returns available
+for both maps if neither signal resolves, preventing uncertain API state from
+hiding tasks. The result is cached for 60 seconds. The same policy is applied
+again by final World Quest eligibility because achievement criteria can seed
+quests without the dynamic scanner.
 
 For each discovered quest it may:
 
@@ -169,7 +179,7 @@ readiness window to 30 seconds. Superseded callbacks are inert, while a later
 mission-list event can start a fresh bounded window for newly available data.
 Settings/profile generations keep their silent mode through readiness retries.
 
-In unreleased 1.3.0, `RefreshQuestPins()` in `WQATurbo.lua` indexes quest-line
+Since 1.3.0, `RefreshQuestPins()` in `Tracking/QuestAvailability.lua` indexes quest-line
 results once per map per readiness pass. A missing result marks that map pending
 and uses the same bounded TaskResolver timer; other ready maps still publish.
 Requests are throttled to at most one per 1.5 seconds per pending map during the

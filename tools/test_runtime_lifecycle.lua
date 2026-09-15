@@ -13,6 +13,12 @@ local loadedAddons = {}
 local taskResolverSchedules = 0
 local deferredRefreshes = 0
 local taskResolverRestartWindow
+local commandCalls = {}
+local function commandCall(name)
+	return function(_, ...)
+		commandCalls[#commandCalls + 1] = { name = name, ... }
+	end
+end
 
 local eventFrame = {
 	registered = {},
@@ -115,19 +121,33 @@ WQATurbo = {
 	ResumeDeferredRefresh = function()
 		deferredRefreshes = deferredRefreshes + 1
 	end,
-	ShowCached = noop,
-	Refresh = noop,
-	ShowWQAMigrationPrompt = noop,
-	PrintPerfSummary = noop,
-	ResetPerf = noop,
-	PrintRewardScannerStatus = noop,
-	CollectionCacheSlash = noop
+	ShowCached = commandCall("cached"),
+	Refresh = commandCall("refresh"),
+	ShowWQAMigrationPrompt = commandCall("import"),
+	PrintPerfSummary = commandCall("perf"),
+	ResetPerf = commandCall("reset"),
+	PrintRewardScannerStatus = commandCall("scan"),
+	PrintReadinessStatus = commandCall("readiness"),
+	CollectionCacheSlash = commandCall("cache")
 }
 
 local WQA = WQATurbo
 dofile("Runtime/Runtime.lua")
 
 assert(commands.wqat == "TurboSlash")
+
+for _, command in ipairs({
+	"", "   refresh", "new", "popup", "import", "perf", "reset", "scan",
+	"readiness", "cache"
+}) do
+	WQA:TurboSlash(command)
+end
+local commandNames = {}
+for _, call in ipairs(commandCalls) do commandNames[#commandNames + 1] = call.name end
+assert(table.concat(commandNames, ",") ==
+	"cached,refresh,refresh,cached,import,perf,reset,scan,readiness,readiness,cache")
+assert(commandCalls[2][1] == nil and commandCalls[3][1] == "new")
+assert(commandCalls[4][1] == "popup" and commandCalls[5][1] == true)
 
 WQA:OnEnable()
 

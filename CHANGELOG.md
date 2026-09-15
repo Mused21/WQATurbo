@@ -1,5 +1,18 @@
 # WQA Turbo Changelog
 
+## 1.4.0
+
+### Improved
+- Scan and display only the currently accessible Val or Naigtal World Quests for the weekly portal rotation.
+- Move static collectible and custom-task registration, quest availability and emissary scanning out of the compatibility core into focused modules with enforced single ownership.
+- Add focused utility-routing and custom runtime registration regression coverage.
+- Remove the unused pre-options-split ordering counter and unreferenced legacy reward-link helper.
+- Pin every packaged library external to an exact stable release tag.
+- Add a focused `/wqat readiness` command and accept leading whitespace in `/wqat` subcommands.
+- Search tracked collectibles by source item, mapped quest, tracking quest and nested criterion names or IDs.
+- Explain why each task matched when its name is hovered in the popup.
+- Validate that every localized UI key has one English fallback and that locale overrides cannot introduce undeclared keys.
+
 ## 1.3.0
 
 ### Improved

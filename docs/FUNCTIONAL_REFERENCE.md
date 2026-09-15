@@ -127,6 +127,14 @@ This is important because achievement/static mappings can identify a WQ before t
 
 A disabled zone must suppress a WQ regardless of why it is relevant.
 
+Val and Naigtal are also subject to their weekly portal availability. Even
+with both zone settings enabled, WQA Turbo scans and displays only the current
+destination. This availability check applies to dynamic rewards and
+achievement-backed World Quests. The localized live portal Area POI is the
+primary signal and the regional weekly-reset clock is the fallback. If neither
+signal or a quest's zone is available, the check fails open rather than hiding
+an uncertain task.
+
 ## 8. Transmog
 
 Settings:
@@ -393,6 +401,9 @@ The hover hint reflects this behavior.
 ## 19. Persistent popup
 
 Features:
+
+- task-name hover appends a localized explanation of the cached reward
+  categories that caused the task to match;
 
 - cached immediate open;
 - scrollable;

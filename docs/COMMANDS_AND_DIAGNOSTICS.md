@@ -58,6 +58,12 @@ Useful for:
 - reputation checks/matches;
 - progressive publishes.
 
+### `/wqat readiness`
+
+Show only current pending IDs and the most recent task/emissary timeout
+snapshots. This is the focused form of the readiness section also printed by
+`/wqat scan` and `/wqat perf`.
+
 ### `/wqat cache`
 
 Show collection-cache diagnostics.
@@ -75,6 +81,11 @@ Import WQAchievements settings through migration flow.
 Retained as a compatibility alias/path.
 
 Do not remove casually because existing users/macros may still use it.
+
+### Direct diagnostic aliases
+
+`/wqaperf`, `/wqascan` and `/wqacache` remain available as direct aliases for
+their corresponding diagnostic output.
 
 ## Diagnostic strategy by bug type
 

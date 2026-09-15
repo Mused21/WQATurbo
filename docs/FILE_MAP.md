@@ -58,16 +58,17 @@ Contains important shared logic such as:
 - reputation item/currency lookup;
 - mission logic;
 - minimap data object;
-- custom tracking helpers;
+- custom tracking draft defaults;
 - the canonical `CreateQuestList()` rebuild and its collection-cache
   invalidation call.
 
 ### `Tracking/CollectionCache.lua`
 
 Optimized mount/pet collection snapshot and ownership lookup logic shared by
-runtime registration and Settings completion grouping.
-Owns the canonical `AddMounts()` and `AddPets()` implementations and provides
-the ephemeral snapshot invalidation helper used by `CreateQuestList()`.
+runtime registration and Settings completion grouping. The module owns the
+canonical `AddMounts()`, `AddPets()` and `AddToys()` implementations and
+provides the ephemeral snapshot invalidation helper used by
+`CreateQuestList()`.
 
 Change when:
 
@@ -75,6 +76,22 @@ Change when:
 - adding supported collection cache dimensions.
 
 Do not turn it into persistent SavedVariables.
+
+### `Tracking/Custom.lua`
+
+Runtime registration for enabled user-defined World Quests, Quest Flags,
+Quest Pins and missions. Owns the canonical `AddCustom()` implementation.
+
+Change when custom saved entries need different runtime registration behavior.
+Editor validation and option-tree changes belong in `UI/Options/Custom.lua`.
+
+### `Tracking/QuestAvailability.lua`
+
+Quest Pin map readiness, request throttling and Quest Flag completion checks.
+Owns `RefreshQuestPins()`, `isQuestPinActive()` and
+`IsQuestFlaggedCompleted()`.
+
+Change when custom Quest Pin or Quest Flag runtime availability changes.
 
 ### `Scanning/RewardScanner.lua`
 
@@ -84,6 +101,13 @@ Owns the canonical `Reward()` implementation.
 Change only for scanner/discovery/readiness behavior.
 
 Do not add ordinary item-ID classification rules here.
+
+### `Scanning/EmissaryScanner.lua`
+
+Emissary bounty discovery, reward-data retries and quest-log activity checks.
+Owns the canonical `EmissaryReward()` and `EmissaryIsActive()` methods.
+
+Change only for emissary discovery, readiness or active-state behavior.
 
 ### `Runtime/Runtime.lua`
 
@@ -184,7 +208,8 @@ Interprets declarative achievement data and registers relevant quest/POI/mission
 
 Shared utility functions and some quest-to-zone fallback mappings.
 
-Includes mapping support such as Mechagon quest-zone cases.
+Includes mapping support such as Mechagon quest-zone cases and the cached,
+fail-open Val/Naigtal availability resolution used by scanning and publication.
 
 ### `Locales.lua`
 
@@ -250,9 +275,9 @@ Adding a zone affects standard scanner coverage and Settings zone pages.
 ### `Data/RuntimeData.lua`
 
 Stable shared lookup tables for currency IDs, reputation faction IDs,
-emissary quest IDs and localized World Quest type labels. Loaded before all
-runtime and Settings consumers. Preserves `WQA.EmissaryQuestIDList` as an alias
-to the canonical emissary table.
+emissary quest IDs, localized World Quest type labels and the Val/Naigtal
+rotation anchor. Loaded before all runtime and Settings consumers. Preserves
+`WQA.EmissaryQuestIDList` as an alias to the canonical emissary table.
 
 ### `Data/ContainerCollectibles.lua`
 
@@ -281,6 +306,11 @@ Compatibility alias to `WQA.Constants.RewardType`; preserves `WQA.Rewards`.
 ### `Rewards/Reward.lua`
 
 Canonical reward merge semantics.
+
+### `Rewards/MatchReason.lua`
+
+Formats the cached reward model into stable reason categories used by popup
+task-name hover. Keep API queries and reward classification out of this file.
 
 If new classification can fit an existing reward type, prefer doing so rather than inventing a parallel structure.
 
@@ -350,11 +380,13 @@ See [RELEASE_AND_CI.md](RELEASE_AND_CI.md).
 Development tooling/scripts. Excluded from release package.
 
 `validate_project.py` checks structure, startup load order and package hygiene.
-`test_tracking_policy.lua` exercises tracking behavior with stubbed Blizzard APIs
-and runs under Lua 5.1 in the validation workflow. `test_reward_classifier.lua`
+`test_tracking_policy.lua` exercises tracking behavior and Val/Naigtal
+availability with stubbed Blizzard APIs and runs under Lua 5.1 in the validation
+workflow. `test_reward_classifier.lua`
 checks representative reward categories, link fallbacks and retry propagation.
 `test_reward_scanner.lua` checks coalesced publication after initial reward
-inspection and completed item retries, including silent Settings publication.
+inspection and completed item retries, including silent Settings publication
+and inactive rotating-map exclusion.
 `test_runtime_lifecycle.lua` checks Settings registration, startup timing,
 event dispatch, combat recovery, War Mode refresh and mission updates.
 `test_task_resolver.lua` checks progressive readiness, retry ownership, final

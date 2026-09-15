@@ -41,8 +41,13 @@ local function build(baseline)
     dofile("Tracking/TrackingPolicy.lua")
     for i = 6, 12 do
         WQA.ExpansionList[i] = "Expansion" .. i
-        WQA.data[i] = { name = "Expansion" .. i, achievements = {{ id = 1 }, { id = 2 }},
-            mounts = {{ spellID = 3, name = "Mount" }}, pets = {{ creatureID = 4, name = "Pet" }},
+        WQA.data[i] = { name = "Expansion" .. i, achievements = {
+            { id = 1, criteria = { 70000 + i, { id = 71000 + i, name = "Nested Tracker " .. i } } },
+            { id = 2 }
+        },
+            mounts = {{ spellID = 3, itemID = 72000 + i, name = "Mount",
+                quest = {{ trackingID = 73000 + i, wqID = 74000 + i }} }},
+            pets = {{ creatureID = 4, name = "Pet" }},
             toys = {{ itemID = 5 }} }
         WQA.ZoneIDList[i] = { i }
         WQA.RuntimeData.CurrencyIDsByExpansion[i] = { i, { id = 100 + i, faction = "Horde" } }
@@ -98,6 +103,14 @@ local function build(baseline)
     tree.args.general.args.search.args.query.set(nil, "achievement")
     local searched = WQA:GetOptions()
     assert(searched.args.general.args.search.args.result_10_achievements)
+    if not baseline then
+        for _, query in ipairs({ "70010", "nested tracker 10", "72010", "73010", "74010" }) do
+            tree.args.general.args.search.args.query.set(nil, query)
+            local related = WQA:GetOptions().args.general.args.search.args
+            assert(related.result_10_achievements or related.result_10_mounts,
+                "Related tracking identifier was not searchable: " .. query)
+        end
+    end
     return { tree, searched }
 end
 local current = build()

@@ -92,11 +92,13 @@ sufficient.
 
 ### `WQA:AddToys(toys)`
 
-Registers relevant mapped toy sources.
+Owned only by `Tracking/CollectionCache.lua`. Registers relevant mapped toy
+sources using Blizzard's direct ownership query and quest-completion state.
 
 ### `WQA:AddCustom()`
 
-Registers enabled user-defined World Quest/mission/custom tracking data.
+Owned only by `Tracking/Custom.lua`. Registers enabled user-defined World
+Quest, Quest Flag, Quest Pin and mission tracking data.
 
 ## Achievement registration
 
@@ -189,6 +191,19 @@ Returns icon/retry state.
 
 ## World Quest filtering
 
+### `WQA:GetActiveValNaigtalMapID()`
+
+Returns the map ID for the current weekly portal destination. It prefers the
+localized portal Area POI and falls back to the next regional reset timestamp
+plus the live Naigtal parity anchor. The result is cached for 60 seconds.
+Returns `nil` when neither signal resolves.
+
+### `WQA:IsMapCurrentlyAvailable(mapID)`
+
+Returns whether a map can currently be scanned and published. Unrelated maps
+always pass; Val and Naigtal pass only for the active weekly destination. A
+missing rotation result fails open.
+
 ### `WQA:GetEffectiveWorldQuestType(questID, questTagInfo)`
 
 Normalizes Blizzard quest type.
@@ -203,7 +218,8 @@ Covers:
 
 - configured WQ type;
 - War Mode/PvP;
-- zone enabled state.
+- zone enabled state;
+- current Val/Naigtal portal availability.
 
 Static relevance must pass this gate too.
 
@@ -223,14 +239,32 @@ Used by hide-maxed behavior.
 
 ### `WQA:EmissaryReward()`
 
-Inspects enabled emissaries and feeds rewards through shared item/currency
+Owned only by `Scanning/EmissaryScanner.lua`. Inspects enabled emissaries and feeds rewards through shared item/currency
 classifiers. Each full invocation owns a new scan generation; unresolved
 Blizzard bounty/reward data is retried for at most 30 seconds, and superseded
 callbacks are ignored.
 
 ### `WQA:EmissaryIsActive(questID)`
 
-Checks whether a known emissary quest is currently in the quest log/active model.
+Owned only by `Scanning/EmissaryScanner.lua`. Checks whether a known emissary
+quest is currently in the quest log/active model.
+
+## Quest Pin and Quest Flag availability
+
+### `WQA:RefreshQuestPins(requestPending)`
+
+Owned only by `Tracking/QuestAvailability.lua`. Builds the active Quest Pin
+index with one query per configured map and throttles requests for pending map
+data.
+
+### `WQA:isQuestPinActive(questID)`
+
+Returns whether a registered custom Quest Pin is in the current active index.
+
+### `WQA:IsQuestFlaggedCompleted(questID)`
+
+Returns whether a registered custom Quest Flag is still incomplete and should
+be displayed.
 
 ## Missions
 
@@ -242,6 +276,11 @@ retry flag for unavailable mission/item data.
 Supports configured currencies/reputation, custom items, transmog and legacy reward categories.
 
 ## Display/readiness
+
+### `WQA:GetTaskMatchReasons(task)` / `WQA:GetTaskMatchReasonText(task)`
+
+Read the canonical cached reward model and return stable localized categories
+for popup task-name hover. These helpers perform no Blizzard API queries.
 
 ### `WQA:CheckWQ(mode, ...)`
 

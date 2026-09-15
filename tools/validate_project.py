@@ -53,7 +53,9 @@ REQUIRED_PROJECT_FILES = (
     "Tracking/TrackingPolicy.lua",
     "Tracking/ContainerCompletion.lua",
     "Tracking/Achievements.lua",
+    "Tracking/Custom.lua",
     "Tracking/CollectionCache.lua",
+    "Tracking/QuestAvailability.lua",
     "Data/Expansions/Legion.lua",
     "Data/RuntimeData.lua",
     "Data/ContainerCollectibles.lua",
@@ -62,6 +64,7 @@ REQUIRED_PROJECT_FILES = (
     "Database.lua",
     "WQATurbo.lua",
     "Scanning/RewardScanner.lua",
+    "Scanning/EmissaryScanner.lua",
     "Runtime/Runtime.lua",
     "Runtime/Display.lua",
     "Runtime/TaskResolver.lua",
@@ -73,15 +76,19 @@ REQUIRED_PROJECT_FILES = (
     "UI/Options/Rewards.lua",
     "UI/Options.lua",
     "Rewards/Reward.lua",
+    "Rewards/MatchReason.lua",
     "Rewards/RewardType.lua",
     "Criterias/CriteriaType.lua",
     "Criterias/AreaPoi.lua",
     "tools/test_reward_classifier.lua",
+    "tools/test_match_reason.lua",
+    "tools/test_utilities.lua",
     "tools/test_reward_scanner.lua",
     "tools/test_runtime_lifecycle.lua",
     "tools/test_task_resolver.lua",
     "tools/test_tooltip_lifecycle.lua",
     "tools/test_custom_options.lua",
+    "tools/test_custom_tracking.lua",
     "tools/test_database_schema.lua",
     "tools/load_options.lua",
     "tools/test_options_structure.lua",
@@ -92,10 +99,13 @@ REQUIRED_PACKAGE_ITEMS = (
     "WQATurbo/Constants.lua",
     "WQATurbo/Tracking/TrackingPolicy.lua",
     "WQATurbo/Tracking/ContainerCompletion.lua",
+    "WQATurbo/Tracking/Custom.lua",
+    "WQATurbo/Tracking/QuestAvailability.lua",
     "WQATurbo/Data/RuntimeData.lua",
     "WQATurbo/Data/ContainerCollectibles.lua",
     "WQATurbo/Database.lua",
     "WQATurbo/Scanning/RewardScanner.lua",
+    "WQATurbo/Scanning/EmissaryScanner.lua",
     "WQATurbo/Runtime/Runtime.lua",
     "WQATurbo/UI/Options/Shared.lua",
     "WQATurbo/UI/Options/Custom.lua",
@@ -136,10 +146,18 @@ FORBIDDEN_REPOSITORY_SUFFIXES = (
 
 CRITERIA_RE = re.compile(r'\bcriteriaType\s*=\s*"([^"]+)"')
 FACTION_RE = re.compile(r'\bfaction\s*=\s*"([^"]+)"')
+LOCALE_KEY_RE = re.compile(r'L\["([^"]+)"\]')
 
 CONSOLIDATED_RUNTIME_METHOD_OWNERS = {
+    "AddCustom": "Tracking/Custom.lua",
     "AddMounts": "Tracking/CollectionCache.lua",
     "AddPets": "Tracking/CollectionCache.lua",
+    "AddToys": "Tracking/CollectionCache.lua",
+    "EmissaryIsActive": "Scanning/EmissaryScanner.lua",
+    "EmissaryReward": "Scanning/EmissaryScanner.lua",
+    "IsQuestFlaggedCompleted": "Tracking/QuestAvailability.lua",
+    "RefreshQuestPins": "Tracking/QuestAvailability.lua",
+    "isQuestPinActive": "Tracking/QuestAvailability.lua",
     "CheckWQ": "Runtime/TaskResolver.lua",
     "CreateQuestList": "WQATurbo.lua",
     "OnEnable": "Runtime/Runtime.lua",
@@ -281,6 +299,17 @@ def validate_toc(validation: Validation) -> None:
                 "TOC must load Migration.lua, Database.lua, then WQATurbo.lua."
             )
 
+    locale_order = ("Locales.lua", "Rewards/MatchReason.lua", "UI/Tooltip.lua")
+    for source in locale_order:
+        if source not in sources:
+            validation.error(f"TOC must load {source}.")
+    if all(source in sources for source in locale_order):
+        positions = [sources.index(source) for source in locale_order]
+        if positions != sorted(positions):
+            validation.error(
+                "TOC must load Locales.lua before the match-reason and tooltip modules."
+            )
+
     options_order = (
         "Performance.lua", "UI/Options/Shared.lua", "UI/Options/Custom.lua",
         "UI/Options/Tracking.lua", "UI/Options/Rewards.lua", "UI/Options.lua",
@@ -350,6 +379,34 @@ def parse_pkgmeta_ignore(text: str) -> set[str]:
     return ignored
 
 
+def parse_pkgmeta_externals(text: str) -> dict[str, dict[str, str]]:
+    """Parse the structured external entries used by this project."""
+    externals: dict[str, dict[str, str]] = {}
+    in_externals = False
+    current: str | None = None
+
+    for line in text.splitlines():
+        if line == "externals:":
+            in_externals = True
+            continue
+        if in_externals and line and not line.startswith(" "):
+            break
+        if not in_externals:
+            continue
+
+        entry = re.match(r"^  ([^:]+):\s*$", line)
+        if entry:
+            current = entry.group(1)
+            externals[current] = {}
+            continue
+
+        field = re.match(r"^    (url|tag):\s*(.+?)\s*$", line)
+        if current and field:
+            externals[current][field.group(1)] = field.group(2)
+
+    return externals
+
+
 def validate_pkgmeta(validation: Validation) -> None:
     text = read_text(PKGMETA, validation)
     if not text:
@@ -370,6 +427,54 @@ def validate_pkgmeta(validation: Validation) -> None:
         validation.error(
             f".pkgmeta ignore list must contain '{path}' so development "
             "files do not ship in release packages."
+        )
+
+    externals = parse_pkgmeta_externals(text)
+    if not externals:
+        validation.error(".pkgmeta must define structured packaged externals.")
+    for path, fields in sorted(externals.items()):
+        if not fields.get("url"):
+            validation.error(f"Packaged external '{path}' is missing its URL.")
+        tag = fields.get("tag")
+        if not tag or tag.lower() == "latest":
+            validation.error(
+                f"Packaged external '{path}' must use an exact release tag."
+            )
+
+
+def validate_locale_keys(validation: Validation) -> None:
+    locale_path = ROOT / "Locales.lua"
+    locale_text = read_text(locale_path, validation)
+    if not locale_text:
+        return
+
+    base_text = locale_text.split("if locale ==", 1)[0]
+    base_keys = LOCALE_KEY_RE.findall(base_text)
+    duplicate_base_keys = sorted(
+        key for key in set(base_keys) if base_keys.count(key) > 1
+    )
+    for key in duplicate_base_keys:
+        validation.error(f"Locales.lua declares base key '{key}' more than once.")
+
+    declared = set(base_keys)
+    for key in sorted(set(LOCALE_KEY_RE.findall(locale_text)) - declared):
+        validation.error(
+            f"Locales.lua overrides undeclared base key '{key}'."
+        )
+
+    used: dict[str, set[str]] = {}
+    for path in ROOT.rglob("*.lua"):
+        relative = path.relative_to(ROOT)
+        if path == locale_path or "Libs" in relative.parts or ".release" in relative.parts:
+            continue
+        text = read_text(path, validation)
+        for key in LOCALE_KEY_RE.findall(text):
+            used.setdefault(key, set()).add(relative.as_posix())
+
+    for key in sorted(set(used) - declared):
+        sources = ", ".join(sorted(used[key]))
+        validation.error(
+            f"Localized key '{key}' has no English fallback ({sources})."
         )
 
 
@@ -609,6 +714,7 @@ def main() -> int:
     validate_required_files(validation)
     validate_toc(validation)
     validate_pkgmeta(validation)
+    validate_locale_keys(validation)
     validate_release_documentation(validation)
     validate_repository_hygiene(validation)
     validate_static_data(validation)

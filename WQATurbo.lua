@@ -1,11 +1,8 @@
 ---@class WQATurbo
 local WQA = WQATurbo
 local RewardType = WQA.Constants.RewardType
-local CriteriaType = WQA.Constants.CriteriaType
 local TaskType = WQA.Constants.TaskType
 local TrackingMode = WQA.Constants.TrackingMode
-local TrackingPolicy = WQA.TrackingPolicy
-local EmissaryQuestIDList = WQA.RuntimeData.EmissaryQuestIDsByExpansion
 
 -- AllTheThings exposes SearchForLink before its search module has necessarily
 -- finished OnLoad initialization. Protect the integration from that startup
@@ -92,8 +89,14 @@ function WQA:ShouldIncludeWorldQuestForCurrentMode(questID, questTagInfo)
 	-- zone entries to true, so only an explicit false excludes a quest.
 	if self.GetQuestZoneID then
 		local zoneID = self:GetQuestZoneID(questID)
-		if type(zoneID) == "number" and self.db.profile.options.zone[zoneID] == false then
-			return false
+		if type(zoneID) == "number" then
+			if self.IsMapCurrentlyAvailable and not self:IsMapCurrentlyAvailable(zoneID) then
+				return false
+			end
+
+			if self.db.profile.options.zone[zoneID] == false then
+				return false
+			end
 		end
 	end
 
@@ -173,20 +176,9 @@ function WQA:ShouldTrackReputation(factionID, missionTable)
 	return not (options.hideExaltedReputations and self:IsReputationMaxed(factionID))
 end
 
-local GetBountiesForMapID = C_QuestLog.GetBountiesForMapID
 local GetTitleForQuestID = C_QuestLog.GetTitleForQuestID
 local GetCurrencyLink = C_CurrencyInfo.GetCurrencyLink
-local IsQuestFlaggedCompleted = C_QuestLog.IsQuestFlaggedCompleted
 local L = WQA.L
-
-local newOrder
-do
-	local current = 0
-	function newOrder()
-		current = current + 1
-		return current
-	end
-end
 
 WQA.data.custom = { wqID = "", rewardID = "", rewardType = "none", questType = TaskType.WorldQuest }
 WQA.data.custom.mission = { missionID = "", rewardID = "", rewardType = "none" }
@@ -382,59 +374,6 @@ function WQA:CreateQuestList()
 	self:EmissaryReward()
 end
 
-function WQA:AddToys(toys)
-	for _, toy in pairs(toys) do
-		local itemID = toy.itemID
-		local enabled, forced = TrackingPolicy.GetState(
-			self.db.profile.toys, itemID, self.playerName)
-
-		if enabled then
-			if not PlayerHasToy(toy.itemID) or forced then
-				if toy.source and toy.source.type == "ITEM" then
-					self.itemList[toy.source.itemID] = true
-				else
-					if toy.questID then
-						self:AddRewardToQuest(toy.questID, RewardType.Chance, toy.itemID)
-					else
-						for _, v in pairs(toy.quest) do
-							if not IsQuestFlaggedCompleted(v.trackingID) then
-								self:AddRewardToQuest(v.wqID, RewardType.Chance, toy.itemID)
-							end
-						end
-					end
-				end
-			end
-		end
-	end
-end
-
-function WQA:AddCustom()
-	-- Custom World Quests
-	if type(self.db.global.custom.worldQuest) == "table" then
-		for questID, v in pairs(self.db.global.custom.worldQuest) do
-			if self.db.profile.custom.worldQuest[questID] == true then
-				self:AddRewardToQuest(questID, RewardType.Custom)
-				if v.questType == CriteriaType.QuestFlag then
-					self.questFlagList[questID] = true
-				elseif v.questType == CriteriaType.QuestPin and v.mapID then
-					C_QuestLine.RequestQuestLinesForMap(v.mapID)
-					self.questPinMapList[v.mapID] = true
-					self.questPinList[questID] = true
-				end
-			end
-		end
-	end
-
-	-- Custom Missions
-	if type(self.db.global.custom.mission) == "table" then
-		for k, v in pairs(self.db.global.custom.mission) do
-			if self.db.profile.custom.mission[k] == true then
-				self:AddRewardToMission(k, RewardType.Custom)
-			end
-		end
-	end
-end
-
 function WQA:AddRewardToMission(missionID, rewardType, reward)
 	if not self.missionList[missionID] then
 		self.missionList[missionID] = {}
@@ -458,20 +397,6 @@ function WQA:AddEmissaryReward(questID, rewardType, reward)
 end
 
 WQA.first = false
-
-function WQA:link(x)
-	if not x then
-		return ""
-	end
-	local t = string.upper(x.type)
-	if t == "ACHIEVEMENT" then
-		return GetAchievementLink(x.id)
-	elseif t == "ITEM" then
-		return select(2, GetItemInfo(x.id))
-	else
-		return ""
-	end
-end
 
 function WQA:GetRewardForID(questID, key, type)
 	local l
@@ -1532,130 +1457,6 @@ function WQA:SortQuestList(list)
 	return list
 end
 
-local EMISSARY_MAP_IDS = { 627, 875 }
-local EMISSARY_RETRY_INTERVAL_SECONDS = 1.5
-local EMISSARY_MAX_PENDING_AGE_SECONDS = 30.0
-
-local function CancelEmissaryRetry(state)
-	if state and state.retryTimer and state.retryTimer.Cancel then
-		state.retryTimer:Cancel()
-	end
-
-	if state then
-		state.retryTimer = nil
-	end
-end
-
-function WQA:EmissaryReward(state)
-	if not state then
-		CancelEmissaryRetry(self._wqaEmissaryScan)
-		self._wqaEmissaryGeneration = (self._wqaEmissaryGeneration or 0) + 1
-		state = {
-			generation = self._wqaEmissaryGeneration,
-			startedAt = GetTime(),
-			retryTimer = nil
-		}
-		self._wqaEmissaryScan = state
-		self._wqaEmissaryTimeout = nil
-	elseif
-		self._wqaEmissaryScan ~= state
-		or self._wqaEmissaryGeneration ~= state.generation
-	then
-		return
-	end
-
-	self.emissaryRewards = false
-	local retry = false
-	local relevanceMayHaveChanged = false
-	local pending = {}
-	state.pending = pending
-
-	for _, mapID in ipairs(EMISSARY_MAP_IDS) do
-		local bounties = GetBountiesForMapID(mapID)
-		if not bounties then
-			pending["emissary-map:" .. tostring(mapID)] = true
-			retry = true
-		else
-			for _, emissary in ipairs(bounties) do
-				relevanceMayHaveChanged = true
-				local questID = emissary.questID
-				if self.db.profile.options.emissary[questID] == true then
-					self:AddEmissaryReward(questID, RewardType.Custom, nil, true)
-				end
-				if HaveQuestData(questID) and HaveQuestRewardData(questID) then
-					local itemsPending = self:CheckItems(questID, true)
-					if itemsPending then pending["emissary:" .. tostring(questID)] = true end
-					retry = itemsPending or retry
-					self:CheckCurrencies(questID, true)
-				else
-					pending["emissary:" .. tostring(questID)] = true
-					retry = true
-				end
-			end
-		end
-	end
-
-	if retry and GetTime() - state.startedAt < EMISSARY_MAX_PENDING_AGE_SECONDS then
-		if relevanceMayHaveChanged and self.ScheduleTaskResolverCheck then
-			self:ScheduleTaskResolverCheck()
-		end
-
-		local timer
-		timer = C_Timer.NewTimer(EMISSARY_RETRY_INTERVAL_SECONDS, function()
-			if
-				self._wqaEmissaryScan ~= state
-				or self._wqaEmissaryGeneration ~= state.generation
-				or state.retryTimer ~= timer
-			then
-				return
-			end
-
-			state.retryTimer = nil
-			self:EmissaryReward(state)
-		end)
-		state.retryTimer = timer
-		return
-	end
-
-	CancelEmissaryRetry(state)
-	if retry then self._wqaEmissaryTimeout = pending end
-	if self._wqaEmissaryScan == state then
-		self._wqaEmissaryScan = nil
-		self.emissaryRewards = true
-		if self.ScheduleTaskResolverCheck then
-			self:ScheduleTaskResolverCheck(true)
-		end
-	end
-end
-
-function WQA:EmissaryIsActive(questID)
-	local emissary = {}
-	for _, v in pairs(EmissaryQuestIDList) do
-		for _, id in pairs(v) do
-			if type(id) == "table" then
-				id = id.id
-			end
-			if id == questID then
-				emissary[id] = true
-			end
-		end
-	end
-
-	if emissary[questID] ~= true then
-		return false
-	end
-
-	local i = 1
-	while C_QuestLog.GetInfo(i) do
-		local questLogQuestID = C_QuestLog.GetInfo(i).questID
-		if questLogQuestID == questID then
-			return true
-		end
-		i = i + 1
-	end
-	return false
-end
-
 function WQA:Special()
 	if
 		(self.db.profile.achievements[11189] ~= TrackingMode.Disabled and not select(4, GetAchievementInfo(11189)) == true) or
@@ -1970,43 +1771,6 @@ function WQA:CheckMissions()
 	end
 
 	return activeMissions, retry
-end
-
--- One map query per readiness pass, rather than per candidate quest.
-function WQA:RefreshQuestPins(requestPending)
-	local active, pending = {}, {}
-	local now = GetTime()
-	self._wqaQuestPinRequests = self._wqaQuestPinRequests or {}
-	local requests = self._wqaQuestPinRequests
-	for mapID in pairs(self.questPinMapList or {}) do
-		local pins = C_QuestLine.GetAvailableQuestLines(mapID)
-		if type(pins) ~= "table" then
-			pending["quest-pin-map:" .. tostring(mapID)] = true
-			if requestPending ~= false and (not requests[mapID] or now - requests[mapID] >= 1.5) then
-				requests[mapID] = now
-				C_QuestLine.RequestQuestLinesForMap(mapID)
-			end
-		else
-			for _, pin in pairs(pins) do
-				if pin.questID then active[pin.questID] = true end
-			end
-		end
-	end
-	self._wqaQuestPinsActive = active
-	return pending
-end
-
-function WQA:isQuestPinActive(questID)
-	if not self._wqaQuestPinsActive then self:RefreshQuestPins() end
-	return self._wqaQuestPinsActive[questID] == true
-end
-
-function WQA:IsQuestFlaggedCompleted(questID)
-	if self.questFlagList[questID] then
-		return not IsQuestFlaggedCompleted(questID)
-	else
-		return false
-	end
 end
 
 function WQA:UpdateMinimapIcon()

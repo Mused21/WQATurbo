@@ -70,7 +70,8 @@ WQATurbo = {
             WorldQuest = "WORLD_QUEST",
             Mission = "MISSION",
             AreaPoi = "AREA_POI"
-        }
+        },
+        RewardType = { Miscellaneous = "MISCELLANEOUS" }
     },
     L = setmetatable({}, { __index = function(_, key) return key end }),
     db = {
@@ -84,6 +85,7 @@ WQATurbo = {
     }
 }
 local WQA = WQATurbo
+dofile("Rewards/MatchReason.lua")
 dofile("UI/Tooltip.lua")
 
 local popupHideCount = 0
@@ -179,13 +181,17 @@ assert(poiTooltip.lines == 2)
 assert(poiTooltip.pois[300][400] and poiTooltip.pois[300][401])
 
 -- POI metadata may disappear after publication but before hover.
-local title
-GameTooltip = { ClearLines = noop, ClearAllPoints = noop, SetPoint = noop, Show = noop }
+local title, tooltipLines = nil, {}
+GameTooltip = {
+    ClearLines = noop, ClearAllPoints = noop, SetPoint = noop, Show = noop,
+    AddLine = function(_, text) tooltipLines[#tooltipLines + 1] = text end
+}
 GameTooltip_SetDefaultAnchor = noop
 GameTooltip_SetTitle = function(_, text) title = text end
 C_AreaPoiInfo = { GetAreaPOIInfo = function() return nil end, IsAreaPOITimed = function() return false end }
 poiTooltip.cellScripts["1:OnEnter"]({})
 assert(title == "POI 300")
+assert(tooltipLines[#tooltipLines] == "Matched because: Match: custom task")
 C_AreaPoiInfo.GetAreaPOIInfo = function() return { name = "Recovered POI", areaPoiID = 300 } end
 poiTooltip.cellScripts["1:OnEnter"]({})
 assert(title == "Recovered POI")

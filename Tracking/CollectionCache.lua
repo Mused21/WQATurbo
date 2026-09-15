@@ -26,6 +26,9 @@ This module preserves the original behaviour but changes the access pattern:
   3. AddMounts/AddPets iterate only WQA's small static data tables and perform
      O(1) ownership lookups.
 
+AddToys lives here as the third static collectible-registration path. Toy
+ownership comes directly from Blizzard's API and does not need a snapshot.
+
 The snapshot is deliberately rebuilt once per refresh rather than cached
 forever. This keeps behaviour aligned with upstream if the player's collection
 or Pet Journal filters change, while still removing the repeated scans.
@@ -237,6 +240,34 @@ function WQA:AddPets(pets)
 						for _, quest in pairs(pet.quest) do
 							if not IsQuestFlaggedCompleted(quest.trackingID) then
 								self:AddRewardToQuest(quest.wqID, RewardType.Chance, pet.itemID)
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+end
+
+---Register mapped toy sources using Blizzard ownership and quest completion.
+---@param toys table
+function WQA:AddToys(toys)
+	for _, toy in pairs(toys) do
+		local itemID = toy.itemID
+		local enabled, forced = TrackingPolicy.GetState(
+			self.db.profile.toys, itemID, self.playerName)
+
+		if enabled then
+			if not PlayerHasToy(toy.itemID) or forced then
+				if toy.source and toy.source.type == "ITEM" then
+					self.itemList[toy.source.itemID] = true
+				else
+					if toy.questID then
+						self:AddRewardToQuest(toy.questID, RewardType.Chance, toy.itemID)
+					else
+						for _, v in pairs(toy.quest) do
+							if not IsQuestFlaggedCompleted(v.trackingID) then
+								self:AddRewardToQuest(v.wqID, RewardType.Chance, toy.itemID)
 							end
 						end
 					end
