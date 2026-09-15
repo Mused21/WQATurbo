@@ -161,6 +161,15 @@ dofile("Data/RuntimeData.lua")
 dofile("Data/ContainerCollectibles.lua")
 dofile("Tracking/ContainerCompletion.lua")
 dofile(arg[1] or "WQATurbo.lua")
+if not arg[1] then
+    assert(WQA.EmissaryReward == nil and WQA.EmissaryIsActive == nil,
+        "The compatibility core must not define emissary scanner methods")
+    dofile("Scanning/EmissaryScanner.lua")
+    assert(WQA.RefreshQuestPins == nil and WQA.isQuestPinActive == nil
+        and WQA.IsQuestFlaggedCompleted == nil,
+        "The compatibility core must not define quest availability methods")
+    dofile("Tracking/QuestAvailability.lua")
+end
 
 assert(#WQA.data.containerCollectibles[199192].questIDs == 10)
 assert(#WQA.data.containerCollectibles[204359].questIDs == 4)

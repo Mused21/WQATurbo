@@ -501,9 +501,10 @@ function WQA:PopulateRewardOptions()
 				}
 
 				for _, tradeskillLineIndex in pairs({ GetProfessions() }) do
-					local professionName, _, _, _, _, _, tradeskillLineID = GetProfessionInfo(tradeskillLineIndex)
-					if tradeskillLineID then
-						local capturedTradeskillLineID = tradeskillLineID						rewardArgs.profession.args[capturedTradeskillLineID .. "Header"] = {
+				local professionName, _, _, _, _, _, tradeskillLineID = GetProfessionInfo(tradeskillLineIndex)
+				if tradeskillLineID then
+					local capturedTradeskillLineID = tradeskillLineID
+					rewardArgs.profession.args[capturedTradeskillLineID .. "Header"] = {
 							type = "header",
 							name = professionName,
 							order = newOrder()

@@ -27,13 +27,13 @@ update the appropriate documentation as part of the change.
 
 ## Current Development
 
-Current development target: WQA Turbo 1.3.0.
+Current development target: WQA Turbo 1.4.0.
 
-1.1.0 functionality is the behavioral baseline.
+1.3.0 functionality is the behavioral baseline.
 
-1.3.0 combines the tested post-release hardening with maintainability,
-performance, feature and data work from the roadmap. Preserve existing
-behavior except for explicitly planned fixes and features.
+1.3.0 is the released behavioral baseline. Continue 1.4.0 work from the
+active roadmap and preserve existing behavior except for explicitly planned
+fixes and features.
 
 The active work queue, current milestone, and completion criteria are
 documented in:

@@ -1,10 +1,10 @@
 # WQA Turbo Developer Documentation
 
-> **Documentation baseline:** `refactor/1.2.0`, local WQA Turbo **1.2.0** refactor
+> **Documentation baseline:** WQA Turbo **1.3.0** / `master`
 >
-> **Behavioral baseline:** 1.1.0 functionality merged to master
+> **Behavioral baseline:** released WQA Turbo 1.3.0 behavior
 >
-> **Last major documentation refresh:** 2026-09-13
+> **Last major documentation refresh:** 2026-09-14
 
 This directory is the canonical architectural and functional reference for WQA Turbo.
 
@@ -28,8 +28,11 @@ Therefore:
 Examples:
 
 - `Scanning/RewardScanner.lua` owns the incremental runtime reward scanner.
+- `Scanning/EmissaryScanner.lua` owns emissary discovery and readiness.
 - `Runtime/TaskResolver.lua` owns readiness and final task publication.
 - `Runtime/Display.lua` owns the cache-first display/refresh split.
+- `Tracking/Custom.lua` owns custom task runtime registration.
+- `Tracking/QuestAvailability.lua` owns Quest Pin and Quest Flag availability.
 - `Tracking/CollectionCache.lua` owns collectible collection-state access.
 - `Runtime/Runtime.lua` owns startup/runtime orchestration and command handling.
 - `WQATurbo.lua` owns the `CreateQuestList()` rebuild.

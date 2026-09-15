@@ -22,6 +22,11 @@ while building the UI; loading Settings is not required to initialize runtime me
 
 Most setters call a debounced refresh scheduler so that configuration changes become visible without requiring `/reload`.
 
+Settings page names, labels, descriptions, validation messages, bulk controls
+and search output use the shared `WQA.L` locale table. English remains the
+fallback for untranslated keys. The 1.4.0 localization expansion adds
+Traditional Chinese and extends translated coverage for the reorganized UI.
+
 ## 2. Tracking
 
 The Tracking tree is organized by expansion and collectible category.
@@ -105,6 +110,11 @@ Mount and pet completion grouping uses the shared `Tracking/CollectionCache.lua`
 ownership indexes. Building the Settings tree does not perform one complete
 journal walk per collectible row. For pets, any positive species count means
 collected; owning three copies is not required.
+
+Tracking search accepts the displayed collectible name or primary ID and also
+matches related source item IDs, mapped World Quest IDs, tracking quest IDs,
+and nested achievement criterion names or IDs. The query remains temporary and
+is not saved to the profile.
 
 Achievement tooltips use achievement hyperlinks.
 
@@ -318,7 +328,7 @@ Possible task forms include:
 
 Custom reward item IDs can also be tracked.
 
-For the unreleased 1.3.0 hardening change, saved editor values must be
+Since the 1.3.0 hardening change, saved editor values must be
 positive integer IDs. Blank mission reward IDs remain optional; other invalid
 values are rejected without changing the saved entry. Duplicate adds report an
 error and preserve the existing entry, including its tracking toggle.
@@ -368,7 +378,7 @@ The debouncer is intended to collapse rapid changes into one refresh.
 
 ### Profile changes
 
-For unreleased 1.3.0, changing, copying or resetting an AceDB profile immediately
+Since 1.3.0, changing, copying or resetting an AceDB profile immediately
 rebuilds results silently, clears old watched state and refreshes the minimap's
 visibility and position from the new profile. An open popup is rebuilt; a closed
 popup stays closed. The profile action supersedes queued Settings refreshes and

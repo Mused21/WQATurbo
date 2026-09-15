@@ -145,6 +145,18 @@ function WQA:GetTrackedObjectDisplayName(groupName, object)
 	return object.name or tostring(id)
 end
 
+local function AppendSearchValues(value, output, visited)
+	local valueType = type(value)
+	if valueType == "number" or valueType == "string" then
+		output[#output + 1] = tostring(value)
+	elseif valueType == "table" and not visited[value] then
+		visited[value] = true
+		for _, child in pairs(value) do
+			AppendSearchValues(child, output, visited)
+		end
+	end
+end
+
 function WQA:GetTrackedObjectSearchText(groupName, object)
 	local id = self:GetTrackedObjectID(object)
 	local name = object.name
@@ -159,7 +171,9 @@ function WQA:GetTrackedObjectSearchText(groupName, object)
 		name = GetItemInfo(object.itemID) or name
 	end
 
-	return string.lower((name or "") .. " " .. tostring(id or ""))
+	local values = { name or "", id or "" }
+	AppendSearchValues(object, values, {})
+	return string.lower(table.concat(values, " "))
 end
 
 function WQA:IsTrackedObjectCompleted(groupName, id)
@@ -398,7 +412,7 @@ function WQA:CreateTrackingSearch(options)
 		order = 1,
 		type = "input",
 		name = L["Search achievements, mounts, pets, and toys"],
-		desc = L["Searches all supported expansions by name or ID. The search text is temporary and is not saved to your profile."],
+		desc = L["Searches all supported expansions by collectible name, primary ID, source item ID, mapped quest ID, tracking quest ID, or nested criterion. The search text is temporary and is not saved to your profile."],
 		width = "full",
 		get = function()
 			return WQA.optionsSearchText or ""
@@ -416,7 +430,7 @@ function WQA:CreateTrackingSearch(options)
 		searchGroup.args.help = {
 			order = 2,
 			type = "description",
-			name = L["Type part of a collectible name or an ID to find it across every expansion."]
+			name = L["Search by collectible name or any related achievement, item, quest, tracking, or criterion ID."]
 		}
 		return
 	end

@@ -207,10 +207,14 @@ another purse.
 
 Once Step 8 consolidates a method, do not restore a compatibility copy earlier
 in the TOC. `Show()` is owned only by `Runtime/Display.lua`, and `OnEnable()`
-is owned only by `Runtime/Runtime.lua`. `AddMounts()` and `AddPets()` are owned
-only by `Tracking/CollectionCache.lua`, and `CheckWQ()` is owned only by
+is owned only by `Runtime/Runtime.lua`. `AddMounts()`, `AddPets()` and
+`AddToys()` are owned only by `Tracking/CollectionCache.lua`; `AddCustom()` is
+owned only by `Tracking/Custom.lua`; and `CheckWQ()` is owned only by
 `Runtime/TaskResolver.lua`. `Reward()` is owned only by
-`Scanning/RewardScanner.lua`. `CreateQuestList()` is owned only by
+`Scanning/RewardScanner.lua`. `EmissaryReward()` and `EmissaryIsActive()` are
+owned only by `Scanning/EmissaryScanner.lua`. `RefreshQuestPins()`,
+`isQuestPinActive()` and `IsQuestFlaggedCompleted()` are owned only by
+`Tracking/QuestAvailability.lua`. `CreateQuestList()` is owned only by
 `WQATurbo.lua`. The validator enforces this ownership.
 
 ### 32. Container completion fails open
@@ -229,6 +233,13 @@ rebind minimap settings, rebuild options and publish new-profile results silentl
 Missing map names and POI hover metadata must not crash. Do not cache fallback
 zone names as resolved metadata. Missing Quest Pin results use bounded retries;
 ready maps and tasks continue independently.
+
+### 35. Localized strings preserve safe fallbacks and format arguments
+
+Every first-party `L["..."]` use must have one English declaration. Locale
+overrides may use only declared keys and must preserve the English value's
+ordered `string.format` placeholders so translated UI cannot pass missing or
+mis-typed arguments at runtime. The project validator enforces these rules.
 
 ## Review technique
 

@@ -6,6 +6,7 @@ local legacyPaths = {
     ["Tracking/TrackingPolicy.lua"] = "TrackingPolicy.lua",
     ["Data/RuntimeData.lua"] = "DB/RuntimeData.lua",
     ["Tracking/CollectionCache.lua"] = "CollectionCache.lua",
+    ["Tracking/Custom.lua"] = "WQATurbo.lua",
     ["Tracking/Achievements.lua"] = "Achievements.lua",
     ["UI/Options.lua"] = "Options.lua"
 }
@@ -22,10 +23,23 @@ end
 
 local function noop() end
 local owned, blocked = false, {}
+local questZoneIDs = {}
+local serverTime = 1782345500
+local secondsUntilWeeklyReset = 100
 local petRowOwned
 local petCollectedCount
-C_QuestLog = { IsQuestFlaggedCompleted = function(id) return blocked[id] end }
-C_TaskQuest = {}
+C_QuestLog = {
+    IsQuestFlaggedCompleted = function(id) return blocked[id] end,
+    GetQuestTagInfo = function() return nil end,
+    GetTitleForQuestID = function() return nil end
+}
+C_TaskQuest = {
+    GetQuestZoneID = function(questID) return questZoneIDs[questID] end
+}
+C_DateAndTime = {
+    GetSecondsUntilWeeklyReset = function() return secondsUntilWeeklyReset end
+}
+GetServerTime = function() return serverTime end
 C_CurrencyInfo = {}
 Enum = {
     QuestTagType = { PvP = 1, PetBattle = 2, Profession = 3, Dungeon = 4 },
@@ -80,15 +94,19 @@ loadSource("Rewards/RewardType.lua")
 assert(WQA.Criterias == criteriaNamespace and WQA.Criterias.sentinel)
 assert(WQA.Rewards == rewardsNamespace and WQA.Rewards.sentinel)
 loadSource("WQATurbo.lua")
+if not arg[1] then loadSource("Utilities.lua") end
 local coreCreateQuestList = WQA.CreateQuestList
-local legacyMounts, legacyPets, legacyCheckWQ, legacyReward =
-    WQA.AddMounts, WQA.AddPets, WQA.CheckWQ, WQA.Reward
+local legacyCustom, legacyMounts, legacyPets, legacyToys, legacyCheckWQ, legacyReward =
+    WQA.AddCustom, WQA.AddMounts, WQA.AddPets, WQA.AddToys, WQA.CheckWQ, WQA.Reward
 if not arg[1] then
+    assert(legacyCustom == nil, "The compatibility core must not define AddCustom")
     assert(legacyMounts == nil, "The compatibility core must not define AddMounts")
     assert(legacyPets == nil, "The compatibility core must not define AddPets")
+    assert(legacyToys == nil, "The compatibility core must not define AddToys")
     assert(legacyCheckWQ == nil, "The compatibility core must not define CheckWQ")
     assert(legacyReward == nil, "The compatibility core must not define Reward")
 end
+if not arg[1] then loadSource("Tracking/Custom.lua") end
 loadSource("Tracking/CollectionCache.lua")
 if not arg[1] then
     assert(WQA.CreateQuestList == coreCreateQuestList,
@@ -105,6 +123,61 @@ WQA.AddRewardToQuest = function(_, questID, kind)
     publishedQuestIDs[#publishedQuestIDs + 1] = questID
 end
 WQA.ScheduleOptionsRefresh = function() refreshes = refreshes + 1 end
+
+-- The June 23-25 regional resets end the first Naigtal week. Both regional
+-- reset timestamps and the following Val week must resolve to one active map.
+if not arg[1] then
+    WQA.questList = {}
+    WQA.db.profile.options = {
+        reward = { general = { worldQuestType = {} } },
+        showWarModeQuestsWithoutWarMode = false,
+        zone = { [2599] = true, [2600] = true }
+    }
+    questZoneIDs[9001] = 2599
+    questZoneIDs[9002] = 2600
+    assert(WQA:GetActiveValNaigtalMapID() == 2600)
+    assert(WQA:IsMapCurrentlyAvailable(2600) == true)
+    assert(WQA:IsMapCurrentlyAvailable(2599) == false)
+    assert(WQA:ShouldIncludeWorldQuestForCurrentMode(9001) == false,
+        "Achievement-backed Val quests must be excluded during a Naigtal week")
+    assert(WQA:ShouldIncludeWorldQuestForCurrentMode(9002) == true)
+
+    serverTime = serverTime + 7 * 24 * 60 * 60
+    assert(WQA:GetActiveValNaigtalMapID() == 2599)
+    assert(WQA:ShouldIncludeWorldQuestForCurrentMode(9001) == true)
+    assert(WQA:ShouldIncludeWorldQuestForCurrentMode(9002) == false,
+        "Achievement-backed Naigtal quests must be excluded during a Val week")
+
+    -- A localized live portal POI overrides the calendar fallback, so a
+    -- Blizzard schedule change does not require a data update.
+    serverTime = 1782345500
+    C_Map = {
+        GetMapInfo = function(mapID)
+            if mapID == 2599 then return { name = "Localized Val" } end
+            if mapID == 2600 then return { name = "Localized Naigtal" } end
+        end
+    }
+    C_AreaPoiInfo = {
+        GetAreaPOIForMap = function(mapID)
+            assert(mapID == 2405)
+            return { 77 }
+        end,
+        GetAreaPOIInfo = function(mapID, areaPoiID)
+            assert(mapID == 2405 and areaPoiID == 77)
+            return { name = "Portal: Localized Val" }
+        end
+    }
+    assert(WQA:GetActiveValNaigtalMapID() == 2599)
+
+    C_Map = nil
+    C_AreaPoiInfo = nil
+    secondsUntilWeeklyReset = nil
+    assert(WQA:GetActiveValNaigtalMapID() == nil)
+    assert(WQA:IsMapCurrentlyAvailable(2599) == true)
+    assert(WQA:IsMapCurrentlyAvailable(2600) == true)
+    assert(WQA:IsMapCurrentlyAvailable(2405) == true)
+    secondsUntilWeeklyReset = 100
+end
 
 local modes = {
     { value = "default", unowned = true, owned = false, bulk = true },

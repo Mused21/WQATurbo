@@ -206,7 +206,7 @@ items cannot remain relevant from an earlier refresh.
 
 State for custom/achievement quest-pin style criteria.
 
-In unreleased 1.3.0, `_wqaQuestPinsActive` is a per-readiness-pass quest-ID set;
+Since 1.3.0, `_wqaQuestPinsActive` is a per-readiness-pass quest-ID set;
 `_wqaQuestPinRequests` holds throttled map request times. Both reset on a full
 rebuild and are not SavedVariables.
 

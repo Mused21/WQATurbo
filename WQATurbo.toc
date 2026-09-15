@@ -39,14 +39,18 @@ Items\Miscellaneous.lua
 Tracking\Achievements.lua
 
 Locales.lua
+Rewards\MatchReason.lua
 Utilities.lua
 UI\Tooltip.lua
 Migration.lua
 Database.lua
 
 WQATurbo.lua
+Tracking\Custom.lua
 Tracking\CollectionCache.lua
+Tracking\QuestAvailability.lua
 Scanning\RewardScanner.lua
+Scanning\EmissaryScanner.lua
 Runtime\Runtime.lua
 Runtime\Display.lua
 Runtime\TaskResolver.lua

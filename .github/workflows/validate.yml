@@ -33,8 +33,17 @@ jobs:
       - name: Test tracking policy
         run: lua5.1 tools/test_tracking_policy.lua
 
+      - name: Test utility routing
+        run: lua5.1 tools/test_utilities.lua
+
       - name: Test reward classifier
         run: lua5.1 tools/test_reward_classifier.lua
+
+      - name: Test task match reasons
+        run: lua5.1 tools/test_match_reason.lua
+
+      - name: Test locale coverage
+        run: lua5.1 tools/test_locales.lua
 
       - name: Test reward scanner publication
         run: lua5.1 tools/test_reward_scanner.lua
@@ -50,6 +59,9 @@ jobs:
 
       - name: Test custom editors
         run: lua5.1 tools/test_custom_options.lua
+
+      - name: Test custom runtime tracking
+        run: lua5.1 tools/test_custom_tracking.lua
 
       - name: Test database schema migrations
         run: lua5.1 tools/test_database_schema.lua

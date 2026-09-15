@@ -4,6 +4,8 @@ local TaskType = WQA.Constants.TaskType
 local EmissaryQuestIDList = WQA.RuntimeData.EmissaryQuestIDsByExpansion
 
 local GetTitleForQuestID = C_QuestLog.GetTitleForQuestID
+local SECONDS_PER_WEEK = 7 * 24 * 60 * 60
+local MAP_AVAILABILITY_CACHE_SECONDS = 60
 
 
 function WQA:GetExpansionByMissionID(missionID)
@@ -204,4 +206,120 @@ function WQA:GetTaskLink(task)
         local poiInfo = C_AreaPoiInfo.GetAreaPOIInfo(task.mapId, task.id)
         return poiInfo and poiInfo.name
     end
+end
+
+local function getActiveValNaigtalMapFromAreaPOI(rotation)
+    if not C_AreaPoiInfo
+        or type(C_AreaPoiInfo.GetAreaPOIForMap) ~= "function"
+        or type(C_AreaPoiInfo.GetAreaPOIInfo) ~= "function"
+        or not C_Map or type(C_Map.GetMapInfo) ~= "function"
+    then
+        return nil
+    end
+
+    local mapIDByName = {}
+    for _, mapID in ipairs({ rotation.valMapID, rotation.naigtalMapID }) do
+        local ok, mapInfo = pcall(C_Map.GetMapInfo, mapID)
+        if ok and mapInfo and type(mapInfo.name) == "string" then
+            mapIDByName[mapInfo.name] = mapID
+        end
+    end
+
+    local ok, areaPoiIDs = pcall(
+        C_AreaPoiInfo.GetAreaPOIForMap,
+        rotation.portalMapID
+    )
+    if not ok or type(areaPoiIDs) ~= "table" then
+        return nil
+    end
+
+    for _, areaPoiID in ipairs(areaPoiIDs) do
+        local infoOk, areaPoiInfo = pcall(
+            C_AreaPoiInfo.GetAreaPOIInfo,
+            rotation.portalMapID,
+            areaPoiID
+        )
+        local areaPoiName = infoOk and areaPoiInfo and areaPoiInfo.name
+
+        if type(areaPoiName) == "string" then
+            for zoneName, mapID in pairs(mapIDByName) do
+                if areaPoiName:find(zoneName, 1, true) then
+                    return mapID
+                end
+            end
+        end
+    end
+
+    return nil
+end
+
+local function getActiveValNaigtalMapFromReset(rotation)
+    local getSecondsUntilWeeklyReset = C_DateAndTime
+        and C_DateAndTime.GetSecondsUntilWeeklyReset
+
+    if type(GetServerTime) ~= "function"
+        or type(getSecondsUntilWeeklyReset) ~= "function"
+    then
+        return nil
+    end
+
+    local okServerTime, serverTime = pcall(GetServerTime)
+    local okReset, secondsUntilReset = pcall(getSecondsUntilWeeklyReset)
+
+    if not okServerTime or not okReset
+        or type(serverTime) ~= "number" or serverTime <= 0
+        or type(secondsUntilReset) ~= "number" or secondsUntilReset < 0
+        or secondsUntilReset > SECONDS_PER_WEEK + 24 * 60 * 60
+    then
+        return nil
+    end
+
+    -- Regional resets occur between Tuesday and Thursday. Nearest-week
+    -- rounding maps every region's next reset to the same Unix week number.
+    local nextResetWeek = math.floor(
+        (serverTime + secondsUntilReset) / SECONDS_PER_WEEK + 0.5
+    )
+
+    if (nextResetWeek - rotation.naigtalReferenceResetWeek) % 2 == 0 then
+        return rotation.naigtalMapID
+    end
+
+    return rotation.valMapID
+end
+
+-- Prefer the live portal Area POI so a Blizzard schedule change is followed
+-- automatically. The reset parity remains a region-independent fallback for
+-- login periods when POI metadata has not arrived yet. If both signals are
+-- unavailable, return nil so callers keep both maps rather than hiding a task.
+function WQA:GetActiveValNaigtalMapID()
+    local now = type(GetTime) == "function" and GetTime() or nil
+    local cached = self._valNaigtalAvailabilityCache
+
+    if cached and now and cached.expiresAt > now then
+        return cached.mapID
+    end
+
+    local rotation = WQA.RuntimeData.ValNaigtalRotation
+    local activeMapID = getActiveValNaigtalMapFromAreaPOI(rotation)
+        or getActiveValNaigtalMapFromReset(rotation)
+
+    if now then
+        self._valNaigtalAvailabilityCache = {
+            mapID = activeMapID,
+            expiresAt = now + MAP_AVAILABILITY_CACHE_SECONDS
+        }
+    end
+
+    return activeMapID
+end
+
+function WQA:IsMapCurrentlyAvailable(mapID)
+    local rotation = WQA.RuntimeData.ValNaigtalRotation
+
+    if mapID ~= rotation.valMapID and mapID ~= rotation.naigtalMapID then
+        return true
+    end
+
+    local activeMapID = self:GetActiveValNaigtalMapID()
+    return activeMapID == nil or activeMapID == mapID
 end

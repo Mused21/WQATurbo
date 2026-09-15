@@ -93,7 +93,13 @@ local function buildEnabledMaps(self)
 
 	for _, zones in pairs(self.ZoneIDList) do
 		for _, mapID in pairs(zones) do
-			if self.db.profile.options.zone[mapID] == true then
+			if
+				self.db.profile.options.zone[mapID] == true
+				and (
+					not self.IsMapCurrentlyAvailable
+					or self:IsMapCurrentlyAvailable(mapID)
+				)
+			then
 				result[#result + 1] = mapID
 			end
 		end

@@ -123,7 +123,7 @@ end
 -- Keep the original /wqa command for users migrating from WQATurbo.
 -- Add one compact Turbo command for development and later release use.
 function WQA:TurboSlash(input)
-	local command = string.match(input or "", "^(%S*)")
+	local command = string.match(input or "", "^%s*(%S*)")
 	command = string.lower(command or "")
 
 	if command == "" then
@@ -135,17 +135,17 @@ function WQA:TurboSlash(input)
 	elseif command == "new" then
 		self:Refresh("new")
 	elseif command == "popup" then
-
-self:ShowCached("popup")
-elseif command == "import" then
-
-self:ShowWQAMigrationPrompt(true)
+		self:ShowCached("popup")
+	elseif command == "import" then
+		self:ShowWQAMigrationPrompt(true)
 	elseif command == "perf" then
 		self:PrintPerfSummary()
 	elseif command == "reset" then
 		self:ResetPerf()
 	elseif command == "scan" then
 		self:PrintRewardScannerStatus()
+		self:PrintReadinessStatus()
+	elseif command == "readiness" then
 		self:PrintReadinessStatus()
 	elseif command == "cache" then
 		self:CollectionCacheSlash()
@@ -155,9 +155,10 @@ self:ShowWQAMigrationPrompt(true)
 		print("/wqat refresh - rebuild and rescan")
 		print("/wqat new - refresh and announce newly found tasks")
 		print("/wqat popup - open cached popup")
-print("/wqat import - import WQAchievements settings")
+		print("/wqat import - import WQAchievements settings")
 		print("/wqat perf - performance summary")
 		print("/wqat scan - scanner status")
+		print("/wqat readiness - pending and timed-out data status")
 		print("/wqat cache - collection-cache status")
 		print("/wqat reset - reset profiler counters")
 	end

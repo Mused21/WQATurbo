@@ -110,18 +110,24 @@ assert(state.stats.publishCount == 1)
 -- A scanner created by a Settings refresh retains silent publication mode;
 -- ordinary scans continue to use new-task publication.
 WQA.Debug = noop
-WQA.ZoneIDList = {}
+WQA.ZoneIDList = { [12] = { 2599, 2600, 2405 } }
 WQA.db = {
     profile = {
         options = {
-            zone = {},
+            zone = { [2599] = true, [2600] = true, [2405] = true },
             reward = { gear = { azeriteTraits = "" }, reputation = {} }
         }
     }
 }
+WQA.IsMapCurrentlyAvailable = function(_, mapID) return mapID ~= 2599 end
 WQA._wqaTurboRefreshMode = "settings"
 WQA:Reward()
 assert(WQA._wqaRewardScan.publishMode == "settings")
+assert(#WQA._wqaRewardScan.maps == 2)
+local scannedMaps = {}
+for _, mapID in ipairs(WQA._wqaRewardScan.maps) do scannedMaps[mapID] = true end
+assert(scannedMaps[2600] and scannedMaps[2405])
+assert(not scannedMaps[2599], "The inactive rotating map must not be scanned")
 WQA._wqaRewardScan = nil
 WQA._wqaTurboRefreshMode = nil
 WQA:Reward()
