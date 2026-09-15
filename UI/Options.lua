@@ -15,7 +15,7 @@ function WQA:UpdateOptions()
 				order = newOrder(),
 				type = "group",
 				childGroups = "tree",
-				name = "Tracking",
+				name = L["Tracking"],
 				args = {}
 			},
 			reward = self:CreateRewardOptions(),
@@ -200,8 +200,8 @@ function WQA:UpdateOptions()
 					},
 					showWarModeQuestsWithoutWarMode = {
 						type = "toggle",
-						name = "Show PvP World Quests while War Mode is disabled",
-						desc = "Shows PvP World Quests even when War Mode is off. These quests may not count toward their associated achievements until War Mode is enabled.",
+						name = L["Show PvP World Quests while War Mode is disabled"],
+						desc = L["Shows PvP World Quests even when War Mode is off. These quests may not count toward their associated achievements until War Mode is enabled."],
 						width = "double",
 						set = function(info, val)
 							WQA.db.profile.options.showWarModeQuestsWithoutWarMode = val
@@ -213,8 +213,7 @@ function WQA:UpdateOptions()
 						end,
 						order = newOrder()
 					},
-
-WorldQuestTracker = {
+					WorldQuestTracker = {
 						type = "toggle",
 						name = L["Use World Quest Tracker"],
 						width = "double",
@@ -284,19 +283,19 @@ function WQA:OrganizeSettingsTabs()
 	customTab.childGroups = "tree"
 	if customTab.args.quest then
 		customTab.args.quest.inline = nil
-		customTab.args.quest.name = "World Quests"
+		customTab.args.quest.name = L["World Quests"]
 	end
 	if customTab.args.reward then
 		customTab.args.reward.inline = nil
-		customTab.args.reward.name = "World Quest Rewards"
+		customTab.args.reward.name = L["World Quest Rewards"]
 	end
 	if customTab.args.mission then
 		customTab.args.mission.inline = nil
-		customTab.args.mission.name = "Missions"
+		customTab.args.mission.name = L["Missions"]
 	end
 	if customTab.args.missionReward then
 		customTab.args.missionReward.inline = nil
-		customTab.args.missionReward.name = "Mission Rewards"
+		customTab.args.missionReward.name = L["Mission Rewards"]
 	end
 
 	-- Options: split the old flat list into focused pages.
@@ -305,7 +304,7 @@ function WQA:OrganizeSettingsTabs()
 	optionsTab.childGroups = "tree"
 
 	if old.showWarModeQuestsWithoutWarMode then
-		old.showWarModeQuestsWithoutWarMode.name = "Show PvP WQs while War Mode is disabled"
+		old.showWarModeQuestsWithoutWarMode.name = L["Show PvP WQs while War Mode is disabled"]
 	end
 
 	-- AceConfig's inline descriptions can become cramped inside Blizzard's
@@ -344,123 +343,123 @@ function WQA:OrganizeSettingsTabs()
 		refresh = {
 			order = 5,
 			type = "group",
-			name = "Refresh",
+			name = L["Refresh"],
 			args = {
 				help = {
 					order = 1,
 					type = "description",
 					width = "full",
-					name = "Tracking and reward filters refresh automatically after changes. Use this button to force an immediate rebuild when you want to verify the current World Quest state."
+					name = L["Tracking and reward filters refresh automatically after changes. Use this button to force an immediate rebuild when you want to verify the current World Quest state."]
 				},
 				now = {
 					order = 2,
 					type = "execute",
-					name = "Refresh now",
+					name = L["Refresh now"],
 					width = 1.0,
-					desc = "Immediately rebuild WQA Turbo's current World Quest data.",
+					desc = L["Immediately rebuild WQA Turbo's current World Quest data."],
 					func = function()
 						WQA:RefreshFromOptions()
 					end
 				}
 			}
 		},
-		output = BuildOptionPage(10, "Output", {
+		output = BuildOptionPage(10, L["Output"], {
 			{
 				key = "chat",
 				option = old.chat,
-				description = "Print matching World Quests to the chat frame when WQA Turbo reports results."
+				description = L["Print matching World Quests to the chat frame when WQA Turbo reports results."]
 			},
 			{
 				key = "PopUp",
 				option = old.PopUp,
-				description = "Automatically show the WQA Turbo popup when new matching World Quests are found."
+				description = L["Automatically show the WQA Turbo popup when new matching World Quests are found."]
 			}
 		}),
-		popup = BuildOptionPage(20, "Popup", {
+		popup = BuildOptionPage(20, L["Popup"], {
 			{
 				key = "popupRememberPosition",
 				option = old.popupRememberPosition,
-				description = "Remember the popup's last dragged position between openings."
+				description = L["Remember the popup's last dragged position between openings."]
 			},
 			{
 				key = "popupShowExpansion",
 				option = old.popupShowExpansion,
-				description = "Show expansion headings in the World Quest popup."
+				description = L["Show expansion headings in the World Quest popup."]
 			},
 			{
 				key = "popupShowZone",
 				option = old.popupShowZone,
-				description = "Show zone headings in the World Quest popup."
+				description = L["Show zone headings in the World Quest popup."]
 			},
 			{
 				key = "popupShowTime",
 				option = old.popupShowTime,
-				description = "Show the remaining time for each World Quest in the popup."
+				description = L["Show the remaining time for each World Quest in the popup."]
 			},
 			{
 				key = "esc",
 				option = old.esc,
-				description = "Allow Escape to close the popup. Changing this option requires a UI reload."
+				description = L["Allow Escape to close the popup. Changing this option requires a UI reload."]
 			}
 		}),
-		chat = BuildOptionPage(30, "Chat", {
+		chat = BuildOptionPage(30, L["Chat"], {
 			{
 				key = "chatShowExpansion",
 				option = old.chatShowExpansion,
-				description = "Print expansion headings when WQA Turbo writes World Quest results to chat."
+				description = L["Print expansion headings when WQA Turbo writes World Quest results to chat."]
 			},
 			{
 				key = "chatShowZone",
 				option = old.chatShowZone,
-				description = "Print zone headings when WQA Turbo writes World Quest results to chat."
+				description = L["Print zone headings when WQA Turbo writes World Quest results to chat."]
 			},
 			{
 				key = "chatShowTime",
 				option = old.chatShowTime,
-				description = "Include each World Quest's remaining time in chat output."
+				description = L["Include each World Quest's remaining time in chat output."]
 			}
 		}),
-		sorting = BuildOptionPage(40, "Sorting", {
+		sorting = BuildOptionPage(40, L["Sorting"], {
 			{
 				key = "sortByName",
 				option = old.sortByName,
-				description = "Sort matching World Quests alphabetically by quest name."
+				description = L["Sort matching World Quests alphabetically by quest name."]
 			},
 			{
 				key = "sortByZoneName",
 				option = old.sortByZoneName,
-				description = "Sort matching World Quests by zone name."
+				description = L["Sort matching World Quests by zone name."]
 			}
 		}),
-		gameplay = BuildOptionPage(50, "Gameplay", {
+		gameplay = BuildOptionPage(50, L["Gameplay"], {
 			{
 				key = "delay",
 				option = old.delay,
-				description = "Seconds to wait after login before WQA Turbo starts its initial scan."
+				description = L["Seconds to wait after login before WQA Turbo starts its initial scan."]
 			},
 			{
 				key = "delayCombat",
 				option = old.delayCombat,
-				description = "Delay automatic WQA Turbo output while you are in combat and resume it afterward."
+				description = L["Delay automatic WQA Turbo output while you are in combat and resume it afterward."]
 			},
 			{
 				key = "showWarModeQuestsWithoutWarMode",
 				option = old.showWarModeQuestsWithoutWarMode,
-				description = "Show PvP World Quests even while War Mode is off. Some associated achievements may still require War Mode to be enabled."
+				description = L["Show PvP World Quests even while War Mode is off. Some associated achievements may still require War Mode to be enabled."]
 			}
 		}),
-		integrations = BuildOptionPage(60, "Integrations", {
+		integrations = BuildOptionPage(60, L["Integrations"], {
 			{
 				key = "WorldQuestTracker",
 				option = old.WorldQuestTracker,
-				description = "Use World Quest Tracker integration when that addon is installed."
+				description = L["Use World Quest Tracker integration when that addon is installed."]
 			}
 		}),
-		interface = BuildOptionPage(70, "Interface", {
+		interface = BuildOptionPage(70, L["Interface"], {
 			{
 				key = "LibDBIcon",
 				option = old.LibDBIcon,
-				description = "Show or hide the WQA Turbo minimap button."
+				description = L["Show or hide the WQA Turbo minimap button."]
 			}
 		})
 	}
