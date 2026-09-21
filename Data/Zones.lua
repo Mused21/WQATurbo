@@ -67,6 +67,7 @@ WQA.ZoneIDList = {
         2369, -- Siren Isle
         2346, -- Undermine
         2371, -- K'aresh
+        2472, -- Tazavesh (open-world K'aresh hub)
     },
     [12] = {
         2395, -- Eversong Woods

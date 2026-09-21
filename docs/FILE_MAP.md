@@ -87,6 +87,12 @@ Quest Pins and missions. Owns the canonical `AddCustom()` implementation.
 Change when custom saved entries need different runtime registration behavior.
 Editor validation and option-tree changes belong in `UI/Options/Custom.lua`.
 
+### `Tracking/Callings.lua`
+
+Owns the opt-in Shadowlands Calling quest-ID set from Blizzard's live update.
+Registers currently available IDs during a task rebuild and rejects IDs from a
+previous active covenant. Event wiring belongs in `Runtime/Runtime.lua`.
+
 ### `Tracking/QuestAvailability.lua`
 
 Quest Pin map readiness, request throttling and Quest Flag completion checks.
@@ -387,13 +393,14 @@ Development tooling/scripts. Excluded from release package.
 `validate_project.py` checks structure, startup load order and package hygiene.
 `test_tracking_policy.lua` exercises tracking behavior and Val/Naigtal
 availability with stubbed Blizzard APIs and runs under Lua 5.1 in the validation
-workflow. `test_reward_classifier.lua`
+workflow. `test_callings.lua` covers opt-in registration, live ID replacement and
+covenant isolation. `test_reward_classifier.lua`
 checks representative reward categories, link fallbacks and retry propagation.
 `test_locales.lua` ensures Simplified and Traditional Chinese override every
 task match-reason label and retain the formatted explanation argument.
 `test_reward_scanner.lua` checks coalesced publication after initial reward
 inspection and completed item retries, including silent Settings publication
-and inactive rotating-map exclusion.
+and inactive rotating-map exclusion, plus Tazavesh inclusion when enabled.
 `test_runtime_lifecycle.lua` checks Settings registration, startup timing,
 event dispatch, combat recovery, War Mode refresh and mission updates.
 `test_task_resolver.lua` checks progressive readiness, retry ownership, final

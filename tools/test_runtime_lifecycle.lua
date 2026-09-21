@@ -121,6 +121,9 @@ WQATurbo = {
 	ResumeDeferredRefresh = function()
 		deferredRefreshes = deferredRefreshes + 1
 	end,
+	UpdateCallings = function(self, callings) self.lastCallings = callings end,
+	ClearCallings = function(self) self.lastCallings = nil end,
+	RequestCallings = function(self) self.callingRequests = (self.callingRequests or 0) + 1 end,
 	ShowCached = commandCall("cached"),
 	Refresh = commandCall("refresh"),
 	ShowWQAMigrationPrompt = commandCall("import"),
@@ -163,6 +166,9 @@ assert(WQA.optionsFrame.Profiles == settingsPages[2])
 assert(eventFrame.registered.PLAYER_ENTERING_WORLD)
 assert(eventFrame.registered.GARRISON_MISSION_LIST_UPDATE)
 assert(eventFrame.registered.WAR_MODE_STATUS_UPDATE)
+assert(eventFrame.registered.COVENANT_CALLINGS_UPDATED)
+assert(eventFrame.registered.COVENANT_CHOSEN)
+assert(eventFrame.registered.QUEST_TURNED_IN)
 assert(#scheduled == 1)
 assert(scheduled[1].callback == "MaybeOfferWQAMigration")
 assert(scheduled[1].delay == 2)
@@ -192,12 +198,21 @@ assert(deferredRefreshes == 1)
 
 eventFrame.onEvent(eventFrame, "QUEST_TURNED_IN", 12345)
 assert(WQA.db.global.completed[12345] == true)
+local callings = { { questID = 60001 } }
+eventFrame.onEvent(eventFrame, "COVENANT_CALLINGS_UPDATED", callings)
+assert(WQA.lastCallings == callings)
+WQA._wqaCallingQuestIDs = { [60001] = true }
+eventFrame.onEvent(eventFrame, "QUEST_TURNED_IN", 60001)
+assert(WQA._wqaCallingQuestIDs[60001] == nil)
+assert(WQA.callingRequests == 1 and taskResolverSchedules == 1)
+eventFrame.onEvent(eventFrame, "COVENANT_CHOSEN", 2)
+assert(WQA.lastCallings == nil and WQA.callingRequests == 2)
 
 eventFrame.onEvent(eventFrame, "WAR_MODE_STATUS_UPDATE")
 assert(#shown == 2 and shown[2].mode == "new" and shown[2].auto == true)
 
 eventFrame.onEvent(eventFrame, "GARRISON_MISSION_LIST_UPDATE")
-assert(taskResolverSchedules == 1)
+assert(taskResolverSchedules == 2)
 assert(#loadedAddons == 0, "mission updates use C_Garrison without loading its UI")
 assert(taskResolverRestartWindow == true)
 

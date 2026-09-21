@@ -90,6 +90,7 @@ REQUIRED_PROJECT_FILES = (
     "tools/test_tooltip_lifecycle.lua",
     "tools/test_custom_options.lua",
     "tools/test_custom_tracking.lua",
+    "tools/test_callings.lua",
     "tools/test_database_schema.lua",
     "tools/load_options.lua",
     "tools/test_options_structure.lua",

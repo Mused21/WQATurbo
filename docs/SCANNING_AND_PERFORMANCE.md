@@ -74,6 +74,13 @@ portal rotation, map construction excludes the inaccessible destination before
 calling `C_TaskQuest.GetQuestsOnMap()`. Other maps and user zone settings keep
 their existing behavior.
 
+The War Within map list includes K'aresh (2371) and its Tazavesh open-world
+hub (2472). A map is still scanned only when its zone setting is enabled.
+Shadowlands Callings are a separate opt-in task source: Blizzard's
+`COVENANT_CALLINGS_UPDATED` payload supplies the active covenant's quest IDs,
+then the existing task resolver prepares and publishes their links. This does
+not add another broad map scan.
+
 `WQA:IsMapCurrentlyAvailable()` prefers the localized live portal Area POI and
 uses Blizzard's regional weekly-reset clock as fallback. It returns available
 for both maps if neither signal resolves, preventing uncertain API state from

@@ -31,7 +31,11 @@ function WQA:GetTaskMatchReasons(task)
 	local reasons, seen = {}, {}
 	if reward.achievement then AddReason(reasons, seen, L["Match: achievement"]) end
 	if reward.chance then AddReason(reasons, seen, L["Match: collectible"]) end
-	if reward.custom then AddReason(reasons, seen, L["Match: custom task"]) end
+	if reward.custom then
+		AddReason(reasons, seen,
+			entry.isCalling and self:IsCallingActive(task.id)
+				and L["Match: calling"] or L["Match: custom task"])
+	end
 
 	if reward.item then
 		local item = reward.item

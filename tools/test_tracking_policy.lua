@@ -107,6 +107,7 @@ if not arg[1] then
     assert(legacyReward == nil, "The compatibility core must not define Reward")
 end
 if not arg[1] then loadSource("Tracking/Custom.lua") end
+if not arg[1] then loadSource("Tracking/Callings.lua") end
 loadSource("Tracking/CollectionCache.lua")
 if not arg[1] then
     assert(WQA.CreateQuestList == coreCreateQuestList,

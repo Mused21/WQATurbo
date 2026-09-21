@@ -353,6 +353,13 @@ Custom configuration can track:
 
 Custom entries are stored separately from built-in data and can be profile-enabled/disabled.
 
+The optional Shadowlands Callings control in Rewards tracks currently available
+Callings for the active covenant as ordinary task rows. It gets their IDs from
+Blizzard's live Calling update, so a covenant switch does not require editing
+custom quest IDs. Calling rows use a **Calling** reward marker and the
+Shadowlands expansion heading even when their sanctuary zone ID is not in the
+normal World Quest map table.
+
 ## 17. Mission tables
 
 Mission-table settings are shown only for expansions that actually use them in WQA:
@@ -416,6 +423,10 @@ Features:
 - collapse state stored per profile;
 - progressive updates;
 - optional remembered position.
+
+An automatic refresh does not reopen a closed popup when it finds no
+interesting tasks. Manual popup opening can still show the empty state, and an
+automatic refresh may open the popup when a newly interesting task appears.
 
 Minimap click instructions are not included inside the persistent popup.
 

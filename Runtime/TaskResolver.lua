@@ -46,6 +46,7 @@ local IsActive = C_TaskQuest.IsActive
 
 local CHECK_RETRY_DELAY_SECONDS = 0.50
 local CHECK_RETRY_MAX_AGE_SECONDS = 30.0
+local SHADOWLANDS_EXPANSION_ID = 9
 
 local function cancelCheckRetry(self)
 	local timer = self._wqaTurboCheckRetryTimer
@@ -112,6 +113,11 @@ function WQA:ScheduleTaskResolverCheck(restartWindow)
 end
 
 local function isQuestActive(self, questID)
+	if self.questList[questID] and self.questList[questID].isCalling then
+		if self:IsCallingActive(questID) then return true end
+		if not self.questList[questID].hasOtherSource then return false end
+	end
+
 	if not self:ShouldIncludeWorldQuestForCurrentMode(questID) then
 		return false
 	end
@@ -121,6 +127,19 @@ local function isQuestActive(self, questID)
 		or self:EmissaryIsActive(questID)
 		or self:isQuestPinActive(questID)
 		or self:IsQuestFlaggedCompleted(questID)
+end
+
+local function worldQuestTask(self, questID)
+	local task = {
+		id = questID,
+		type = TaskType.WorldQuest
+	}
+
+	if self.questList[questID].isCalling and self:IsCallingActive(questID) then
+		task.expansion = SHADOWLANDS_EXPANSION_ID
+	end
+
+	return task
 end
 
 ---Resolve/cache all currently required links for one active world quest.
@@ -255,8 +274,9 @@ end
 ---Turbo replacement for upstream CheckWQ().
 ---
 ---The optional second argument is internal and only indicates that this call
----came from Turbo's coalesced retry timer.
-function WQA:CheckWQ(mode, fromRetry)
+---came from Turbo's coalesced retry timer. The third preserves automatic
+---refresh intent so an empty result cannot reopen a popup the user closed.
+function WQA:CheckWQ(mode, fromRetry, automatic)
 	self:Debug("CheckWQ (WQA Turbo progressive)", mode)
 
 	local activeQuests = {}
@@ -331,13 +351,7 @@ function WQA:CheckWQ(mode, fromRetry)
 	self.activeTasks = {}
 
 	for id in pairs(activeQuests) do
-		table.insert(
-			self.activeTasks,
-			{
-				id = id,
-				type = TaskType.WorldQuest
-			}
-		)
+		table.insert(self.activeTasks, worldQuestTask(self, id))
 	end
 
 	for id in pairs(readyMissions) do
@@ -369,14 +383,7 @@ function WQA:CheckWQ(mode, fromRetry)
 
 	for id in pairs(newQuests) do
 		self.watched[id] = true
-
-		table.insert(
-			self.newTasks,
-			{
-				id = id,
-				type = TaskType.WorldQuest
-			}
-		)
+		table.insert(self.newTasks, worldQuestTask(self, id))
 	end
 
 	for id in pairs(newMissions) do
@@ -416,7 +423,10 @@ function WQA:CheckWQ(mode, fromRetry)
 	elseif mode == "new" then
 		self:AnnounceChat(self.newTasks, self.first)
 
-		if self.db.profile.options.PopUp == true then
+		if
+			self.db.profile.options.PopUp == true
+			and (automatic ~= true or next(self.newTasks) ~= nil)
+		then
 			self:AnnouncePopUp(self.newTasks, self.first)
 		end
 	elseif mode == "popup" then
@@ -426,7 +436,10 @@ function WQA:CheckWQ(mode, fromRetry)
 	else
 		self:AnnounceChat(self.activeTasks)
 
-		if self.db.profile.options.PopUp == true then
+		if
+			self.db.profile.options.PopUp == true
+			and (automatic ~= true or next(self.activeTasks) ~= nil)
+		then
 			self:AnnouncePopUp(self.activeTasks)
 		end
 	end

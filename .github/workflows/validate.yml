@@ -63,6 +63,9 @@ jobs:
       - name: Test custom runtime tracking
         run: lua5.1 tools/test_custom_tracking.lua
 
+      - name: Test covenant calling tracking
+        run: lua5.1 tools/test_callings.lua
+
       - name: Test database schema migrations
         run: lua5.1 tools/test_database_schema.lua
 

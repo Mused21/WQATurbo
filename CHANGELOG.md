@@ -1,5 +1,15 @@
 # WQA Turbo Changelog
 
+## 1.5.0
+
+### Improved
+- Keep a closed World Quest popup closed when an automatic refresh finds no interesting tasks, then open it when a new interesting task appears.
+- Add one optional Shadowlands Callings setting that follows the active covenant's live Calling quest IDs across covenant switches.
+
+### Fixed
+- Scan the Tazavesh open-world map in K'aresh for relevant The War Within World Quest rewards.
+- Show Callings under Shadowlands instead of Unknown and give their Settings toggle enough room for its full label.
+
 ## 1.4.1
 
 ### Fixed

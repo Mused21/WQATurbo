@@ -100,6 +100,12 @@ sources using Blizzard's direct ownership query and quest-completion state.
 Owned only by `Tracking/Custom.lua`. Registers enabled user-defined World
 Quest, Quest Flag, Quest Pin and mission tracking data.
 
+### `WQA:AddCallings()` / `WQA:UpdateCallings(callings)`
+
+Owned by `Tracking/Callings.lua`. Reuses and refreshes Blizzard's live Calling
+quest-ID set for the active covenant when the Shadowlands toggle is enabled.
+`WQA:IsCallingActive(questID)` prevents a previous covenant's IDs from showing.
+
 ## Achievement registration
 
 ### `WQA.Achievements:Register(definition)`
@@ -294,7 +300,9 @@ The Turbo implementation:
 - resolves task/reward links;
 - publishes ready tasks without waiting for every unresolved task;
 - populates `activeTasks` and `newTasks`;
-- routes to chat/popup/LDB behavior by mode.
+- routes to chat/popup/LDB behavior by mode;
+- suppresses empty automatic popup creation while preserving manual empty
+  output and updates to an already-open popup.
 
 ### `WQA:ResetTaskResolverRetry()`
 

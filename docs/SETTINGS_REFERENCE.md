@@ -161,6 +161,12 @@ Expansion World Quest groups can contain:
 - Professions
 - expansion-specific categories
 
+The Shadowlands Rewards group also has **Track Shadowlands Callings**. It is
+off by default and tracks currently available Callings for the active covenant
+using Blizzard's live quest IDs. No individual custom quest entries are needed;
+switching covenants updates the tracked IDs. The toggle uses the full Settings
+row so its localized label is not clipped.
+
 ### Mission Table
 
 Show only for:
