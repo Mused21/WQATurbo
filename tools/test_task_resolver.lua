@@ -215,6 +215,64 @@ assert(openPopupRefreshes == refreshesBeforePopup)
 WQA:CheckWQ("LDB")
 assert(#ldbPublications == 1)
 
+-- A live calling is a quest task, but not a World Quest and must not be
+-- rejected by World Quest type or zone filtering.
+local callingActive = true
+WQA.questList[105] = { reward = { custom = true }, isCalling = true }
+WQA.IsCallingActive = function(_, questID)
+	assert(questID == 105)
+	return callingActive
+end
+local originalEligibility = WQA.ShouldIncludeWorldQuestForCurrentMode
+WQA.ShouldIncludeWorldQuestForCurrentMode = function(self, questID)
+	if questID == 105 then error("Calling must bypass World Quest filters") end
+	return originalEligibility(self, questID)
+end
+WQA:CheckWQ("settings")
+assert(taskKeys(WQA.activeTasks)["WORLD_QUEST:105"])
+local callingTask
+for _, task in ipairs(WQA.activeTasks) do
+	if task.id == 105 then callingTask = task end
+end
+assert(callingTask and callingTask.expansion == 9,
+	"Live Callings must render under the Shadowlands expansion")
+callingActive = false
+WQA:CheckWQ("settings")
+assert(not taskKeys(WQA.activeTasks)["WORLD_QUEST:105"])
+WQA.questList[105].hasOtherSource = true
+WQA.ShouldIncludeWorldQuestForCurrentMode = originalEligibility
+activeQuests[105] = true
+WQA:CheckWQ("settings")
+assert(taskKeys(WQA.activeTasks)["WORLD_QUEST:105"],
+	"A custom entry for a rotated-out Calling keeps its original behavior")
+activeQuests[105] = nil
+WQA.questList[105] = nil
+
+-- Automatic publication must not reopen a closed popup for an empty result.
+-- Manual publication still exposes the empty state, and automatic publication
+-- resumes as soon as an interesting task exists.
+local savedCheckMissions = WQA.CheckMissions
+local savedAreaPoiCheck = WQA.Criterias.AreaPoi.Check
+local savedActiveQuests = activeQuests
+activeQuests = {}
+WQA.CheckMissions = function() return {}, false end
+WQA.Criterias.AreaPoi.Check = function()
+	return { active = {}, new = {}, retry = false }
+end
+WQA.db.profile.options.PopUp = true
+local popupCount = #popupPublications
+WQA:CheckWQ(nil, nil, true)
+assert(#popupPublications == popupCount, "Empty automatic refresh must keep a closed popup closed")
+WQA:CheckWQ()
+assert(#popupPublications == popupCount + 1, "Manual output must still show the empty popup state")
+activeQuests[101] = true
+WQA:CheckWQ(nil, nil, true)
+assert(#popupPublications == popupCount + 2, "Automatic refresh must open for an interesting task")
+WQA.db.profile.options.PopUp = false
+activeQuests = savedActiveQuests
+WQA.CheckMissions = savedCheckMissions
+WQA.Criterias.AreaPoi.Check = savedAreaPoiCheck
+
 -- Area POI readiness is isolated per POI. One missing reward link or missing
 -- POI payload must not publish that POI or block a separate ready POI.
 local allPoiRewardsReady = false

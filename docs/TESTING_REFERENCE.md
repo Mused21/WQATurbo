@@ -15,6 +15,7 @@ From the repository root with a Lua 5.1 interpreter:
 
 ```text
 lua5.1 tools/test_tracking_policy.lua
+lua5.1 tools/test_callings.lua
 lua5.1 tools/test_reward_classifier.lua
 lua5.1 tools/test_reward_scanner.lua
 lua5.1 tools/test_runtime_lifecycle.lua
@@ -55,6 +56,11 @@ equipment caches, transmog and retry, reputation items, recipes, known/custom
 items, Azerite traits and conduits. It can run the same cases against an
 optional prior `WQATurbo.lua` path.
 
+The locale test checks the Simplified and Traditional Chinese task-match
+explanations and expanded collectible-search help. Project validation separately
+guards unique English fallbacks, declared override keys, format placeholders,
+and the complete alphabetized key template in every locale family.
+
 The reward-scanner test checks that initial reward inspection and completed
 item retries dirty a publication batch, and that repeated flushes without new
 work do not rebuild the display again. It also verifies that a scanner started
@@ -70,10 +76,15 @@ completion, War Mode refresh and mission updates. It also invokes all three
 AceDB profile callbacks through the real Options/Display refresh path, checking
 queued refresh cancellation, silent immediate rebuild, watched-state reset and
 LibDBIcon rebinding even with combat deferral enabled.
+It also checks Calling event dispatch, turn-in removal and covenant-change
+invalidation. The Calling test covers opt-in registration, replacement of the
+live quest-ID set, covenant isolation and the disabled setting.
 
 The task-resolver test exercises the canonical `CheckWQ()` owner. It checks
 per-task readiness, retry coalescing/cancellation, final filtering and
-Settings/popup/LDB publication modes.
+Settings/popup/LDB publication modes. It also verifies that an empty automatic
+publication leaves a closed popup closed while manual empty output and a later
+interesting automatic result still open it.
 
 The tooltip-lifecycle test checks exact-object ownership, stale `OnHide`
 callbacks, idempotent release, attached-task cleanup and popup/LDB rebuild
@@ -205,6 +216,15 @@ Expected:
 - popup only updates automatically if already open.
 
 ## 9. Popup lifecycle test
+
+With the popup closed and automatic popup output enabled:
+
+- an automatic refresh with no interesting tasks keeps it closed;
+- manual left-click or `/wqat popup` can still show the empty state;
+- an automatic refresh opens it after a newly interesting task appears.
+
+With the popup already open, an empty automatic refresh updates it to the
+localized no-interest message without closing or duplicating it.
 
 Repeatedly:
 

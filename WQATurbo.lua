@@ -240,6 +240,7 @@ function WQA:OnInitialize()
 				chat = true,
 				PopUp = false,
 				popupRememberPosition = false,
+				trackShadowlandsCallings = false,
 				popupCollapsedExpansions = {},
 				showWarModeQuestsWithoutWarMode = false,
 				hideExaltedReputations = false,
@@ -369,6 +370,7 @@ function WQA:CreateQuestList()
 
 
 	self:AddCustom()
+	self:AddCallings()
 	self:Special()
 	self:Reward()
 	self:EmissaryReward()
@@ -1309,7 +1311,9 @@ function WQA:GetRewardTextByID(questID, key, value, i, type)
 	local k, v = key, value
 	local text
 	if k == "custom" then
-		text = "Custom"
+		text = self.questList[questID] and self.questList[questID].isCalling
+			and self:IsCallingActive(questID)
+			and L["Calling"] or L["Custom"]
 	elseif k == "item" then
 		text = self:GetRewardForID(questID, k, type)
 	elseif k == "reputation" then

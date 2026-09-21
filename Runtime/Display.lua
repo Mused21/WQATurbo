@@ -33,10 +33,11 @@ end
 ---Rebuild the data model using the established refresh sequence.
 ---@param self WQATurbo
 ---@param mode string?
-local function refreshData(self, mode)
+---@param auto boolean?
+local function refreshData(self, mode, auto)
 	self:Debug("Show", mode)
 	self:CreateQuestList()
-	self:CheckWQ(mode)
+	self:CheckWQ(mode, nil, auto == true)
 	self.first = true
 end
 
@@ -73,7 +74,7 @@ function WQA:Refresh(mode, auto)
 
 	local previousMode = self._wqaTurboRefreshMode
 	self._wqaTurboRefreshMode = mode
-	refreshData(self, mode)
+	refreshData(self, mode, auto)
 	self._wqaTurboRefreshMode = previousMode
 end
 

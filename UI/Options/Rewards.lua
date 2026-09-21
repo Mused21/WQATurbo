@@ -448,6 +448,25 @@ function WQA:PopulateRewardOptions()
 					}
 				end
 
+				-- This blanket toggle uses Blizzard's live covenant-specific IDs.
+				if i == 9 then
+					rewardArgs.callings = {
+						order = 35,
+						type = "toggle",
+						name = L["Track Shadowlands Callings"],
+						desc = L["Track the current covenant's available Callings without entering quest IDs."],
+						width = "full",
+						set = function(_, value)
+							WQA.db.profile.options.trackShadowlandsCallings = value
+							if not value then WQA:ClearCallings() end
+							WQA:ScheduleOptionsRefresh()
+						end,
+						get = function()
+							return WQA.db.profile.options.trackShadowlandsCallings
+						end
+					}
+				end
+
 				-- Emissary
 				if EmissaryQuestIDList[i] then
 					rewardArgs.emissary = {

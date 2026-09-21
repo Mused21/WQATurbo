@@ -49,6 +49,7 @@ WQATurbo.lua
 
 Tracking/CollectionCache.lua
 Tracking/Custom.lua
+Tracking/Callings.lua
 Tracking/QuestAvailability.lua
 Scanning/RewardScanner.lua
 Scanning/EmissaryScanner.lua
@@ -250,6 +251,11 @@ Quests and missions. `Tracking/CollectionCache.lua` provides the invalidation he
 mount/pet snapshot implementation and registers static mount, pet and toy
 sources. Consolidated runtime methods have one source owner.
 
+`Tracking/Callings.lua` owns the optional live Shadowlands Calling ID set.
+`Runtime/Runtime.lua` forwards Calling and covenant-change events, while the
+TaskResolver uses the current covenant's set for availability. Calling IDs are
+not saved in the profile.
+
 `CheckReward()` owns item-link acquisition and retry aggregation. Its focused
 classifiers decide what the resolved reward means and publish through
 `AddRewardToQuest()`. They do not control scanner scheduling.
@@ -276,6 +282,12 @@ ownership query.
 
 Owns `AddCustom()` and registers enabled user-defined World Quests, Quest
 Flags, Quest Pins and missions during each `CreateQuestList()` rebuild.
+
+### `Tracking/Callings.lua`
+
+Requests the current covenant's Calling data and registers its live quest IDs
+when the Shadowlands option is enabled. A covenant change invalidates the old
+set before requesting the new one; turn-in removes that Calling immediately.
 
 ### `Tracking/QuestAvailability.lua`
 

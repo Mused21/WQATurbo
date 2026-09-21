@@ -61,6 +61,9 @@ function WQA:OnEnable()
 	self.event:RegisterEvent("PLAYER_ENTERING_WORLD")
 	self.event:RegisterEvent("GARRISON_MISSION_LIST_UPDATE")
 	self.event:RegisterEvent("WAR_MODE_STATUS_UPDATE")
+	self.event:RegisterEvent("COVENANT_CALLINGS_UPDATED")
+	self.event:RegisterEvent("COVENANT_CHOSEN")
+	self.event:RegisterEvent("QUEST_TURNED_IN")
 
 	self.event:SetScript("OnEvent", function(_, eventName, id)
 		if eventName == "PLAYER_ENTERING_WORLD" then
@@ -94,6 +97,18 @@ function WQA:OnEnable()
 
 		elseif eventName == "QUEST_TURNED_IN" then
 			self.db.global.completed[id] = true
+			if self._wqaCallingQuestIDs and self._wqaCallingQuestIDs[id] then
+				self._wqaCallingQuestIDs[id] = nil
+				self:ScheduleTaskResolverCheck(true)
+				self:RequestCallings()
+			end
+
+		elseif eventName == "COVENANT_CALLINGS_UPDATED" then
+			self:UpdateCallings(id)
+
+		elseif eventName == "COVENANT_CHOSEN" then
+			self:ClearCallings()
+			self:RequestCallings()
 
 		elseif eventName == "WAR_MODE_STATUS_UPDATE" then
 			self:Show("new", true)

@@ -47,6 +47,7 @@ Database.lua
 
 WQATurbo.lua
 Tracking\Custom.lua
+Tracking\Callings.lua
 Tracking\CollectionCache.lua
 Tracking\QuestAvailability.lua
 Scanning\RewardScanner.lua

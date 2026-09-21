@@ -161,7 +161,11 @@ function WQA:GetExpansionByQuestID(questID)
 end
 
 function WQA:GetExpansion(task)
-    if task.type == TaskType.Mission then
+	if task.expansion then
+		return task.expansion
+	end
+
+	if task.type == TaskType.Mission then
         return self:GetExpansionByMissionID(task.id)
     end
 

@@ -1,14 +1,14 @@
 # WQA Turbo Development Roadmap
 
-> **Current release target:** 1.4.1
+> **Current release target:** 1.5.0
 >
 > **Released baseline:** 1.4.1
 >
-> **Current milestone:** 1.4.1 released
+> **Current milestone:** 1.5.0 release candidate
 >
-> **Current item:** 1.4.1 release (Done)
+> **Current item:** 1.5.0 release candidate, including PR #17 localization maintenance (Done)
 >
-> **Last reviewed:** 2026-09-15
+> **Last reviewed:** 2026-09-21
 
 This is the active work queue for WQA Turbo. Read it before planning or
 starting follow-up work. Update the current item and status in the same change
@@ -22,6 +22,46 @@ historical records and must not be reused as active checklists.
 - **Queued**: accepted work with lower priority or a dependency on earlier work.
 - **Research**: requires current API or game-data evidence before implementation.
 - **Done**: implemented, locally validated, and tested in game where applicable.
+
+## 1.5.0: user experience
+
+| Status | Priority | Work item | Completion criteria |
+|---|---:|---|---|
+| **Done** | P1 | Automatic popup empty-result behavior | An automatic refresh with no interesting tasks keeps a closed popup closed; a newly interesting task may open it; manual popup opening and refresh of an already-open popup preserve their current behavior; focused automated and in-game checks pass. |
+| **Done** | P1 | K'aresh transmog discovery | Include the Tazavesh open-world map (2472) in The War Within scan, without changing reward eligibility or disabled-zone rules. Verify a missing appearance World Quest there in game; investigate any remaining named omissions separately. |
+| **Done** | P1 | Blanket Shadowlands Callings | A full-width opt-in Settings control follows Blizzard's live Calling quest IDs for the active covenant, refreshes on turn-in/switch, hides unavailable callings, and groups active rows under Shadowlands. Focused automated and in-game checks pass. |
+| **Done** | P3 | Locale-family organization and Chinese search help | PR #17's locale-family alphabetization and new Simplified/Traditional Chinese search-help translations are integrated without dropping the existing French or Russian translations; all locale blocks expose missing keys as commented English fallbacks, and focused validation passes. |
+
+The K'aresh map entry is a discovery correction. The base K'aresh map (2371)
+was already present; no specific missing quest or item ID was supplied, so this
+does not establish that every reported transmog omission has the same cause.
+Callings use the live `COVENANT_CALLINGS_UPDATED` payload instead of maintaining
+a covenant quest-ID table. The full local gate passes, and the developer
+reported the combined 1.5.0 behavior working in game on 2026-09-21. All three
+items are **Done** and approved for a `release:minor` pull request.
+
+PR #17 was not merged verbatim: its submitted rewrite removed one French and
+29 Russian translations and contained trailing whitespace. The 1.5.0
+integration preserves every existing translation and English fallback, applies
+the requested alphabetical organization, and retains the four new Chinese
+search-help translations.
+
+Focused 1.5.0 in-game checks:
+
+- With automatic popup output enabled, close the popup and let an empty
+  automatic refresh run. It stays closed; manual opening still shows the
+  empty state, and a newly interesting task can open it again.
+- With K'aresh and Tazavesh enabled under The War Within zones, check a known
+  Tazavesh World Quest that rewards an uncollected appearance. Disable only
+  Tazavesh and verify that quest is excluded. Capture a quest and item ID for
+  any remaining missing transmog on K'aresh or another TWW map.
+- Enable **Track Shadowlands Callings** on a character with a covenant. Check
+  that each available Calling appears, a turned-in Calling disappears, and a
+  covenant switch replaces the old set after the update arrives. The full
+  Settings label must be visible and popup rows must use the Shadowlands
+  heading rather than Unknown. Disable the toggle and confirm the automatic
+  Calling rows disappear without affecting manually configured custom quests
+  or ordinary Shadowlands World Quests.
 
 ## 1.4.1: post-release correctness
 

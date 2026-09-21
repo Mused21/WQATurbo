@@ -49,6 +49,12 @@ then silent refresh
 
 Never show the full WQ list merely because the user hovers the icon.
 
+### Automatic empty results keep a closed popup closed
+
+An automatic refresh may open a closed popup only when it publishes an
+interesting task. Manual popup requests must still be able to show the empty
+state, and an already-open popup must continue to refresh in place.
+
 ## Tooltip safety
 
 ### 10. Stale delayed callback may not release a new tooltip

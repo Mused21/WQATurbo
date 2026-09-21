@@ -76,6 +76,7 @@ local function build(baseline)
     assert(gear.jewelryCache == nil)
     local reward = tree.args.reward.args
     assert(reward.Expansion12.order < reward.Expansion6.order)
+    assert(reward.Expansion9.args.Expansion9WorldQuests.args.callings.width == "full")
     assert(reward.Expansion6.args.Expansion6WorldQuests == nil)
     assert(reward.Expansion12.args.Expansion12MissionTable == nil)
     local wq = reward.Expansion10.args.Expansion10WorldQuests.args

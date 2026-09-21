@@ -134,17 +134,34 @@ WQA:Reward()
 assert(WQA._wqaRewardScan.publishMode == "new")
 WQA._wqaRewardScan = nil
 
+-- The actual expansion map list must make Tazavesh discoverable, while the
+-- per-zone setting still controls whether its map enters a scan.
+dofile("Data/Zones.lua")
+WQA.db.profile.options.zone = setmetatable({ [2472] = true }, {
+    __index = function() return false end
+})
+WQA:Reward()
+assert(#WQA._wqaRewardScan.maps == 1 and WQA._wqaRewardScan.maps[1] == 2472)
+WQA._wqaRewardScan = nil
+WQA.db.profile.options.zone[2472] = false
+WQA:Reward()
+assert(#WQA._wqaRewardScan.maps == 0)
+WQA._wqaRewardScan = nil
+
 -- Refresh exposes its mode while CreateQuestList starts the scanner, and the
 -- display publisher passes the retained mode back to CheckWQ. Cached display
 -- modes do not rebuild once startup has supplied usable task state.
 local refreshModeDuringCreate
 local createCount = 0
-local checkMode
+local checkMode, checkAutomatic
 WQA.CreateQuestList = function(self)
 	createCount = createCount + 1
 	refreshModeDuringCreate = self._wqaTurboRefreshMode
 end
-WQA.CheckWQ = function(_, mode) checkMode = mode end
+WQA.CheckWQ = function(_, mode, _, automatic)
+	checkMode = mode
+	checkAutomatic = automatic
+end
 local deferredEvent
 local inCombat = false
 WQA.event = {
@@ -157,6 +174,7 @@ WQA:Refresh("settings", true)
 assert(refreshModeDuringCreate == "settings")
 assert(WQA._wqaTurboRefreshMode == nil)
 assert(createCount == 1 and checkMode == "settings")
+assert(checkAutomatic == true)
 
 WQA.questList = nil
 WQA.activeTasks = nil
@@ -164,6 +182,7 @@ refreshModeDuringCreate = "not-called"
 WQA:ShowCached("popup")
 assert(createCount == 2 and checkMode == "popup")
 assert(refreshModeDuringCreate == nil)
+assert(checkAutomatic == false)
 
 WQA.questList = {}
 WQA.activeTasks = {}
@@ -174,6 +193,7 @@ WQA:Show("new", true)
 assert(createCount == 3 and checkMode == "new")
 assert(refreshModeDuringCreate == "new")
 assert(WQA._wqaTurboRefreshMode == nil)
+assert(checkAutomatic == true)
 
 inCombat = true
 WQA.db.profile.options.delayCombat = true
@@ -186,6 +206,7 @@ WQA:ResumeDeferredRefresh()
 assert(createCount == 4 and checkMode == "settings")
 assert(refreshModeDuringCreate == "settings")
 assert(WQA._wqaTurboPendingRefresh == nil)
+assert(checkAutomatic == true)
 
 WQA:TurboPublishEnrichment("settings")
 assert(checkMode == "settings")
