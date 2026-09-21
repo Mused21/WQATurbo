@@ -149,6 +149,11 @@ FORBIDDEN_REPOSITORY_SUFFIXES = (
 CRITERIA_RE = re.compile(r'\bcriteriaType\s*=\s*"([^"]+)"')
 FACTION_RE = re.compile(r'\bfaction\s*=\s*"([^"]+)"')
 LOCALE_KEY_RE = re.compile(r'L\["([^"]+)"\]')
+LOCALE_BLOCK_RE = re.compile(
+    r'(?:if|elseif) locale == "([^"]+)" then\s*(.*?)'
+    r'(?=\nelseif locale ==|\nend\s*$)',
+    re.DOTALL,
+)
 LOCALE_ASSIGNMENT_RE = re.compile(
     r'^\s*L\["([^"]+)"\]\s*=\s*"((?:\\.|[^"])*)"\s*$',
     re.MULTILINE,
@@ -464,6 +469,18 @@ def validate_locale_keys(validation: Validation) -> None:
     )
     for key in duplicate_base_keys:
         validation.error(f"Locales.lua declares base key '{key}' more than once.")
+
+    expected_order = sorted(base_keys, key=lambda key: (key.casefold(), key))
+    if base_keys != expected_order:
+        validation.error("Locales.lua English keys must be alphabetized.")
+
+    for locale, block in LOCALE_BLOCK_RE.findall(locale_text):
+        locale_keys = LOCALE_KEY_RE.findall(block)
+        if locale_keys != expected_order:
+            validation.error(
+                f"Locales.lua {locale} family must contain the complete "
+                "alphabetized English key list."
+            )
 
     declared = set(base_keys)
     for key in sorted(set(LOCALE_KEY_RE.findall(locale_text)) - declared):

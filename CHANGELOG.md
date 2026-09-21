@@ -5,6 +5,7 @@
 ### Improved
 - Keep a closed World Quest popup closed when an automatic refresh finds no interesting tasks, then open it when a new interesting task appears.
 - Add one optional Shadowlands Callings setting that follows the active covenant's live Calling quest IDs across covenant switches.
+- Sort every locale family alphabetically and add Simplified and Traditional Chinese translations for the expanded collectible search help.
 
 ### Fixed
 - Scan the Tazavesh open-world map in K'aresh for relevant The War Within World Quest rewards.

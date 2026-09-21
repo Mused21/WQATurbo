@@ -6,7 +6,7 @@
 >
 > **Current milestone:** 1.5.0 release candidate
 >
-> **Current item:** 1.5.0 popup, K'aresh discovery, and covenant Callings (Done)
+> **Current item:** 1.5.0 release candidate, including PR #17 localization maintenance (Done)
 >
 > **Last reviewed:** 2026-09-21
 
@@ -30,6 +30,7 @@ historical records and must not be reused as active checklists.
 | **Done** | P1 | Automatic popup empty-result behavior | An automatic refresh with no interesting tasks keeps a closed popup closed; a newly interesting task may open it; manual popup opening and refresh of an already-open popup preserve their current behavior; focused automated and in-game checks pass. |
 | **Done** | P1 | K'aresh transmog discovery | Include the Tazavesh open-world map (2472) in The War Within scan, without changing reward eligibility or disabled-zone rules. Verify a missing appearance World Quest there in game; investigate any remaining named omissions separately. |
 | **Done** | P1 | Blanket Shadowlands Callings | A full-width opt-in Settings control follows Blizzard's live Calling quest IDs for the active covenant, refreshes on turn-in/switch, hides unavailable callings, and groups active rows under Shadowlands. Focused automated and in-game checks pass. |
+| **Done** | P3 | Locale-family organization and Chinese search help | PR #17's locale-family alphabetization and new Simplified/Traditional Chinese search-help translations are integrated without dropping the existing French or Russian translations; all locale blocks expose missing keys as commented English fallbacks, and focused validation passes. |
 
 The K'aresh map entry is a discovery correction. The base K'aresh map (2371)
 was already present; no specific missing quest or item ID was supplied, so this
@@ -38,6 +39,12 @@ Callings use the live `COVENANT_CALLINGS_UPDATED` payload instead of maintaining
 a covenant quest-ID table. The full local gate passes, and the developer
 reported the combined 1.5.0 behavior working in game on 2026-09-21. All three
 items are **Done** and approved for a `release:minor` pull request.
+
+PR #17 was not merged verbatim: its submitted rewrite removed one French and
+29 Russian translations and contained trailing whitespace. The 1.5.0
+integration preserves every existing translation and English fallback, applies
+the requested alphabetical organization, and retains the four new Chinese
+search-help translations.
 
 Focused 1.5.0 in-game checks:
 

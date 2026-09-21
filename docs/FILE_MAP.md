@@ -222,7 +222,10 @@ fail-open Val/Naigtal availability resolution used by scanning and publication.
 ### `Locales.lua`
 
 User-visible localization strings, including the reorganized Settings UI and
-Simplified and Traditional Chinese task-match explanations.
+Simplified and Traditional Chinese task-match and collectible-search text.
+Each language family follows the alphabetized English key list; untranslated
+entries remain commented English fallbacks for easy coverage review. The
+project validator enforces that ordering and complete key template.
 
 When adding or changing a localized UI label, declare its English fallback in
 this file. Locale overrides must preserve any `string.format` placeholders.
@@ -397,7 +400,8 @@ workflow. `test_callings.lua` covers opt-in registration, live ID replacement an
 covenant isolation. `test_reward_classifier.lua`
 checks representative reward categories, link fallbacks and retry propagation.
 `test_locales.lua` ensures Simplified and Traditional Chinese override every
-task match-reason label and retain the formatted explanation argument.
+task match-reason label, retain the formatted explanation argument and include
+the expanded collectible-search help translations.
 `test_reward_scanner.lua` checks coalesced publication after initial reward
 inspection and completed item retries, including silent Settings publication
 and inactive rotating-map exclusion, plus Tazavesh inclusion when enabled.

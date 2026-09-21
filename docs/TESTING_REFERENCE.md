@@ -56,6 +56,11 @@ equipment caches, transmog and retry, reputation items, recipes, known/custom
 items, Azerite traits and conduits. It can run the same cases against an
 optional prior `WQATurbo.lua` path.
 
+The locale test checks the Simplified and Traditional Chinese task-match
+explanations and expanded collectible-search help. Project validation separately
+guards unique English fallbacks, declared override keys, format placeholders,
+and the complete alphabetized key template in every locale family.
+
 The reward-scanner test checks that initial reward inspection and completed
 item retries dirty a publication batch, and that repeated flushes without new
 work do not rebuild the display again. It also verifies that a scanner started

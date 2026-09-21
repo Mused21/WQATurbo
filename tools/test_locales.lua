@@ -16,6 +16,11 @@ local matchKeys = {
     "Match: miscellaneous reward"
 }
 
+local searchKeys = {
+    "Search by collectible name or any related achievement, item, quest, tracking, or criterion ID.",
+    "Searches all supported expansions by collectible name, primary ID, source item ID, mapped quest ID, tracking quest ID, or nested criterion. The search text is temporary and is not saved to your profile."
+}
+
 local function LoadLocale(locale)
     WQATurbo = {}
     GetLocale = function() return locale end
@@ -30,6 +35,11 @@ for _, locale in ipairs({ "zhCN", "zhTW" }) do
         locale .. " must translate the match-reason format")
 
     for _, key in ipairs(matchKeys) do
+        assert(localized[key] and localized[key] ~= english[key],
+            locale .. " must translate " .. key)
+    end
+
+    for _, key in ipairs(searchKeys) do
         assert(localized[key] and localized[key] ~= english[key],
             locale .. " must translate " .. key)
     end
