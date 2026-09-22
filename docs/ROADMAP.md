@@ -34,7 +34,9 @@ contains 24 daily Calling families and all 96 covenant-specific quest IDs.
 Blizzard's active-covenant event remains the rotation authority, so this does
 not add a broad map scan or poll inactive covenant quest logs. The developer
 verified the combined behavior, sanctuary grouping and unclipped Settings rows
-in game on 2026-09-22, so the item is **Done**.
+in game on 2026-09-22, so the item is **Done**. PR #19's Simplified and
+Traditional Chinese Calling translations are incorporated with its description
+updated for the selected-covenant behavior.
 
 Focused 1.5.1 in-game checks:
 

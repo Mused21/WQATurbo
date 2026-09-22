@@ -4,6 +4,7 @@
 
 ### Improved
 - Let Shadowlands Calling tracking include any selected covenants, show unclipped selectors, label and group each covenant-specific row by its sanctuary, and keep completed variants hidden until the shared Calling rotation expires.
+- Add Simplified and Traditional Chinese translations for the Calling interface and related tracking labels from PR #19.
 
 ## 1.5.0
 

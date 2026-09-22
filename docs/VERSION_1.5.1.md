@@ -18,6 +18,9 @@ not lose their localized zone group when Blizzard omits quest-zone metadata.
 The feature adds four profile-scoped covenant selectors, an account-wide cache
 of observed family expirations, and character-scoped completion locks with the
 same expiration. Unknown future IDs remain limited to the active covenant.
+PR #19 contributes Simplified and Traditional Chinese translations for the
+Calling interface; its description translation follows the final
+selected-covenant wording.
 
 ## Release state
 

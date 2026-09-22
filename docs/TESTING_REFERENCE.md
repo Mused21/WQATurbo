@@ -82,6 +82,8 @@ unique IDs, selected-covenant expansion, labels and shared expiration, per-
 character completion retention, Blizzard completion flags, expiration pruning,
 unknown-ID fallback, request gating and the disabled setting. The options suite
 checks the master row and four dependent covenant selectors.
+The locale suite also locks the contributed Simplified and Traditional Chinese
+Calling labels and selected-covenant description against English fallback.
 
 The task-resolver test exercises the canonical `CheckWQ()` owner. It checks
 per-task readiness, retry coalescing/cancellation, final filtering and
