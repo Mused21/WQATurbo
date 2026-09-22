@@ -354,11 +354,19 @@ Custom configuration can track:
 Custom entries are stored separately from built-in data and can be profile-enabled/disabled.
 
 The optional Shadowlands Callings control in Rewards tracks currently available
-Callings for the active covenant as ordinary task rows. It gets their IDs from
-Blizzard's live Calling update, so a covenant switch does not require editing
-custom quest IDs. Calling rows use a **Calling** reward marker and the
-Shadowlands expansion heading even when their sanctuary zone ID is not in the
-normal World Quest map table.
+Callings for any selected covenants as ordinary task rows. Blizzard's live
+active-covenant update determines the daily objective families; a verified
+mapping supplies each selected covenant's corresponding quest ID. Unknown
+future IDs remain limited to the active covenant. Calling rows use a
+**Calling (Covenant)** reward marker and the Shadowlands expansion heading even
+when their sanctuary zone ID is not in the normal World Quest map table. If
+Blizzard does not expose zone metadata for an inactive covenant's quest, its
+row uses that covenant's sanctuary map rather than the Unknown group.
+
+The four covenant selectors are enabled by default when the master option is
+first enabled. Turning in a variant hides it for that character until the
+observed Calling expires, without hiding the other covenant variants. The
+selection and completion behavior survives covenant switches and `/reload`.
 
 ## 17. Mission tables
 

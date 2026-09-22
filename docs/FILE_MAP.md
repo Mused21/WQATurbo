@@ -89,9 +89,11 @@ Editor validation and option-tree changes belong in `UI/Options/Custom.lua`.
 
 ### `Tracking/Callings.lua`
 
-Owns the opt-in Shadowlands Calling quest-ID set from Blizzard's live update.
-Registers currently available IDs during a task rebuild and rejects IDs from a
-previous active covenant. Event wiring belongs in `Runtime/Runtime.lua`.
+Owns opt-in Shadowlands Calling registration. It resolves Blizzard's active
+covenant payload to shared daily families, registers selected covenant variants,
+tracks observed expirations and per-character completion locks, and limits
+unknown future IDs to the active covenant. Event wiring belongs in
+`Runtime/Runtime.lua`.
 
 ### `Tracking/QuestAvailability.lua`
 
@@ -292,6 +294,12 @@ emissary quest IDs, localized World Quest type labels and the Val/Naigtal
 rotation anchor. Loaded before all runtime and Settings consumers. Preserves
 `WQA.EmissaryQuestIDList` as an alias to the canonical emissary table.
 
+### `Data/ShadowlandsCallings.lua`
+
+Verified mapping of 24 daily Calling objective families to their 96
+covenant-specific quest IDs, plus the reverse quest lookup. Loaded before the
+Calling tracker; contains no API calls or mutable runtime state.
+
 ### `Data/ContainerCollectibles.lua`
 
 Fixed collectible pools for racing purses, Benthic armor tokens, ordinary
@@ -396,8 +404,9 @@ Development tooling/scripts. Excluded from release package.
 `validate_project.py` checks structure, startup load order and package hygiene.
 `test_tracking_policy.lua` exercises tracking behavior and Val/Naigtal
 availability with stubbed Blizzard APIs and runs under Lua 5.1 in the validation
-workflow. `test_callings.lua` covers opt-in registration, live ID replacement and
-covenant isolation. `test_reward_classifier.lua`
+workflow. `test_callings.lua` covers the complete 96-ID mapping, selected
+covenant expansion, completion retention, expiration, unknown-ID fallback and
+disabled states. `test_reward_classifier.lua`
 checks representative reward categories, link fallbacks and retry propagation.
 `test_locales.lua` ensures Simplified and Traditional Chinese override every
 task match-reason label, retain the formatted explanation argument and include
@@ -429,7 +438,8 @@ validator rejects reintroducing this obsolete configuration.
 ## File ownership rule of thumb
 
 ```text
-stable game-ID mapping          → Data/Expansions, Data/Zones, Data/RuntimeData
+stable game-ID mapping          → Data/Expansions, Data/Zones, Data/RuntimeData,
+                                  Data/ShadowlandsCallings
 reward meaning/classification   → WQATurbo shared classifier / Rewards
 scanner timing/readiness        → RewardScanner
 task publication/readiness      → TaskResolver

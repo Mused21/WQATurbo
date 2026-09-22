@@ -58,6 +58,7 @@ REQUIRED_PROJECT_FILES = (
     "Tracking/QuestAvailability.lua",
     "Data/Expansions/Legion.lua",
     "Data/RuntimeData.lua",
+    "Data/ShadowlandsCallings.lua",
     "Data/ContainerCollectibles.lua",
     "Utilities.lua",
     "Migration.lua",
@@ -104,6 +105,7 @@ REQUIRED_PACKAGE_ITEMS = (
     "WQATurbo/Tracking/Custom.lua",
     "WQATurbo/Tracking/QuestAvailability.lua",
     "WQATurbo/Data/RuntimeData.lua",
+    "WQATurbo/Data/ShadowlandsCallings.lua",
     "WQATurbo/Data/ContainerCollectibles.lua",
     "WQATurbo/Database.lua",
     "WQATurbo/Scanning/RewardScanner.lua",
@@ -301,6 +303,17 @@ def validate_toc(validation: Validation) -> None:
                 validation.error(
                     f"TOC must load {runtime_data} before {consumer}."
                 )
+
+    calling_order = ("Data/ShadowlandsCallings.lua", "Tracking/Callings.lua")
+    for source in calling_order:
+        if source not in sources:
+            validation.error(f"TOC must load {source}.")
+    if all(source in sources for source in calling_order):
+        positions = [sources.index(source) for source in calling_order]
+        if positions != sorted(positions):
+            validation.error(
+                "TOC must load Shadowlands Calling data before its runtime owner."
+            )
 
     database_order = ("Migration.lua", "Database.lua", "WQATurbo.lua")
     for source in database_order:

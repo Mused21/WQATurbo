@@ -76,9 +76,12 @@ completion, War Mode refresh and mission updates. It also invokes all three
 AceDB profile callbacks through the real Options/Display refresh path, checking
 queued refresh cancellation, silent immediate rebuild, watched-state reset and
 LibDBIcon rebinding even with combat deferral enabled.
-It also checks Calling event dispatch, turn-in removal and covenant-change
-invalidation. The Calling test covers opt-in registration, replacement of the
-live quest-ID set, covenant isolation and the disabled setting.
+It also checks Calling event dispatch, turn-in completion handling and
+covenant-change invalidation. The Calling test verifies all 24 families and 96
+unique IDs, selected-covenant expansion, labels and shared expiration, per-
+character completion retention, Blizzard completion flags, expiration pruning,
+unknown-ID fallback, request gating and the disabled setting. The options suite
+checks the master row and four dependent covenant selectors.
 
 The task-resolver test exercises the canonical `CheckWQ()` owner. It checks
 per-task readiness, retry coalescing/cancellation, final filtering and

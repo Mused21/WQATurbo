@@ -37,6 +37,21 @@ AceDB provides three important scopes:
 
 Always confirm scope before adding a new setting.
 
+Shadowlands Calling tracking uses all three scopes deliberately:
+
+```lua
+db.profile.options.trackShadowlandsCallings
+db.profile.options.shadowlandsCallingsByCovenant[covenantID]
+db.char.shadowlandsCallingCompletions[questID] = expiresAt
+db.global.shadowlandsCallingRotations[familyID] = expiresAt
+```
+
+The profile stores user choices. Character completion locks prevent a turned-in
+variant from returning during the same Calling rotation. The account-wide
+rotation cache lets another character or covenant reuse the active covenant's
+observed daily families. Both time-based caches prune expired or malformed
+entries when Calling state is rebuilt.
+
 ## 2. Important profile structures
 
 Conceptually:
@@ -112,6 +127,26 @@ WQA.RuntimeData.WorldQuestTypesByLabel
 Faction-restricted entries keep the existing `{ id = ..., faction = ... }`
 shape. `WQA.EmissaryQuestIDList` aliases the canonical emissary table so
 existing integrations retain the same access path.
+
+### `WQA.ShadowlandsCallingData`
+
+Stable, read-only Calling-family metadata loaded from
+`Data/ShadowlandsCallings.lua`:
+
+```lua
+WQA.ShadowlandsCallingData.CovenantIDs
+WQA.ShadowlandsCallingData.SanctumMapIDs[covenantID] = uiMapID
+WQA.ShadowlandsCallingData.QuestFamilies[familyID][covenantID] = questID
+WQA.ShadowlandsCallingData.ByQuestID[questID] = {
+    familyID = familyID,
+    covenantID = covenantID,
+}
+```
+
+The table contains 24 daily families, 96 unique quest IDs and each covenant's
+primary sanctuary map. It does not include covenant introduction quests. A
+live Calling ID missing from this mapping is retained only for the active
+covenant rather than inferred.
 
 ### `WQA.data.containerCollectibles`
 
@@ -515,7 +550,7 @@ Use this decision:
 
 ```text
 Is this a stable mapping between game IDs?
-    → Data/Expansions, Data/Zones or Data/RuntimeData
+    → Data/Expansions, Data/Zones, Data/RuntimeData or Data/ShadowlandsCallings
 
 Is this user preference?
     → AceDB profile/char/global as appropriate

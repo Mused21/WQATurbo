@@ -102,9 +102,13 @@ Quest, Quest Flag, Quest Pin and mission tracking data.
 
 ### `WQA:AddCallings()` / `WQA:UpdateCallings(callings)`
 
-Owned by `Tracking/Callings.lua`. Reuses and refreshes Blizzard's live Calling
-quest-ID set for the active covenant when the Shadowlands toggle is enabled.
-`WQA:IsCallingActive(questID)` prevents a previous covenant's IDs from showing.
+Owned by `Tracking/Callings.lua`. Reuses unexpired family rotations, merges
+Blizzard's active-covenant payload, and registers each selected covenant's
+mapped variant. `WQA:IsCallingActive(questID)` rejects stale transient state.
+`WQA:CompleteCalling(questID)` stores a character completion lock through the
+observed expiration. `WQA:GetCallingCovenantName(questID)` and
+`WQA:GetCallingTimeLeftMinutes(questID)` supply display metadata for inferred
+variants.
 
 ## Achievement registration
 

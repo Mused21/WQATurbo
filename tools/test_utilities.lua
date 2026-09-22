@@ -38,6 +38,7 @@ GetTime = function() return 1000 end
 dofile("Utilities.lua")
 
 WQA.questList[100] = {}
+WQA.questList[101] = { isCalling = true, callingZoneID = 1699 }
 WQA.questList[9001] = { isEmissary = true }
 WQA.missionList[200] = { expansion = 8, offerEndTime = 1600 }
 WQA.missionList[201] = { expansion = 8, shipyard = true }
@@ -52,7 +53,10 @@ local worldQuest = { id = 100, type = TaskType.WorldQuest }
 local mission = { id = 200, type = TaskType.Mission }
 local areaPoi = { id = 300, mapId = 2405, type = TaskType.AreaPoi }
 local calling = { id = 101, type = TaskType.WorldQuest, expansion = 9 }
+WQA.IsCallingActive = function(_, questID) return questID == 101 end
+WQA.GetCallingTimeLeftMinutes = function(_, questID) return questID == 101 and 42 or 0 end
 assert(WQA:GetTaskZoneID(worldQuest) == 80)
+assert(WQA:GetTaskZoneID(calling) == 1699)
 assert(WQA:GetTaskZoneID(mission) == -8)
 assert(WQA:GetTaskZoneID(areaPoi) == 2405)
 
@@ -78,6 +82,7 @@ assert(WQA:GetExpansionName(99) == "Unknown")
 assert(WQA:GetMissionTimeLeftMinutes(200) == 10)
 assert(WQA:GetMissionTimeLeftMinutes(201) == 0)
 assert(WQA:GetTaskTime(worldQuest) == 110)
+assert(WQA:GetTaskTime(calling) == 42)
 assert(WQA:GetTaskTime(mission) == 10)
 assert(WQA:GetTaskTime(areaPoi) == 3)
 assert(WQA:GetTaskLink(worldQuest) == "quest:100")

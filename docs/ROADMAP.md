@@ -1,14 +1,14 @@
 # WQA Turbo Development Roadmap
 
-> **Current release target:** 1.5.0
+> **Current release target:** 1.5.1
 >
-> **Released baseline:** 1.4.1
+> **Released baseline:** 1.5.0
 >
-> **Current milestone:** 1.5.0 release candidate
+> **Current milestone:** 1.5.1 release candidate
 >
-> **Current item:** 1.5.0 release candidate, including PR #17 localization maintenance (Done)
+> **Current item:** Per-covenant Shadowlands Callings (Done)
 >
-> **Last reviewed:** 2026-09-21
+> **Last reviewed:** 2026-09-22
 
 This is the active work queue for WQA Turbo. Read it before planning or
 starting follow-up work. Update the current item and status in the same change
@@ -22,6 +22,40 @@ historical records and must not be reused as active checklists.
 - **Queued**: accepted work with lower priority or a dependency on earlier work.
 - **Research**: requires current API or game-data evidence before implementation.
 - **Done**: implemented, locally validated, and tested in game where applicable.
+
+## 1.5.1: covenant Calling selection
+
+| Status | Priority | Work item | Completion criteria |
+|---|---:|---|---|
+| **Done** | P1 | Per-covenant Shadowlands Callings | The existing opt-in Calling tracker can include any selected covenant; the active covenant's live payload determines the shared daily rotations; covenant-specific quest variants are labeled, grouped under their sanctuary and independently filtered; completed variants stay hidden until that rotation expires; unknown future IDs remain limited to the active covenant; focused automated and in-game checks pass. |
+
+Implementation and local verification are complete. The verified data table
+contains 24 daily Calling families and all 96 covenant-specific quest IDs.
+Blizzard's active-covenant event remains the rotation authority, so this does
+not add a broad map scan or poll inactive covenant quest logs. The developer
+verified the combined behavior, sanctuary grouping and unclipped Settings rows
+in game on 2026-09-22, so the item is **Done**.
+
+Focused 1.5.1 in-game checks:
+
+- Enable **Track Shadowlands Callings** and select all four covenants. Confirm
+  that each live objective appears once per selected covenant and each row's
+  reward label names Kyrian, Venthyr, Night Fae or Necrolord. Confirm their
+  zone groups are Elysian Hold, Sinfall, Heart of the Forest and Seat of the
+  Primus, with no Calling under Unknown. Each covenant selector must occupy a
+  separate Settings row without clipping its name.
+- Disable one covenant and refresh. Only that covenant's variants disappear;
+  manually configured custom quests and ordinary Shadowlands World Quests do
+  not change.
+- Turn in a Calling for the active covenant. Its row disappears immediately,
+  the corresponding rows for other selected covenants remain, and the turned-in
+  variant does not return after refresh or `/reload` during the same rotation.
+- Switch covenants and wait for Blizzard's Calling update. The daily objective
+  families and expiration times remain consistent, completed variants stay
+  hidden, and no stale or duplicate Calling rows appear.
+- Disable the master toggle. All automatic Calling rows disappear while custom
+  entries remain. Re-enable it and confirm the selected covenant checkboxes are
+  preserved.
 
 ## 1.5.0: user experience
 

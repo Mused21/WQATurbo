@@ -219,6 +219,7 @@ function WQA:OnInitialize()
 	-- Defaults
 	local defaults = {
 		char = {
+			shadowlandsCallingCompletions = {},
 			options = {
 				reward = {
 					gear = {
@@ -241,6 +242,12 @@ function WQA:OnInitialize()
 				PopUp = false,
 				popupRememberPosition = false,
 				trackShadowlandsCallings = false,
+				shadowlandsCallingsByCovenant = {
+					[1] = true,
+					[2] = true,
+					[3] = true,
+					[4] = true,
+				},
 				popupCollapsedExpansions = {},
 				showWarModeQuestsWithoutWarMode = false,
 				hideExaltedReputations = false,
@@ -300,6 +307,7 @@ function WQA:OnInitialize()
 		global = {
 			schemaVersion = 0,
 			completed = { ["*"] = false },
+			shadowlandsCallingRotations = {},
 			custom = {
 				["*"] = { ["*"] = false }
 			}
@@ -1311,9 +1319,14 @@ function WQA:GetRewardTextByID(questID, key, value, i, type)
 	local k, v = key, value
 	local text
 	if k == "custom" then
-		text = self.questList[questID] and self.questList[questID].isCalling
+		if self.questList[questID] and self.questList[questID].isCalling
 			and self:IsCallingActive(questID)
-			and L["Calling"] or L["Custom"]
+		then
+			local covenantName = self:GetCallingCovenantName(questID)
+			text = covenantName and (L["Calling"] .. " (" .. covenantName .. ")") or L["Calling"]
+		else
+			text = L["Custom"]
+		end
 	elseif k == "item" then
 		text = self:GetRewardForID(questID, k, type)
 	elseif k == "reputation" then

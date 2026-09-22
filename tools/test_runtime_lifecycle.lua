@@ -124,6 +124,12 @@ WQATurbo = {
 	UpdateCallings = function(self, callings) self.lastCallings = callings end,
 	ClearCallings = function(self) self.lastCallings = nil end,
 	RequestCallings = function(self) self.callingRequests = (self.callingRequests or 0) + 1 end,
+	CompleteCalling = function(self, questID)
+		self.completedCalling = questID
+		self._wqaCallingQuestIDs[questID] = nil
+		self:ScheduleTaskResolverCheck(true)
+		self:RequestCallings()
+	end,
 	ShowCached = commandCall("cached"),
 	Refresh = commandCall("refresh"),
 	ShowWQAMigrationPrompt = commandCall("import"),
@@ -204,6 +210,7 @@ assert(WQA.lastCallings == callings)
 WQA._wqaCallingQuestIDs = { [60001] = true }
 eventFrame.onEvent(eventFrame, "QUEST_TURNED_IN", 60001)
 assert(WQA._wqaCallingQuestIDs[60001] == nil)
+assert(WQA.completedCalling == 60001)
 assert(WQA.callingRequests == 1 and taskResolverSchedules == 1)
 eventFrame.onEvent(eventFrame, "COVENANT_CHOSEN", 2)
 assert(WQA.lastCallings == nil and WQA.callingRequests == 2)
