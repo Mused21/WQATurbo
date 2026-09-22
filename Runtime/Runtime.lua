@@ -98,9 +98,7 @@ function WQA:OnEnable()
 		elseif eventName == "QUEST_TURNED_IN" then
 			self.db.global.completed[id] = true
 			if self._wqaCallingQuestIDs and self._wqaCallingQuestIDs[id] then
-				self._wqaCallingQuestIDs[id] = nil
-				self:ScheduleTaskResolverCheck(true)
-				self:RequestCallings()
+				self:CompleteCalling(id)
 			end
 
 		elseif eventName == "COVENANT_CALLINGS_UPDATED" then

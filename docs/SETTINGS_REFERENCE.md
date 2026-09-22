@@ -162,10 +162,14 @@ Expansion World Quest groups can contain:
 - expansion-specific categories
 
 The Shadowlands Rewards group also has **Track Shadowlands Callings**. It is
-off by default and tracks currently available Callings for the active covenant
-using Blizzard's live quest IDs. No individual custom quest entries are needed;
-switching covenants updates the tracked IDs. The toggle uses the full Settings
-row so its localized label is not clipped.
+off by default. Four dependent profile toggles select Kyrian, Venthyr, Night
+Fae and Necrolord; all four default to enabled. Blizzard's active-covenant
+payload supplies the live objective rotation, and the verified Calling-family
+mapping supplies corresponding IDs for every selected covenant. No individual
+custom quest entries are needed. The master toggle uses the full Settings row
+so its localized label is not clipped. Each covenant selector also uses its own
+full row so long localized covenant names remain visible. Every setter uses the
+shared debounced Settings refresh.
 
 ### Mission Table
 

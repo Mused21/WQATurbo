@@ -30,6 +30,7 @@ Data/Expansions/*
 Data/Expansions.lua
 Data/Zones.lua
 Data/RuntimeData.lua
+Data/ShadowlandsCallings.lua
 Data/ContainerCollectibles.lua
 
 Tracking/ContainerCompletion.lua
@@ -181,6 +182,13 @@ If both signals are unavailable or invalid, availability fails open so
 uncertain World Quests remain eligible. The result is cached for 60 seconds to
 keep final per-quest eligibility cheap.
 
+### `Data/ShadowlandsCallings.lua`
+
+Owns the verified 24-family mapping between the four covenant-specific quest
+IDs for each Shadowlands daily Calling objective. It builds a reverse lookup
+for the Calling tracker, supplies the four primary covenant-sanctum map IDs for
+zone fallback, and loads before `Tracking/Callings.lua`.
+
 ### `Data/ContainerCollectibles.lua`
 
 Owns fixed collectible outcome data for racing purses, Benthic armor tokens,
@@ -251,10 +259,12 @@ Quests and missions. `Tracking/CollectionCache.lua` provides the invalidation he
 mount/pet snapshot implementation and registers static mount, pet and toy
 sources. Consolidated runtime methods have one source owner.
 
-`Tracking/Callings.lua` owns the optional live Shadowlands Calling ID set.
-`Runtime/Runtime.lua` forwards Calling and covenant-change events, while the
-TaskResolver uses the current covenant's set for availability. Calling IDs are
-not saved in the profile.
+`Tracking/Callings.lua` owns optional Shadowlands Calling registration.
+`Runtime/Runtime.lua` forwards Calling, turn-in and covenant-change events.
+The active covenant's payload identifies shared daily families; the tracker
+expands those families into the selected covenant-specific variants. Observed
+family expirations are global, per-character completion locks are retained only
+through the same expiration, and covenant selections are profile settings.
 
 `CheckReward()` owns item-link acquisition and retry aggregation. Its focused
 classifiers decide what the resolved reward means and publish through
@@ -285,9 +295,12 @@ Flags, Quest Pins and missions during each `CreateQuestList()` rebuild.
 
 ### `Tracking/Callings.lua`
 
-Requests the current covenant's Calling data and registers its live quest IDs
-when the Shadowlands option is enabled. A covenant change invalidates the old
-set before requesting the new one; turn-in removes that Calling immediately.
+Requests the active covenant's Calling data when the Shadowlands option is
+enabled. Known IDs resolve to a shared daily family and register every selected
+covenant's variant. Unmapped future IDs remain active-covenant only. Covenant
+changes invalidate transient event state before requesting current data;
+turn-in records a character-scoped completion through the observed expiration
+and removes that variant immediately.
 
 ### `Tracking/QuestAvailability.lua`
 

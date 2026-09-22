@@ -21,6 +21,15 @@ local searchKeys = {
     "Searches all supported expansions by collectible name, primary ID, source item ID, mapped quest ID, tracking quest ID, or nested criterion. The search text is temporary and is not saved to your profile."
 }
 
+local callingKeys = {
+    "Calling",
+    "Match: calling",
+    "Mixed / choose setting",
+    "Track available Callings for the selected covenants without entering quest IDs.",
+    "Track Shadowlands Callings",
+    "Unknown"
+}
+
 local function LoadLocale(locale)
     WQATurbo = {}
     GetLocale = function() return locale end
@@ -44,10 +53,15 @@ for _, locale in ipairs({ "zhCN", "zhTW" }) do
             locale .. " must translate " .. key)
     end
 
+    for _, key in ipairs(callingKeys) do
+        assert(localized[key] and localized[key] ~= english[key],
+            locale .. " must translate " .. key)
+    end
+
     local explanation = string.format(
         localized["Matched because: %s"], localized["Match: achievement"])
     assert(explanation:find(localized["Match: achievement"], 1, true),
         locale .. " match-reason format must retain its argument")
 end
 
-print("locale coverage tests passed (zhCN and zhTW match reasons)")
+print("locale coverage tests passed (zhCN and zhTW match reasons, search and Callings)")

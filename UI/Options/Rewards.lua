@@ -454,7 +454,7 @@ function WQA:PopulateRewardOptions()
 						order = 35,
 						type = "toggle",
 						name = L["Track Shadowlands Callings"],
-						desc = L["Track the current covenant's available Callings without entering quest IDs."],
+						desc = L["Track available Callings for the selected covenants without entering quest IDs."],
 						width = "full",
 						set = function(_, value)
 							WQA.db.profile.options.trackShadowlandsCallings = value
@@ -465,6 +465,28 @@ function WQA:PopulateRewardOptions()
 							return WQA.db.profile.options.trackShadowlandsCallings
 						end
 					}
+
+					for order, covenantID in ipairs(WQA.ShadowlandsCallingData.CovenantIDs) do
+						local capturedCovenantID = covenantID
+						local covenantData = C_Covenants and C_Covenants.GetCovenantData
+							and C_Covenants.GetCovenantData(capturedCovenantID)
+						rewardArgs["callingCovenant" .. capturedCovenantID] = {
+							order = 35 + order / 10,
+							type = "toggle",
+							name = covenantData and covenantData.name or tostring(capturedCovenantID),
+							width = "full",
+							disabled = function()
+								return WQA.db.profile.options.trackShadowlandsCallings ~= true
+							end,
+							set = function(_, value)
+								WQA.db.profile.options.shadowlandsCallingsByCovenant[capturedCovenantID] = value
+								WQA:ScheduleOptionsRefresh()
+							end,
+							get = function()
+								return WQA.db.profile.options.shadowlandsCallingsByCovenant[capturedCovenantID] == true
+							end,
+						}
+					end
 				end
 
 				-- Emissary

@@ -52,10 +52,13 @@ local questZoneIDList = {
 }
 
 function WQA:GetQuestZoneID(questID)
-    if WQA.questList[questID] and WQA.questList[questID].isEmissary then
+    local quest = WQA.questList[questID]
+    if quest and quest.isEmissary then
         return "Emissary"
     end
-    return questZoneIDList[questID] or C_TaskQuest.GetQuestZoneID(questID)
+    return questZoneIDList[questID]
+        or C_TaskQuest.GetQuestZoneID(questID)
+        or (quest and quest.isCalling and quest.callingZoneID)
 end
 
 function WQA:GetMissionZoneID(missionID)
@@ -190,6 +193,11 @@ end
 
 function WQA:GetTaskTime(task)
     if task.type == TaskType.WorldQuest then
+		if self.questList[task.id] and self.questList[task.id].isCalling
+			and self:IsCallingActive(task.id)
+		then
+			return self:GetCallingTimeLeftMinutes(task.id)
+		end
         return C_TaskQuest.GetQuestTimeLeftMinutes(task.id)
     elseif task.type == TaskType.Mission then
         return self:GetMissionTimeLeftMinutes(task.id)

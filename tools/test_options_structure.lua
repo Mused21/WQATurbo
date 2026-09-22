@@ -4,6 +4,7 @@ local noop = function() end
 local function named(prefix) return function(id) return { name = prefix .. id } end end
 C_CurrencyInfo = { GetCurrencyInfo = named("Currency") }
 C_QuestLog = { GetTitleForQuestID = function(id) return "Quest" .. id end }
+C_Covenants = { GetCovenantData = function(id) return { name = "Covenant" .. id } end }
 C_Map = { GetMapInfo = named("Map") }
 C_Reputation = { GetFactionDataByID = named("Faction") }
 C_Garrison = { GetMissionLink = noop }
@@ -23,6 +24,7 @@ local function build(baseline)
     local WQA = {
         Constants = {}, L = setmetatable({}, { __index = function(_, k) return k end }),
         faction = "Alliance", data = { custom = {} }, ExpansionList = {}, ZoneIDList = {},
+		ShadowlandsCallingData = { CovenantIDs = { 1, 2, 3, 4 } },
         RuntimeData = { CurrencyIDsByExpansion = {}, FactionIDsByExpansion = {},
             EmissaryQuestIDsByExpansion = {}, WorldQuestTypesByLabel = { PVP = 1 } },
         db = { global = { custom = { worldQuest = {}, reward = {}, mission = {}, missionReward = {} } },
@@ -31,6 +33,8 @@ local function build(baseline)
                 pets = { exclusive = {} }, toys = { exclusive = {} },
                 options = { reward = { general = { worldQuestType = {} }, currency = {},
                     reputation = {}, recipe = {} }, zone = {}, emissary = {},
+					trackShadowlandsCallings = false,
+					shadowlandsCallingsByCovenant = { [1] = true, [2] = true, [3] = true, [4] = true },
                     missionTable = { reward = { currency = {}, reputation = {} } } } },
             char = { options = { reward = { gear = { AzeriteArmorCache = true } } } } },
         IsMountCollectedBySpellID = function() return false end,
@@ -76,7 +80,13 @@ local function build(baseline)
     assert(gear.jewelryCache == nil)
     local reward = tree.args.reward.args
     assert(reward.Expansion12.order < reward.Expansion6.order)
-    assert(reward.Expansion9.args.Expansion9WorldQuests.args.callings.width == "full")
+	local shadowlandsWQ = reward.Expansion9.args.Expansion9WorldQuests.args
+	assert(shadowlandsWQ.callings.width == "full")
+	for covenantID = 1, 4 do
+		local option = shadowlandsWQ["callingCovenant" .. covenantID]
+		assert(option.name == "Covenant" .. covenantID and option.width == "full")
+		assert(option.disabled())
+	end
     assert(reward.Expansion6.args.Expansion6WorldQuests == nil)
     assert(reward.Expansion12.args.Expansion12MissionTable == nil)
     local wq = reward.Expansion10.args.Expansion10WorldQuests.args
@@ -88,6 +98,9 @@ local function build(baseline)
     wq.profession.args["171MaxLevel"].set(nil, true)
     wq.profession.args["171Skillup"].set(nil, true)
     wq.containers.args.racingRewardContainers.set(nil, true)
+	shadowlandsWQ.callings.set(nil, true)
+	assert(not shadowlandsWQ.callingCovenant4.disabled())
+	shadowlandsWQ.callingCovenant4.set(nil, false)
     tree.args.reward.args.gear.args.AzeriteArmorCacheCharacter.set(nil, false)
     reward.Expansion8.args.Expansion8MissionTable.args.currency.args.Currency88.set(nil, true)
     tree.args.general.args.Expansion10.args.bulkTracking.set(nil, WQA.Constants.TrackingMode.Always)
@@ -98,6 +111,8 @@ local function build(baseline)
     assert(WQA.db.profile.options.reward[10].profession[171].skillup == true)
     assert(WQA.db.profile.options.missionTable.reward.currency[8] == true)
     assert(WQA.db.char.options.reward.gear.AzeriteArmorCache == false)
+	assert(WQA.db.profile.options.trackShadowlandsCallings == true)
+	assert(WQA.db.profile.options.shadowlandsCallingsByCovenant[4] == false)
     local pending = 0
     for _, callback in pairs(timers) do pending = pending + 1; callback() end
     assert(pending == 1 and refreshes == 1, "Cross-feature changes must share one debouncer")

@@ -26,6 +26,7 @@ Data\Expansions\Midnight.lua
 Data\Expansions.lua
 Data\Zones.lua
 Data\RuntimeData.lua
+Data\ShadowlandsCallings.lua
 Data\ContainerCollectibles.lua
 Tracking\ContainerCompletion.lua
 Criterias\CriteriaType.lua

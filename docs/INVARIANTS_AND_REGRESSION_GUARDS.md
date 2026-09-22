@@ -249,6 +249,15 @@ overrides may use only declared keys and must preserve the English value's
 ordered `string.format` placeholders so translated UI cannot pass missing or
 mis-typed arguments at runtime. The project validator enforces these rules.
 
+### 36. Calling variants follow one observed daily family rotation
+
+Use Blizzard's active-covenant Calling payload to identify live daily families.
+Only expand IDs present in the verified covenant-family table; an unknown ID
+must remain limited to the active covenant. Keep observed family expiration
+account-wide, completion suppression character-specific, and both bounded by
+the same expiration. Calling tracking must not introduce another map scan or
+poll inactive covenant quest logs.
+
 ## Review technique
 
 For every significant PR, ask:
