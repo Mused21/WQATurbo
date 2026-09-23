@@ -4,9 +4,9 @@
 >
 > **Released baseline:** 1.5.1
 >
-> **Current milestone:** 1.5.2 correctness patch
+> **Current milestone:** 1.5.2 release candidate
 >
-> **Current item:** Scaled World Quest transmog sources (In progress)
+> **Current item:** Scaled World Quest transmog sources (Done)
 >
 > **Last reviewed:** 2026-09-23
 
@@ -19,7 +19,7 @@ historical records and must not be reused as active checklists.
 
 | Status | Priority | Work item | Completion criteria |
 |---|---:|---|---|
-| **In progress** | P0 | Scaled World Quest transmog sources | Exact scaled-link appearances retain precedence; a missing link record falls back to the authoritative quest reward item ID; exact and overall ownership use Blizzard's direct source API without requiring richer source metadata; unavailable ownership remains pending; focused automated and in-game checks pass. |
+| **Done** | P0 | Scaled World Quest transmog sources | Exact scaled-link appearances retain precedence; a missing link record falls back to the authoritative quest reward item ID; exact and overall ownership use Blizzard's direct source API without requiring richer source metadata; unavailable ownership remains pending; focused automated and in-game checks pass. |
 
 The reported K'aresh item `243534` and Undermine item `233534` are
 known-appearance/missing-source cases: each shares a collected visual with
@@ -42,6 +42,9 @@ Focused 1.5.2 in-game checks:
   confirm its entirely uncollected appearance appears.
 - Check a collected exact scaled-link appearance and confirm the base-item
   fallback does not expose a different bonus variant.
+
+Implementation and local verification are complete. The developer confirmed
+the CI build works in game and approved the patch for release.
 
 ## Status definitions
 

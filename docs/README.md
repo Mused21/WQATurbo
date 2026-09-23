@@ -108,7 +108,7 @@ When debugging or extending the addon:
 
 ## Current release direction
 
-Version **1.5.1** is released. The **1.5.2** correctness patch is in progress. The
+Version **1.5.1** is released. The tested **1.5.2** patch is ready for release. The
 completed 1.2.0 refactor and verification
 history remain in [VERSION_1.2.0.md](VERSION_1.2.0.md). See
 [ROADMAP.md](ROADMAP.md) for follow-up work and research status.
