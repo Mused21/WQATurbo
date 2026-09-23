@@ -1,19 +1,47 @@
 # WQA Turbo Development Roadmap
 
-> **Current release target:** 1.5.1
+> **Current release target:** 1.5.2
 >
-> **Released baseline:** 1.5.0
+> **Released baseline:** 1.5.1
 >
-> **Current milestone:** 1.5.1 release candidate
+> **Current milestone:** 1.5.2 correctness patch
 >
-> **Current item:** Per-covenant Shadowlands Callings (Done)
+> **Current item:** Scaled World Quest transmog sources (In progress)
 >
-> **Last reviewed:** 2026-09-22
+> **Last reviewed:** 2026-09-23
 
 This is the active work queue for WQA Turbo. Read it before planning or
 starting follow-up work. Update the current item and status in the same change
 that completes or reprioritizes roadmap work. Released version documents are
 historical records and must not be reused as active checklists.
+
+## 1.5.2: transmog source correctness
+
+| Status | Priority | Work item | Completion criteria |
+|---|---:|---|---|
+| **In progress** | P0 | Scaled World Quest transmog sources | Exact scaled-link appearances retain precedence; a missing link record falls back to the authoritative quest reward item ID; exact and overall ownership use Blizzard's direct source API without requiring richer source metadata; unavailable ownership remains pending; focused automated and in-game checks pass. |
+
+The reported K'aresh item `243534` and Undermine item `233534` are
+known-appearance/missing-source cases: each shares a collected visual with
+another weapon, but its exact source is uncollected. The Ringing Deeps item
+`224710` is an entirely uncollected appearance. Undermine (2346) and Ringing
+Deeps (2214) are already in the scan map list, and the reports show other
+quests being discovered, so these cases exercise reward classification rather
+than map discovery. They must remain relevant when Blizzard's direct source
+ownership result is available but richer `GetAppearanceSourceInfo()` metadata
+is omitted.
+
+Focused 1.5.2 in-game checks:
+
+- With **Unknown source** enabled, refresh while either reported World Quest
+  rewards K'aresh item `243534` or Undermine item `233534`. Confirm it appears
+  and its match reason is transmog.
+- Disable only **Unknown source** while leaving **Unknown appearance** enabled.
+  Confirm this known-appearance reward disappears.
+- With **Unknown appearance** enabled, check Ringing Deeps item `224710` and
+  confirm its entirely uncollected appearance appears.
+- Check a collected exact scaled-link appearance and confirm the base-item
+  fallback does not expose a different bonus variant.
 
 ## Status definitions
 

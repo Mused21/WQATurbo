@@ -1,10 +1,10 @@
 # WQA Turbo Developer Documentation
 
-> **Documentation baseline:** WQA Turbo **1.5.0** / `master`
+> **Documentation baseline:** WQA Turbo **1.5.1** / `master`
 >
-> **Behavioral baseline:** released WQA Turbo 1.5.0 behavior
+> **Behavioral baseline:** released WQA Turbo 1.5.1 behavior
 >
-> **Last major documentation refresh:** 2026-09-22
+> **Last major documentation refresh:** 2026-09-23
 
 This directory is the canonical architectural and functional reference for WQA Turbo.
 
@@ -108,7 +108,7 @@ When debugging or extending the addon:
 
 ## Current release direction
 
-Version **1.5.0** is released. The tested **1.5.1** patch is ready for review. The
+Version **1.5.1** is released. The **1.5.2** correctness patch is in progress. The
 completed 1.2.0 refactor and verification
 history remain in [VERSION_1.2.0.md](VERSION_1.2.0.md). See
 [ROADMAP.md](ROADMAP.md) for follow-up work and research status.

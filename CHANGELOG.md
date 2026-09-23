@@ -1,5 +1,10 @@
 # WQA Turbo Changelog
 
+## 1.5.2
+
+### Fixed
+- Show uncollected transmog appearances and missing exact sources when Blizzard resolves ownership through the direct source API but omits richer source metadata for a scaled World Quest reward.
+
 ## 1.5.1
 
 ### Improved

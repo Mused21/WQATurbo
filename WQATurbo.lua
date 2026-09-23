@@ -776,44 +776,73 @@ local function GetUnknownSourceIcon()
 	return "|TInterface\\RaidFrame\\ReadyCheck-Waiting:0|t"
 end
 
+local function IsTransmogSourceCollected(transmogCollection, appearanceSourceID)
+	if type(transmogCollection.PlayerHasTransmogItemModifiedAppearance) == "function" then
+		local collected = transmogCollection.PlayerHasTransmogItemModifiedAppearance(appearanceSourceID)
+		if collected ~= nil then
+			return collected == true, false
+		end
+	end
+
+	-- Compatibility fallback for clients without the direct ownership API.
+	local sourceInfo = transmogCollection.GetAppearanceSourceInfo(appearanceSourceID)
+	if not sourceInfo then
+		return false, true
+	end
+	return sourceInfo.isCollected == true, false
+end
+
 ---Return the icon WQA Turbo should show for a transmog reward.
 ---
 ---The first state is account-wide appearance ownership. The second is exact
 ---source ownership (the specific item). They intentionally map to the two
 ---separate settings "Unknown appearance" and "Unknown source".
 ---@param itemLink string
+---@param itemID? number
 ---@return string? icon
 ---@return boolean retry
-function WQA:GetTrackedTransmogIcon(itemLink)
-	local appearanceID, sourceID = C_TransmogCollection.GetItemInfo(itemLink)
+function WQA:GetTrackedTransmogIcon(itemLink, itemID)
+	local transmogCollection = C_TransmogCollection
+	local appearanceID, sourceID = transmogCollection.GetItemInfo(itemLink)
+	if not appearanceID or not sourceID then
+		-- Scaled/bonus reward links occasionally have no collection record even
+		-- though Blizzard can resolve the base reward item. Keep the exact link
+		-- authoritative whenever it does resolve because its bonuses can select
+		-- a different appearance.
+		itemID = itemID or C_Item.GetItemInfoInstant(itemLink)
+		if itemID then
+			appearanceID, sourceID = transmogCollection.GetItemInfo(itemID)
+		end
+	end
 	if not appearanceID or not sourceID then
 		return nil, true
 	end
 
-	-- `appearanceIsCollected` from GetAppearanceInfoBySource() is not reliable
-	-- for every multi-source appearance. Determine both states from the actual
-	-- sources instead: exact-source ownership comes from this source, while
-	-- appearance ownership is true when ANY source for the appearance is owned.
-	local sourceInfo = C_TransmogCollection.GetAppearanceSourceInfo(sourceID)
-	if not sourceInfo then
+	-- Determine exact-source ownership directly. Overall appearance ownership
+	-- remains true when ANY source for this appearance is collected.
+	local sourceIsCollected, sourceRetry = IsTransmogSourceCollected(transmogCollection, sourceID)
+	if sourceRetry then
 		return nil, true
 	end
-
-	local sourceIsCollected = sourceInfo.isCollected == true
 	local appearanceIsCollected = sourceIsCollected
 
 	if not appearanceIsCollected then
-		local appearanceSources = C_TransmogCollection.GetAllAppearanceSources(appearanceID)
+		local appearanceSources = transmogCollection.GetAllAppearanceSources(appearanceID)
 		if not appearanceSources then
 			return nil, true
 		end
 
+		local appearanceRetry = false
 		for _, appearanceSourceID in ipairs(appearanceSources) do
-			local appearanceSourceInfo = C_TransmogCollection.GetAppearanceSourceInfo(appearanceSourceID)
-			if appearanceSourceInfo and appearanceSourceInfo.isCollected then
+			local collected, retry = IsTransmogSourceCollected(transmogCollection, appearanceSourceID)
+			if collected then
 				appearanceIsCollected = true
 				break
 			end
+			appearanceRetry = retry or appearanceRetry
+		end
+		if not appearanceIsCollected and appearanceRetry then
+			return nil, true
 		end
 	end
 
@@ -1159,13 +1188,13 @@ local function ClassifyEquipmentCacheReward(self, questID, isEmissary, itemID, i
 	return retry
 end
 
-local function ClassifyTransmogReward(self, questID, isEmissary, itemLink, itemClassID)
+local function ClassifyTransmogReward(self, questID, isEmissary, itemID, itemLink, itemClassID)
 	if
 		(self.db.profile.options.reward.gear.unknownAppearance or self.db.profile.options.reward.gear.unknownSource)
 		and self:IsTransmogable(itemLink)
 		and (itemClassID == 2 or itemClassID == 4)
 	then
-		local transmog, retry = self:GetTrackedTransmogIcon(itemLink)
+		local transmog, retry = self:GetTrackedTransmogIcon(itemLink, itemID)
 		if retry then
 			return true
 		end
@@ -1264,7 +1293,7 @@ function WQA:CheckReward(questID, isEmissary, rewardIndex)
 	retry = ClassifyContainerReward(self, questID, isEmissary, itemID, itemLink) or retry
 	retry = ClassifyGearUpgradeReward(self, questID, isEmissary, itemLink, itemEquipLoc) or retry
 	retry = ClassifyEquipmentCacheReward(self, questID, isEmissary, itemID, itemLink) or retry
-	retry = ClassifyTransmogReward(self, questID, isEmissary, itemLink, itemClassID) or retry
+	retry = ClassifyTransmogReward(self, questID, isEmissary, itemID, itemLink, itemClassID) or retry
 	ClassifyReputationItemReward(self, questID, isEmissary, itemID, itemLink)
 	ClassifyRecipeReward(self, questID, isEmissary, itemLink, itemClassID, expacID)
 	ClassifyKnownItemReward(self, questID, isEmissary, itemID, itemLink)
