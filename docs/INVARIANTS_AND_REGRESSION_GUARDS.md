@@ -107,6 +107,9 @@ ATT/CanIMogIt are presentation-only.
 ### 16. Do not trust `appearanceIsCollected` alone
 
 Overall appearance ownership must enumerate all appearance sources.
+Use Blizzard's direct item-modified-appearance ownership query when available;
+do not require richer source metadata to decide whether a known source is
+collected.
 
 ### 17. Preserve Unknown Appearance versus Unknown Source semantics
 

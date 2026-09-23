@@ -52,9 +52,10 @@ wrapper. Pet cases also cover inconsistent row ownership: species counts of
 
 The reward-classifier test covers authoritative item-link fallback, missing
 data retries, containers, gear upgrades, StatWeightScore dual-slot selection,
-equipment caches, transmog and retry, reputation items, recipes, known/custom
-items, Azerite traits and conduits. It can run the same cases against an
-optional prior `WQATurbo.lua` path.
+equipment caches, exact-link transmog precedence, bare-item fallback, direct
+source ownership and retry, reputation items, recipes, known/custom items,
+Azerite traits and conduits. It can run the same cases against an optional
+prior `WQATurbo.lua` path.
 
 The locale test checks the Simplified and Traditional Chinese task-match
 explanations and expanded collectible-search help. Project validation separately

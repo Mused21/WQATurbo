@@ -75,7 +75,18 @@ C_Soulbinds = {
 local transmogAppearances = {}
 local transmogAppearanceSources = {}
 local transmogSourceInfo = {}
+local transmogItemInfo = {}
+local transmogSourceOwned = {}
 C_TransmogCollection = {
+    GetItemInfo = function(itemInfo)
+        local info = transmogItemInfo[itemInfo]
+        if info then
+            return info.appearanceID, info.sourceID
+        end
+    end,
+    PlayerHasTransmogItemModifiedAppearance = function(sourceID)
+        return transmogSourceOwned[sourceID]
+    end,
     GetAppearanceInfoBySource = function(sourceID)
         return transmogAppearances[sourceID]
     end,
@@ -282,6 +293,8 @@ local function Reset(itemID)
     transmogAppearances = {}
     transmogAppearanceSources = {}
     transmogSourceInfo = {}
+    transmogItemInfo = {}
+    transmogSourceOwned = {}
     WQA.db = {
         profile = { options = NewOptions(), custom = { worldQuestReward = {} } },
         char = { options = { reward = { gear = { AzeriteArmorCache = true } } } },
@@ -479,8 +492,52 @@ AssertReward(2, WQA.Constants.RewardType.Item)
 Reset(200000)
 itemClassID = 4
 WQA.db.profile.options.reward.gear.unknownAppearance = true
+
+-- Exact link data remains authoritative when the base item has a different
+-- appearance context.
+transmogItemInfo[scannedItemLink] = { appearanceID = 5000, sourceID = 6000 }
+transmogItemInfo[200000] = { appearanceID = 5001, sourceID = 6001 }
+transmogAppearanceSources[5000] = { 6000 }
+transmogAppearanceSources[5001] = { 6001 }
+transmogSourceOwned[6000] = true
+transmogSourceOwned[6001] = false
+local transmogIcon, transmogRetry = WQA:GetTrackedTransmogIcon(scannedItemLink, rewardItemID)
+assert(transmogIcon == nil and transmogRetry == false,
+    "Exact reward-link transmog context must take precedence over the base item")
+
+-- Reproduce the reported K'aresh and Undermine reward state: the visual is
+-- known through another item but the exact source is missing. The scaled link
+-- has no collection record and richer source metadata is unavailable; direct
+-- source ownership is enough.
+transmogItemInfo[scannedItemLink] = nil
+transmogAppearanceSources[5001] = { 6001, 6002 }
+transmogSourceOwned[6002] = true
+WQA.db.profile.options.reward.gear.unknownSource = true
+transmogIcon, transmogRetry = WQA:GetTrackedTransmogIcon(scannedItemLink, rewardItemID)
+assert(transmogIcon and transmogRetry == false,
+    "A known appearance with an uncollected exact source must match Unknown source")
+
+WQA.db.profile.options.reward.gear.unknownSource = false
+transmogIcon, transmogRetry = WQA:GetTrackedTransmogIcon(scannedItemLink, rewardItemID)
+assert(transmogIcon == nil and transmogRetry == false,
+    "A known appearance must still respect the Unknown source setting")
+
+transmogSourceOwned[6002] = false
+transmogIcon, transmogRetry = WQA:GetTrackedTransmogIcon(scannedItemLink, rewardItemID)
+assert(transmogIcon and transmogRetry == false,
+    "An entirely uncollected appearance must still match Unknown appearance")
+
+transmogSourceOwned[6001] = nil
+transmogIcon, transmogRetry = WQA:GetTrackedTransmogIcon(scannedItemLink, rewardItemID)
+assert(transmogIcon == nil and transmogRetry == true,
+    "Unavailable source ownership must remain pending instead of guessing")
+
 WQA.IsTransmogable = function() return true end
-WQA.GetTrackedTransmogIcon = function() return "transmog-icon", false end
+WQA.GetTrackedTransmogIcon = function(_, itemLink, itemID)
+    assert(itemLink == scannedItemLink and itemID == rewardItemID,
+        "Transmog classification must retain the authoritative quest reward item ID")
+    return "transmog-icon", false
+end
 assert(WQA:CheckReward(1000, false, 1) == false)
 assert(AssertReward(1, WQA.Constants.RewardType.Item).transmog == "transmog-icon")
 rewards = {}

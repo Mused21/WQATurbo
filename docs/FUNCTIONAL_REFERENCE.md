@@ -171,18 +171,25 @@ Blizzard APIs are authoritative.
 The logic is approximately:
 
 ```text
-GetItemInfo(itemLink)
+GetItemInfo(itemLink), then GetItemInfo(itemID) only if needed
     ↓
 appearanceID + sourceID
 
 source ownership:
-    GetAppearanceSourceInfo(sourceID).isCollected
+    PlayerHasTransmogItemModifiedAppearance(sourceID)
 
 appearance ownership:
     GetAllAppearanceSources(appearanceID)
     ↓
-    any source has isCollected == true
+    any source is owned by PlayerHasTransmogItemModifiedAppearance()
 ```
+
+The exact scaled reward link is resolved first because item bonuses can select
+a different appearance. If that link has no appearance/source record, the
+classifier retries with the authoritative reward item ID. Exact and overall
+source ownership prefer
+`PlayerHasTransmogItemModifiedAppearance()`; richer appearance-source metadata
+is only a compatibility fallback and may be temporarily unavailable.
 
 Do not rely solely on `GetAppearanceInfoBySource().appearanceIsCollected`; it was proven unreliable for some multi-source appearances.
 
