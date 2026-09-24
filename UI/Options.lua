@@ -198,6 +198,19 @@ function WQA:UpdateOptions()
 							return WQA.db.profile.options.delayCombat
 						end
 					},
+					pauseAutomaticRefreshInInstances = {
+						type = "toggle",
+						name = L["Pause automatic scans in instances"],
+						order = newOrder(),
+						width = "double",
+						set = function(_, value)
+							WQA.db.profile.options.pauseAutomaticRefreshInInstances = value
+							WQA:ScheduleOptionsRefresh()
+						end,
+						get = function()
+							return WQA.db.profile.options.pauseAutomaticRefreshInInstances
+						end
+					},
 					showWarModeQuestsWithoutWarMode = {
 						type = "toggle",
 						name = L["Show PvP World Quests while War Mode is disabled"],
@@ -441,6 +454,11 @@ function WQA:OrganizeSettingsTabs()
 				key = "delayCombat",
 				option = old.delayCombat,
 				description = L["Delay automatic WQA Turbo output while you are in combat and resume it afterward."]
+			},
+			{
+				key = "pauseAutomaticRefreshInInstances",
+				option = old.pauseAutomaticRefreshInInstances,
+				description = L["Skip automatic scans and notifications in dungeons, raids, scenarios, battlegrounds, and arenas. The latest deferred refresh resumes after you return to the open world; manual popup and refresh commands remain available."]
 			},
 			{
 				key = "showWarModeQuestsWithoutWarMode",

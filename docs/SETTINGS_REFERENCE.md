@@ -102,6 +102,17 @@ Bulk operations:
 
 Do not expose exclusive/character-only modes as bulk values.
 
+### Reward-list bulk controls
+
+World Quest types and each expansion's zone, currency, reputation and emissary
+lists expose **Enable all in this list**. Mission currency and reputation lists
+use the same control. A bulk action changes only entries represented in that
+displayed list, so opposite-faction entries are not modified. Mission gold and
+character-specific profession state remain independent.
+
+Each bulk action writes all affected booleans directly and calls the shared
+Settings debouncer once.
+
 ### Completed entries and tooltips
 
 Completed entries remain hoverable.
@@ -369,6 +380,12 @@ General UI/output options include behavior such as:
 - refresh controls;
 - War Mode behavior;
 - hide-maxed reputation behavior.
+- pausing automatic scans and notifications in grouped instances.
+
+**Pause automatic scans in instances** is enabled by default for dungeons,
+raids, scenarios, battlegrounds and arenas. The latest deferred automatic
+refresh resumes after the player returns to the open world. Cached popup access
+and explicit `/wqat refresh` remain available inside an instance.
 
 ### Refresh now
 

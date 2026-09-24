@@ -251,6 +251,7 @@ function WQA:OnInitialize()
 				popupCollapsedExpansions = {},
 				showWarModeQuestsWithoutWarMode = false,
 				hideExaltedReputations = false,
+				pauseAutomaticRefreshInInstances = true,
 				popupX = 600,
 				popupY = 800,
 				zone = { ["*"] = true },

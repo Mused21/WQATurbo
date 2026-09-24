@@ -544,7 +544,19 @@ db.profile.options.reward[10].racingRewardContainers
 
 The existing wildcard reward defaults make expansion reward toggles default to enabled unless explicitly overridden.
 
-## 15. Data ownership rule
+## 15. Instance refresh preference and pending state
+
+The default-on profile preference is stored at:
+
+```lua
+db.profile.options.pauseAutomaticRefreshInInstances
+```
+
+The latest deferred request is held only for the current session in
+`_wqaTurboPendingInstanceRefresh`. It is not SavedVariables data and is cleared
+when an allowed automatic or explicit refresh runs.
+
+## 16. Data ownership rule
 
 Use this decision:
 

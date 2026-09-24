@@ -30,14 +30,38 @@ local function hasUsableCache(self)
 		and type(self.activeTasks) == "table"
 end
 
+local restrictedInstanceTypes = {
+	party = true,
+	raid = true,
+	scenario = true,
+	pvp = true,
+	arena = true
+}
+
+---Return whether the player is inside grouped instanced content.
+---Housing neighborhoods/interiors are intentionally not treated as restricted.
+function WQA:IsRestrictedGroupInstance()
+	local inInstance, instanceType = IsInInstance()
+	return inInstance == true and restrictedInstanceTypes[instanceType] == true
+end
+
+---Return whether automatic refresh/output should pause in the current instance.
+function WQA:ShouldPauseAutomaticRefreshInInstance()
+	return self.db.profile.options.pauseAutomaticRefreshInInstances ~= false
+		and self:IsRestrictedGroupInstance()
+end
+
 ---Rebuild the data model using the established refresh sequence.
 ---@param self WQATurbo
 ---@param mode string?
 ---@param auto boolean?
 local function refreshData(self, mode, auto)
 	self:Debug("Show", mode)
+	local previousAutomatic = self._wqaTurboRefreshAutomatic
+	self._wqaTurboRefreshAutomatic = auto == true
 	self:CreateQuestList()
 	self:CheckWQ(mode, nil, auto == true)
+	self._wqaTurboRefreshAutomatic = previousAutomatic
 	self.first = true
 end
 
@@ -58,6 +82,17 @@ end
 ---@param mode string?
 ---@param auto boolean?
 function WQA:Refresh(mode, auto)
+	if auto and self:ShouldPauseAutomaticRefreshInInstance() then
+		self._wqaTurboPendingInstanceRefresh = {
+			mode = mode,
+			auto = auto
+		}
+		return
+	end
+
+	-- Any refresh that is allowed to run satisfies the deferred instance work.
+	self._wqaTurboPendingInstanceRefresh = nil
+
 	if auto and self.db.profile.options.delayCombat == true and UnitAffectingCombat("player") then
 		self._wqaTurboPendingRefresh = {
 			mode = mode,
@@ -76,6 +111,15 @@ function WQA:Refresh(mode, auto)
 	self._wqaTurboRefreshMode = mode
 	refreshData(self, mode, auto)
 	self._wqaTurboRefreshMode = previousMode
+end
+
+---Resume the most recent automatic refresh after returning to the open world.
+function WQA:ResumeInstanceDeferredRefresh()
+	local pending = self._wqaTurboPendingInstanceRefresh
+	if pending and not self:ShouldPauseAutomaticRefreshInInstance() then
+		self._wqaTurboPendingInstanceRefresh = nil
+		self:Refresh(pending.mode, pending.auto)
+	end
 end
 
 ---Resume the most recent automatic refresh that combat deferred.
@@ -115,10 +159,10 @@ function WQA:TurboRefreshOpenPopup()
 
 	self:RebuildQTip("popup", self.activeTasks or {})
 end
-function WQA:TurboPublishEnrichment(mode)
+function WQA:TurboPublishEnrichment(mode, automatic)
 	if not self.questList then
 		return
 	end
 
-	self:CheckWQ(mode or "new")
+	self:CheckWQ(mode or "new", nil, automatic == true)
 end

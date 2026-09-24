@@ -266,6 +266,12 @@ assert(#popupPublications == popupCount, "Empty automatic refresh must keep a cl
 WQA:CheckWQ()
 assert(#popupPublications == popupCount + 1, "Manual output must still show the empty popup state")
 activeQuests[101] = true
+WQA.ShouldPauseAutomaticRefreshInInstance = function() return true end
+local chatCount = #chatPublications
+WQA:CheckWQ(nil, nil, true)
+assert(#chatPublications == chatCount and #popupPublications == popupCount + 1,
+	"Automatic output must stay silent after entering a restricted instance")
+WQA.ShouldPauseAutomaticRefreshInInstance = function() return false end
 WQA:CheckWQ(nil, nil, true)
 assert(#popupPublications == popupCount + 2, "Automatic refresh must open for an interesting task")
 WQA.db.profile.options.PopUp = false
@@ -341,5 +347,22 @@ assert(eventTimer.cancelled == true)
 assert(WQA._wqaTurboTaskGeneration == boundedGeneration + 1)
 eventTimer.callback()
 assert(WQA._wqaTurboCheckRetryTimer == nil, "A stale generation callback must be inert")
+
+-- Readiness retries retain whether their originating refresh was automatic so
+-- late data cannot bypass grouped-instance output suppression.
+local originalCheckWQ = WQA.CheckWQ
+local retryMode, retryFlag, retryAutomatic
+WQA._wqaTurboRefreshMode = "new"
+WQA._wqaTurboRefreshAutomatic = true
+WQA:ResetTaskResolverRetry()
+WQA.CheckWQ = function(_, mode, fromRetry, automatic)
+	retryMode, retryFlag, retryAutomatic = mode, fromRetry, automatic
+end
+WQA:ScheduleTaskResolverCheck(true)
+timers[#timers].callback()
+assert(retryMode == "new" and retryFlag == true and retryAutomatic == true)
+WQA.CheckWQ = originalCheckWQ
+WQA._wqaTurboRefreshMode = nil
+WQA._wqaTurboRefreshAutomatic = nil
 
 print("Task resolver regression checks passed (progressive readiness, bounded generation retries, filtering and display modes).")

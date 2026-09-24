@@ -67,6 +67,7 @@ function WQA:ResetTaskResolverRetry()
 	self._wqaTaskPending = nil
 	self._wqaTaskTimeout = nil
 	self._wqaTaskRetryMode = self._wqaTurboRefreshMode == "settings" and "settings" or "new"
+	self._wqaTaskRetryAutomatic = self._wqaTurboRefreshAutomatic == true
 end
 
 ---Schedule one generation-owned readiness pass.
@@ -105,7 +106,11 @@ function WQA:ScheduleTaskResolverCheck(restartWindow)
 			self._wqaTurboCheckRetryTimer = nil
 
 			-- Keep Settings/profile generations silent; ordinary retries use "new".
-			self:CheckWQ(self._wqaTaskRetryMode or "new", true)
+			self:CheckWQ(
+				self._wqaTaskRetryMode or "new",
+				true,
+				self._wqaTaskRetryAutomatic == true
+			)
 		end
 	)
 	self._wqaTurboCheckRetryTimer = timer
@@ -417,23 +422,29 @@ function WQA:CheckWQ(mode, fromRetry, automatic)
 		end
 	end
 
+	local suppressAutomaticOutput = automatic == true
+		and self.ShouldPauseAutomaticRefreshInInstance
+		and self:ShouldPauseAutomaticRefreshInInstance()
+
 	if mode == "settings" then
 		-- Settings-triggered refreshes update the cache (and any already-open
 		-- popup below) without spamming chat or opening a new popup.
 	elseif mode == "new" then
-		self:AnnounceChat(self.newTasks, self.first)
+		if not suppressAutomaticOutput then
+			self:AnnounceChat(self.newTasks, self.first)
 
-		if
-			self.db.profile.options.PopUp == true
-			and (automatic ~= true or next(self.newTasks) ~= nil)
-		then
-			self:AnnouncePopUp(self.newTasks, self.first)
+			if
+				self.db.profile.options.PopUp == true
+				and (automatic ~= true or next(self.newTasks) ~= nil)
+			then
+				self:AnnouncePopUp(self.newTasks, self.first)
+			end
 		end
 	elseif mode == "popup" then
 		self:AnnouncePopUp(self.activeTasks)
 	elseif mode == "LDB" then
 		self:AnnounceLDB(self.activeTasks)
-	else
+	elseif not suppressAutomaticOutput then
 		self:AnnounceChat(self.activeTasks)
 
 		if

@@ -1,5 +1,11 @@
 # WQA Turbo Changelog
 
+## 1.6.0
+
+### Added
+- Pause automatic scans and notifications in grouped instances, then resume the latest deferred refresh after returning to the open world while keeping manual popup and refresh commands available.
+- Add one-click enable/disable controls for World Quest types, zones, currencies, reputations, emissaries, and mission currency/reputation lists.
+
 ## 1.5.2
 
 ### Fixed

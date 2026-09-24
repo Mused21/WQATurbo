@@ -43,9 +43,11 @@ local publishedMode
 WQA.CheckItems = function() return false end
 WQA.CheckCurrencies = noop
 WQA.RewardScannerProcessProfession = noop
-WQA.TurboPublishEnrichment = function(_, mode)
+local publishedAutomatic
+WQA.TurboPublishEnrichment = function(_, mode, automatic)
     publications = publications + 1
     publishedMode = mode
+	publishedAutomatic = automatic
 end
 
 local function NewState(phase)
@@ -69,11 +71,13 @@ end
 -- dirty the batch even when no direct-reputation match did so.
 local state = NewState("initial")
 state.publishMode = "settings"
+state.publishAutomatic = true
 WQA:RewardScannerProcessRewardDetails(state, { questID = 1000 }, nil, 1)
 assert(state.enrichmentDirty == true)
 assert(state.stats.enrichedQuests == 1)
 WQA:RewardScannerPublishPendingChanges(state)
 assert(publications == 1)
+assert(publishedMode == "settings" and publishedAutomatic == true)
 assert(state.stats.publishCount == 1)
 assert(state.enrichmentDirty == false)
 assert(publishedMode == "settings")
@@ -121,8 +125,10 @@ WQA.db = {
 }
 WQA.IsMapCurrentlyAvailable = function(_, mapID) return mapID ~= 2599 end
 WQA._wqaTurboRefreshMode = "settings"
+WQA._wqaTurboRefreshAutomatic = true
 WQA:Reward()
 assert(WQA._wqaRewardScan.publishMode == "settings")
+assert(WQA._wqaRewardScan.publishAutomatic == true)
 assert(#WQA._wqaRewardScan.maps == 2)
 local scannedMaps = {}
 for _, mapID in ipairs(WQA._wqaRewardScan.maps) do scannedMaps[mapID] = true end
@@ -130,8 +136,10 @@ assert(scannedMaps[2600] and scannedMaps[2405])
 assert(not scannedMaps[2599], "The inactive rotating map must not be scanned")
 WQA._wqaRewardScan = nil
 WQA._wqaTurboRefreshMode = nil
+WQA._wqaTurboRefreshAutomatic = nil
 WQA:Reward()
 assert(WQA._wqaRewardScan.publishMode == "new")
+assert(WQA._wqaRewardScan.publishAutomatic == false)
 WQA._wqaRewardScan = nil
 
 -- The actual expansion map list must make Tazavesh discoverable, while the
@@ -168,6 +176,7 @@ WQA.event = {
 	RegisterEvent = function(_, event) deferredEvent = event end
 }
 UnitAffectingCombat = function() return inCombat end
+IsInInstance = function() return false, "none" end
 LibStub = function() return { Release = noop } end
 dofile("Runtime/Display.lua")
 WQA:Refresh("settings", true)
@@ -208,7 +217,7 @@ assert(refreshModeDuringCreate == "settings")
 assert(WQA._wqaTurboPendingRefresh == nil)
 assert(checkAutomatic == true)
 
-WQA:TurboPublishEnrichment("settings")
-assert(checkMode == "settings")
+WQA:TurboPublishEnrichment("settings", true)
+assert(checkMode == "settings" and checkAutomatic == true)
 
 print("Reward scanner regression checks passed (publication, retries, Settings mode and display routing).")

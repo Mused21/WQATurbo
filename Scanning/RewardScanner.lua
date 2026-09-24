@@ -384,7 +384,7 @@ function WQA:RewardScannerPublishPendingChanges(state)
 
 	-- Publish current results now. Do not wait for every unrelated pending
 	-- quest in the world to resolve.
-	self:TurboPublishEnrichment(state.publishMode)
+	self:TurboPublishEnrichment(state.publishMode, state.publishAutomatic)
 end
 
 function WQA:RewardScannerScheduleRetry(state)
@@ -604,6 +604,7 @@ function WQA:Reward()
 		retryTimer = nil,
 		enrichmentDirty = false,
 		publishMode = self._wqaTurboRefreshMode == "settings" and "settings" or "new",
+		publishAutomatic = self._wqaTurboRefreshAutomatic == true,
 
 		stats = {
 			finished = false,
