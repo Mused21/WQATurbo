@@ -1,19 +1,49 @@
 # WQA Turbo Development Roadmap
 
-> **Current release target:** 1.5.2
+> **Current release target:** 1.6.0
 >
-> **Released baseline:** 1.5.1
+> **Released baseline:** 1.5.2
 >
-> **Current milestone:** 1.5.2 release candidate
+> **Current milestone:** 1.6.0 release candidate
 >
-> **Current item:** Scaled World Quest transmog sources (Done)
+> **Current item:** Instance-aware refresh and reward-list bulk controls (Done)
 >
-> **Last reviewed:** 2026-09-23
+> **Last reviewed:** 2026-09-24
 
 This is the active work queue for WQA Turbo. Read it before planning or
 starting follow-up work. Update the current item and status in the same change
 that completes or reprioritizes roadmap work. Released version documents are
 historical records and must not be reused as active checklists.
+
+## 1.6.0: instance-aware refresh and bulk controls
+
+| Status | Priority | Work item | Completion criteria |
+|---|---:|---|---|
+| **Done** | P1 | Pause automatic work in grouped instances | A default-on option prevents automatic scans and notifications in dungeons, raids, scenarios, battlegrounds and arenas; the latest deferred refresh resumes on return to the open world; manual cached popup and explicit refresh access remain available; a scan finishing after entry cannot open a new automatic popup; focused automated and in-game checks pass. |
+| **Done** | P1 | Reward-list bulk controls | World Quest types, zones, currencies, reputations, emissaries and mission currency/reputation lists each expose one full-width control that updates only entries in that displayed list and schedules one coalesced Settings refresh; focused automated and in-game checks pass. |
+
+The implementation was informed by Hyphie24's WQAchievements work. WQA Turbo
+keeps instance policy at its automatic refresh/publication boundary instead of
+duplicating scan guards, and reuses its existing Settings debouncer rather than
+refreshing once per changed entry.
+
+Automated validation and focused in-game verification passed on 2026-09-24.
+
+Focused 1.6.0 in-game checks:
+
+- With **Pause automatic scans in instances** enabled, enter a dungeon or raid
+  before the login/recurring refresh fires. Confirm no scan, chat notification
+  or new popup appears, then leave and confirm one refresh resumes.
+- Start an automatic refresh immediately before entering an instance. Confirm
+  late reward enrichment cannot open a new popup inside the instance.
+- Inside an instance, confirm normal minimap left-click and `/wqat popup` show
+  cached results, and `/wqat refresh` still performs an explicit refresh.
+- Disable the instance option and confirm automatic refresh behavior is restored
+  inside a dungeon or raid.
+- Use **Enable all in this list** twice on representative zone, currency,
+  reputation, emissary and mission lists. Confirm every displayed row changes,
+  opposite-faction hidden entries are untouched, and the popup/cache refreshes
+  once after rapid bulk changes.
 
 ## 1.5.2: transmog source correctness
 

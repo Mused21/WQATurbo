@@ -143,6 +143,7 @@ Responsibilities include:
 - the canonical data refresh sequence used by `Refresh()`;
 - cached display;
 - explicit refresh;
+- grouped-instance detection and latest-request automatic deferral;
 - progressive open-popup rebuild;
 - enrichment publication hooks.
 

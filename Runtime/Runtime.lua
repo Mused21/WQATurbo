@@ -67,29 +67,33 @@ function WQA:OnEnable()
 
 	self.event:SetScript("OnEvent", function(_, eventName, id)
 		if eventName == "PLAYER_ENTERING_WORLD" then
-			self.event:UnregisterEvent("PLAYER_ENTERING_WORLD")
+			if not self._wqaTurboStartupScheduled then
+				self._wqaTurboStartupScheduled = true
 
-			-- Turbo no longer needs a long login delay to let a synchronous
-			-- reward preload run first. Respect smaller user values, but cap
-			-- legacy/default values at one second.
-			local configuredDelay =
-				tonumber(self.db.profile.options.delay) or STARTUP_DELAY_CAP_SECONDS
+				-- Turbo no longer needs a long login delay to let a synchronous
+				-- reward preload run first. Respect smaller user values, but cap
+				-- legacy/default values at one second.
+				local configuredDelay =
+					tonumber(self.db.profile.options.delay) or STARTUP_DELAY_CAP_SECONDS
 
-			local startupDelay = math.max(
-				0,
-				math.min(configuredDelay, STARTUP_DELAY_CAP_SECONDS)
-			)
+				local startupDelay = math.max(
+					0,
+					math.min(configuredDelay, STARTUP_DELAY_CAP_SECONDS)
+				)
 
-			self:ScheduleTimer("Show", startupDelay, nil, true)
+				self:ScheduleTimer("Show", startupDelay, nil, true)
 
-			-- Preserve upstream refresh alignment and recurring refresh.
-			self:ScheduleTimer(
-				function()
-					self:Show("new", true)
-					self:ScheduleRepeatingTimer("Show", 30 * 60, "new", true)
-				end,
-				(32 - (date("%M") % 30)) * 60
-			)
+				-- Preserve upstream refresh alignment and recurring refresh.
+				self:ScheduleTimer(
+					function()
+						self:Show("new", true)
+						self:ScheduleRepeatingTimer("Show", 30 * 60, "new", true)
+					end,
+					(32 - (date("%M") % 30)) * 60
+				)
+			elseif self.ResumeInstanceDeferredRefresh then
+				self:ResumeInstanceDeferredRefresh()
+			end
 
 		elseif eventName == "PLAYER_REGEN_ENABLED" then
 			self.event:UnregisterEvent("PLAYER_REGEN_ENABLED")

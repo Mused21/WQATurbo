@@ -12,6 +12,7 @@ local shown = {}
 local loadedAddons = {}
 local taskResolverSchedules = 0
 local deferredRefreshes = 0
+local instanceDeferredRefreshes = 0
 local taskResolverRestartWindow
 local commandCalls = {}
 local function commandCall(name)
@@ -46,6 +47,11 @@ end
 UnitFullName = function(unit)
 	assert(unit == "player")
 	return "Tester", "Realm"
+end
+
+local currentInstanceType = "none"
+IsInInstance = function()
+	return currentInstanceType ~= "none", currentInstanceType
 end
 
 date = function(format)
@@ -121,6 +127,9 @@ WQATurbo = {
 	ResumeDeferredRefresh = function()
 		deferredRefreshes = deferredRefreshes + 1
 	end,
+	ResumeInstanceDeferredRefresh = function()
+		instanceDeferredRefreshes = instanceDeferredRefreshes + 1
+	end,
 	UpdateCallings = function(self, callings) self.lastCallings = callings end,
 	ClearCallings = function(self) self.lastCallings = nil end,
 	RequestCallings = function(self) self.callingRequests = (self.callingRequests or 0) + 1 end,
@@ -181,7 +190,7 @@ assert(scheduled[1].delay == 2)
 assert(#loadedAddons == 0, "startup must not eagerly load Blizzard_GarrisonUI")
 
 eventFrame.onEvent(eventFrame, "PLAYER_ENTERING_WORLD")
-assert(eventFrame.unregistered.PLAYER_ENTERING_WORLD)
+assert(not eventFrame.unregistered.PLAYER_ENTERING_WORLD)
 assert(#scheduled == 3)
 assert(scheduled[2].callback == "Show")
 assert(scheduled[2].delay == 1)
@@ -189,6 +198,10 @@ assert(scheduled[2].args.n == 2)
 assert(scheduled[2].args[1] == nil and scheduled[2].args[2] == true)
 assert(type(scheduled[3].callback) == "function")
 assert(scheduled[3].delay == 32 * 60)
+
+eventFrame.onEvent(eventFrame, "PLAYER_ENTERING_WORLD")
+assert(instanceDeferredRefreshes == 1)
+assert(#scheduled == 3, "Zoning must not duplicate startup timers")
 
 scheduled[3].callback()
 assert(#shown == 1)
@@ -262,6 +275,29 @@ WQA.CheckWQ = function(self, mode)
     assert(mode == "settings")
     self.activeTasks = { self.db.profile.testID }
 end
+
+-- Automatic work pauses in grouped instances and resumes after leaving.
+WQA.db.profile = { testID = 99, options = {
+	pauseAutomaticRefreshInInstances = true,
+	delayCombat = false
+} }
+WQA.tooltip = nil
+WQA.watched, WQA.watchedMissions = {}, {}
+WQA.Criterias.AreaPoi.watched = {}
+currentInstanceType = "raid"
+WQA:Refresh("settings", true)
+assert(rebuilds == 0 and WQA._wqaTurboPendingInstanceRefresh)
+currentInstanceType = "none"
+WQA:ResumeInstanceDeferredRefresh()
+assert(rebuilds == 1 and WQA._wqaTurboPendingInstanceRefresh == nil)
+
+-- Explicit refresh remains available inside an instance.
+currentInstanceType = "party"
+WQA:Refresh("settings")
+assert(rebuilds == 2)
+currentInstanceType = "none"
+rebuilds = 0
+
 for index, event in ipairs({ "OnProfileChanged", "OnProfileCopied", "OnProfileReset" }) do
     WQA.options = { old = true }
     WQA.tooltip = {}

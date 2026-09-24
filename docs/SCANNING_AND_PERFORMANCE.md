@@ -158,7 +158,9 @@ finishes. Publication is coalesced at batch boundaries, so an open persistent
 popup gains the resolved reward-based quests without rebuilding once per quest.
 The scanner also retains the refresh mode that created it: Settings-triggered
 enrichment republishes in silent `settings` mode, while ordinary background
-discovery uses `new` mode.
+discovery uses `new` mode. Scanner and readiness retry state also retain whether
+the originating refresh was automatic so late results still obey grouped-
+instance notification suppression.
 
 ## 7. Readiness in `Runtime/TaskResolver.lua`
 
@@ -278,6 +280,9 @@ Desired behavior:
 - if the persistent popup is already open, update it when new results are ready.
 - if combat defers the refresh, retain the silent Settings publication mode
   until `PLAYER_REGEN_ENABLED` resumes it.
+- if grouped-instance policy defers automatic work, retain only the latest
+  request and resume it after `PLAYER_ENTERING_WORLD` reports open-world state;
+  do not suppress explicit manual refreshes or cached popup access.
 
 Bulk operations should trigger **one** debounced refresh, not one refresh per item.
 

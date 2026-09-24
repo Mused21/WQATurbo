@@ -330,7 +330,23 @@ perform a scan.
 
 Explicit refresh entry point owned by `Runtime/Display.lua`.
 
-Used by commands/settings/minimap Shift+Left-click.
+Used by commands/settings/minimap Shift+Left-click. Automatic calls can be
+deferred by combat or grouped-instance policy; explicit calls remain available.
+
+### `WQA:IsRestrictedGroupInstance()`
+
+Uses `IsInInstance()` to identify party, raid, scenario, battleground and arena
+instances while excluding housing neighborhoods/interiors.
+
+### `WQA:ShouldPauseAutomaticRefreshInInstance()`
+
+Combines the current instance type with the profile option used by automatic
+refresh and publication paths.
+
+### `WQA:ResumeInstanceDeferredRefresh()`
+
+Resumes the latest deferred automatic request after `PLAYER_ENTERING_WORLD`
+reports that the player has returned to unrestricted content.
 
 ### `WQA:ShowCached(...)`
 

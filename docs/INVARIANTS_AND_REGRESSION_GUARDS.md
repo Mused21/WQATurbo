@@ -55,6 +55,13 @@ An automatic refresh may open a closed popup only when it publishes an
 interesting task. Manual popup requests must still be able to show the empty
 state, and an already-open popup must continue to refresh in place.
 
+### Automatic instance suppression preserves manual access
+
+When the profile option is enabled, automatic scans and new output pause only
+for party, raid, scenario, battleground and arena instance types. Preserve
+manual cached popup access and explicit refresh commands. Keep at most one
+deferred automatic request and resume it after returning to the open world.
+
 ## Tooltip safety
 
 ### 10. Stale delayed callback may not release a new tooltip

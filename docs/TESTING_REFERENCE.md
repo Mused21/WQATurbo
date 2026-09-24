@@ -66,7 +66,8 @@ The reward-scanner test checks that initial reward inspection and completed
 item retries dirty a publication batch, and that repeated flushes without new
 work do not rebuild the display again. It also verifies that a scanner started
 by a Settings refresh republishes silently while ordinary scans use new-task
-mode. Its display checks cover refresh-mode visibility, first-access fallback
+mode, and that automatic origin is retained through late enrichment. Its
+display checks cover refresh-mode visibility, first-access fallback
 and cache-only popup routing through the canonical `Show()` owner, and it
 asserts that `Scanning/RewardScanner.lua` supplies `Reward()`.
 
@@ -77,6 +78,8 @@ completion, War Mode refresh and mission updates. It also invokes all three
 AceDB profile callbacks through the real Options/Display refresh path, checking
 queued refresh cancellation, silent immediate rebuild, watched-state reset and
 LibDBIcon rebinding even with combat deferral enabled.
+It also covers grouped-instance deferral, open-world resumption and explicit
+manual refresh access inside an instance.
 It also checks Calling event dispatch, turn-in completion handling and
 covenant-change invalidation. The Calling test verifies all 24 families and 96
 unique IDs, selected-covenant expansion, labels and shared expiration, per-
@@ -90,7 +93,8 @@ The task-resolver test exercises the canonical `CheckWQ()` owner. It checks
 per-task readiness, retry coalescing/cancellation, final filtering and
 Settings/popup/LDB publication modes. It also verifies that an empty automatic
 publication leaves a closed popup closed while manual empty output and a later
-interesting automatic result still open it.
+interesting automatic result still open it. Automatic publication after entry
+into a restricted instance remains silent.
 
 The tooltip-lifecycle test checks exact-object ownership, stale `OnHide`
 callbacks, idempotent release, attached-task cleanup and popup/LDB rebuild

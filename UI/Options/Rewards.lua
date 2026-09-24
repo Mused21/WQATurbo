@@ -10,9 +10,36 @@ local EmissaryQuestIDList = RuntimeData.EmissaryQuestIDsByExpansion
 local FactionIDList = RuntimeData.FactionIDsByExpansion
 local GetSortedExpansionIDs = WQA.OptionsUI.GetSortedExpansionIDs
 
+local function CreateBulkBooleanOption(getSettings, ids)
+	return {
+		order = 0,
+		type = "toggle",
+		name = L["Enable all in this list"],
+		desc = L["Enable or disable every entry in this list at once."],
+		width = "full",
+		hidden = #ids == 0,
+		get = function()
+			local settings = getSettings()
+			for _, id in ipairs(ids) do
+				if settings[id] ~= true then
+					return false
+				end
+			end
+			return #ids > 0
+		end,
+		set = function(_, value)
+			local settings = getSettings()
+			for _, id in ipairs(ids) do
+				settings[id] = value
+			end
+			WQA:ScheduleOptionsRefresh()
+		end
+	}
+end
+
 local function CreateHideMaxedReputationsOption()
 	return {
-		order = 1,
+		order = 2,
 		type = "toggle",
 		name = L["Hide Exalted / max Renown reputations"],
 		desc = L["Hide finished reputations from these lists and ignore them when matching reputation rewards. This includes classic Exalted reputations and Major Factions at maximum Renown."],
@@ -276,9 +303,11 @@ function WQA:PopulateWorldQuestTypeOptions()
 		args = {}
 	}
 	local worldQuestTypeArgs = args.worldQuestTypes.args
+	local worldQuestTypeIDs = {}
 	for k, v in pairs(worldQuestType) do
 		local optionKey = k
 		local worldQuestTypeID = v
+		worldQuestTypeIDs[#worldQuestTypeIDs + 1] = worldQuestTypeID
 
 		worldQuestTypeArgs[optionKey] = {
 			type = "toggle",
@@ -294,6 +323,9 @@ function WQA:PopulateWorldQuestTypeOptions()
 			order = newOrder()
 		}
 	end
+	worldQuestTypeArgs.enableAll = CreateBulkBooleanOption(function()
+		return WQA.db.profile.options.reward.general.worldQuestType
+	end, worldQuestTypeIDs)
 
 end
 
@@ -331,7 +363,9 @@ function WQA:PopulateRewardOptions()
 						type = "group",
 						args = {}
 					}
+					local zoneIDs = {}
 					for _, zoneID in pairs(WQA.ZoneIDList[i]) do
+						zoneIDs[#zoneIDs + 1] = zoneID
 						local mapInfo = C_Map.GetMapInfo(zoneID)
 						local zoneName = mapInfo and mapInfo.name or tostring(zoneID)
 						local capturedZoneID = zoneID
@@ -349,6 +383,9 @@ function WQA:PopulateRewardOptions()
 							order = newOrder()
 						}
 					end
+					rewardArgs.zone.args.enableAll = CreateBulkBooleanOption(function()
+						return WQA.db.profile.options.zone
+					end, zoneIDs)
 				end
 
 				-- Currencies
@@ -359,12 +396,14 @@ function WQA:PopulateRewardOptions()
 						type = "group",
 						args = {}
 					}
+					local currencyIDs = {}
 					for _, currencyEntry in ipairs(CurrencyIDList[i]) do
 						if not (type(currencyEntry) == "table" and currencyEntry.faction ~= self.faction) then
 							local currencyID = type(currencyEntry) == "table" and currencyEntry.id or currencyEntry
 							local currencyInfo = currencyID and GetCurrencyInfo(currencyID)
 							if currencyInfo and currencyInfo.name then
 								local capturedCurrencyID = currencyID
+								currencyIDs[#currencyIDs + 1] = capturedCurrencyID
 								rewardArgs.currency.args[currencyInfo.name .. tostring(capturedCurrencyID)] = {
 									type = "toggle",
 									name = currencyInfo.name,
@@ -381,6 +420,9 @@ function WQA:PopulateRewardOptions()
 							end
 						end
 					end
+					rewardArgs.currency.args.enableAll = CreateBulkBooleanOption(function()
+						return WQA.db.profile.options.reward.currency
+					end, currencyIDs)
 				end
 
 				-- Reputation
@@ -394,12 +436,14 @@ function WQA:PopulateRewardOptions()
 							hideMaxed = CreateHideMaxedReputationsOption()
 						}
 					}
+					local factionIDs = {}
 					for _, factionGroup in ipairs({ "Neutral", UnitFactionGroup("player") }) do
 						if FactionIDList[i][factionGroup] then
 							for _, factionID in ipairs(FactionIDList[i][factionGroup]) do
 								local factionData = C_Reputation.GetFactionDataByID(factionID)
 								if factionData and factionData.name then
 									local capturedFactionID = factionID
+									factionIDs[#factionIDs + 1] = capturedFactionID
 									rewardArgs.reputation.args[factionData.name .. tostring(capturedFactionID)] = {
 										type = "toggle",
 										name = factionData.name,
@@ -421,6 +465,9 @@ function WQA:PopulateRewardOptions()
 							end
 						end
 					end
+					rewardArgs.reputation.args.enableAll = CreateBulkBooleanOption(function()
+						return WQA.db.profile.options.reward.reputation
+					end, factionIDs)
 				end
 
 				-- Dragonflight racing reward containers
@@ -497,10 +544,12 @@ function WQA:PopulateRewardOptions()
 						type = "group",
 						args = {}
 					}
+					local emissaryQuestIDs = {}
 					for _, questEntry in ipairs(EmissaryQuestIDList[i]) do
 						if not (type(questEntry) == "table" and questEntry.faction ~= self.faction) then
 							local questID = type(questEntry) == "table" and questEntry.id or questEntry
 							local capturedQuestID = questID
+							emissaryQuestIDs[#emissaryQuestIDs + 1] = capturedQuestID
 							local questName = GetTitleForQuestID(capturedQuestID) or tostring(capturedQuestID)
 							rewardArgs.emissary.args[questName .. tostring(capturedQuestID)] = {
 								type = "toggle",
@@ -517,6 +566,9 @@ function WQA:PopulateRewardOptions()
 							}
 						end
 					end
+					rewardArgs.emissary.args.enableAll = CreateBulkBooleanOption(function()
+						return WQA.db.profile.options.emissary
+					end, emissaryQuestIDs)
 				end
 
 				-- Professions
@@ -628,12 +680,14 @@ function WQA:PopulateRewardOptions()
 						}
 					end
 
+					local missionCurrencyIDs = {}
 					for _, currencyEntry in ipairs(CurrencyIDList[i]) do
 						if not (type(currencyEntry) == "table" and currencyEntry.faction ~= self.faction) then
 							local currencyID = type(currencyEntry) == "table" and currencyEntry.id or currencyEntry
 							local currencyInfo = currencyID and GetCurrencyInfo(currencyID)
 							if currencyInfo and currencyInfo.name then
 								local capturedCurrencyID = currencyID
+								missionCurrencyIDs[#missionCurrencyIDs + 1] = capturedCurrencyID
 								missionArgs.currency.args[currencyInfo.name .. tostring(capturedCurrencyID)] = {
 									type = "toggle",
 									name = currencyInfo.name,
@@ -650,6 +704,9 @@ function WQA:PopulateRewardOptions()
 							end
 						end
 					end
+					missionArgs.currency.args.enableAll = CreateBulkBooleanOption(function()
+						return WQA.db.profile.options.missionTable.reward.currency
+					end, missionCurrencyIDs)
 				end
 
 				if FactionIDList[i] then
@@ -661,12 +718,14 @@ function WQA:PopulateRewardOptions()
 							hideMaxed = CreateHideMaxedReputationsOption()
 						}
 					}
+					local missionFactionIDs = {}
 					for _, factionGroup in ipairs({ "Neutral", UnitFactionGroup("player") }) do
 						if FactionIDList[i][factionGroup] then
 							for _, factionID in ipairs(FactionIDList[i][factionGroup]) do
 								local factionData = C_Reputation.GetFactionDataByID(factionID)
 								if factionData and factionData.name then
 									local capturedFactionID = factionID
+									missionFactionIDs[#missionFactionIDs + 1] = capturedFactionID
 									missionArgs.reputation.args[factionData.name .. tostring(capturedFactionID)] = {
 										type = "toggle",
 										name = factionData.name,
@@ -688,6 +747,9 @@ function WQA:PopulateRewardOptions()
 							end
 						end
 					end
+					missionArgs.reputation.args.enableAll = CreateBulkBooleanOption(function()
+						return WQA.db.profile.options.missionTable.reward.reputation
+					end, missionFactionIDs)
 				end
 			end
 		end

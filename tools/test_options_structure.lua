@@ -33,6 +33,7 @@ local function build(baseline)
                 pets = { exclusive = {} }, toys = { exclusive = {} },
                 options = { reward = { general = { worldQuestType = {} }, currency = {},
                     reputation = {}, recipe = {} }, zone = {}, emissary = {},
+					pauseAutomaticRefreshInInstances = true,
 					trackShadowlandsCallings = false,
 					shadowlandsCallingsByCovenant = { [1] = true, [2] = true, [3] = true, [4] = true },
                     missionTable = { reward = { currency = {}, reputation = {} } } } },
@@ -91,6 +92,29 @@ local function build(baseline)
     assert(reward.Expansion12.args.Expansion12MissionTable == nil)
     local wq = reward.Expansion10.args.Expansion10WorldQuests.args
     assert(wq.currency.args.Currency110110 == nil, "Hide opposite-faction currencies")
+	local bulkOptions = {
+		tree.args.reward.args.general.args.worldQuestTypes.args.enableAll,
+		wq.zone.args.enableAll,
+		wq.currency.args.enableAll,
+		wq.reputation.args.enableAll,
+		wq.emissary.args.enableAll,
+		reward.Expansion8.args.Expansion8MissionTable.args.currency.args.enableAll,
+		reward.Expansion8.args.Expansion8MissionTable.args.reputation.args.enableAll
+	}
+	for _, option in ipairs(bulkOptions) do
+		assert(option.name == "Enable all in this list" and option.width == "full")
+		option.set(nil, false)
+		assert(option.get() == false)
+		option.set(nil, true)
+		assert(option.get() == true)
+	end
+	assert(WQA.db.profile.options.reward.currency[110] == nil,
+		"Bulk currency changes must not include opposite-faction entries")
+	local gameplay = tree.args.options.args.gameplay.args
+	assert(gameplay.pauseAutomaticRefreshInInstances.width == "full")
+	assert(gameplay.pauseAutomaticRefreshInInstances.get() == true)
+	gameplay.pauseAutomaticRefreshInInstances.set(nil, false)
+	assert(WQA.db.profile.options.pauseAutomaticRefreshInInstances == false)
     wq.currency.args.Currency1010.set(nil, true)
     wq.zone.args.Map1010.set(nil, true)
     wq.reputation.args.Faction1010.set(nil, true)

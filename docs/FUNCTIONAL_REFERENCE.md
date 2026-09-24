@@ -443,6 +443,13 @@ An automatic refresh does not reopen a closed popup when it finds no
 interesting tasks. Manual popup opening can still show the empty state, and an
 automatic refresh may open the popup when a newly interesting task appears.
 
+When **Pause automatic scans in instances** is enabled, automatic refreshes and
+notifications pause in dungeons, raids, scenarios, battlegrounds and arenas.
+Only the latest deferred request is retained and resumed after returning to the
+open world. Manual cached popup access and explicit refresh commands continue
+to work. Automatic enrichment that began before instance entry may update the
+cache, but it cannot open a new popup or announce results inside the instance.
+
 Minimap click instructions are not included inside the persistent popup.
 
 ## 20. Chat/output behavior
