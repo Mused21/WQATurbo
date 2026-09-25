@@ -279,6 +279,7 @@ MISCELLANEOUS
 PROFESSION_SKILLUP
 RECIPE
 REPUTATION
+WORLD_BOSS_TRANSMOG
 ```
 
 Use these concepts consistently rather than inventing ad-hoc parallel structures.
@@ -321,6 +322,26 @@ These may contain arrays of distinct mapped rewards and are de-duplicated.
 ### Reputation/currency rewards
 
 Structured values include faction/currency identifiers and amounts or links.
+
+### World Boss transmog rewards
+
+`WORLD_BOSS_TRANSMOG` is stored as `reward.worldBossTransmog`:
+
+```lua
+{
+    encounterID = 1234,
+    encounterName = "...",
+    missingCount = 2,
+    items = {
+        { itemID = 1001, itemLink = "...", transmog = "..." },
+        { itemID = 1002, itemLink = "...", transmog = "..." }
+    }
+}
+```
+
+The Encounter Journal links are ready when the reward is published, so the
+entry does not use ordinary quest-reward link readiness. Reinspection replaces
+the item list for that quest rather than appending duplicates.
 
 ## 6. Achievement data schema
 

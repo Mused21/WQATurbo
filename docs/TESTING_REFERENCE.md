@@ -18,6 +18,7 @@ lua5.1 tools/test_tracking_policy.lua
 lua5.1 tools/test_callings.lua
 lua5.1 tools/test_reward_classifier.lua
 lua5.1 tools/test_reward_scanner.lua
+lua5.1 tools/test_world_boss_scanner.lua
 lua5.1 tools/test_runtime_lifecycle.lua
 lua5.1 tools/test_task_resolver.lua
 lua5.1 tools/test_tooltip_lifecycle.lua
@@ -70,6 +71,22 @@ mode, and that automatic origin is retained through late enrichment. Its
 display checks cover refresh-mode visibility, first-access fallback
 and cache-only popup routing through the canonical `Show()` owner, and it
 asserts that `Scanning/RewardScanner.lua` supplies `Reward()`.
+
+The World Boss scanner test covers coordinate and exact-name encounter
+matching, ambiguous-match rejection, completed-boss suppression, class-filtered
+missing-item listing, visible-Guide deferral, disabled-option short-circuiting
+and restoration of Encounter Journal selection and loot filters. It also covers
+pinless exact quest-name and legacy objective-name fallbacks, journal-tier
+restoration, cold item-cache retries and immediate publication of a confirmed
+match while other EJ rows remain unresolved. TaskResolver coverage verifies
+that its Encounter Journal item links bypass quest-reward readiness. Tracking-policy
+coverage verifies that the dedicated World Boss quest tag overrides a legacy
+Normal world-quest type. World Boss scanner coverage also verifies that only
+Epic Elite legacy candidates enter encounter confirmation.
+The utility-routing suite verifies that a positive Blizzard quest timer wins,
+the seconds API fills a missing minute value, a confirmed World Boss can fall
+back to the regional weekly reset, and ordinary zero-minute behavior is
+unchanged.
 
 The runtime-lifecycle test exercises the canonical `OnEnable()` owner. It
 checks Settings registration, startup-delay capping, recurring refreshes,

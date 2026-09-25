@@ -888,4 +888,17 @@ assert(WQA.questList[101].info.zoneName == nil)
 mapInfo = { name = "Stormwind" }
 assert(WQA:GetQuestZoneName(101) == "Stormwind")
 assert(WQA:GetTaskZoneName({ type = WQA.Constants.TaskType.AreaPoi, mapId = 84 }) == "Stormwind")
+local worldBossReward = {
+    items = {
+        { itemLink = "|cff0070dd|Hitem:1001|h[Boss Helm]|h|r", transmog = " X" },
+        { itemLink = "|cff0070dd|Hitem:1002|h[Boss Sword]|h|r", transmog = " Y" }
+    }
+}
+assert(WQA:GetRewardTextByID(101, "worldBossTransmog", worldBossReward, 1) ==
+    "|cff0070dd|Hitem:1001|h[Boss Helm]|h|r X")
+assert(WQA:GetRewardTextByID(101, "worldBossTransmog", worldBossReward, 2) ==
+    "|cff0070dd|Hitem:1002|h[Boss Sword]|h|r Y")
+assert(WQA:GetRewardTextByID(101, "worldBossTransmog", worldBossReward, 3) == nil)
+assert(WQA:GetRewardLinkByID(101, "worldBossTransmog", worldBossReward, 2) ==
+    "|cff0070dd|Hitem:1002|h[Boss Sword]|h|r")
 print("Reward/core regression checks passed (classification, missions, emissaries, Quest Pin readiness and metadata recovery).")

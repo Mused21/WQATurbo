@@ -57,6 +57,7 @@ function WQA:GetTaskMatchReasons(task)
 	if reward.currency then AddReason(reasons, seen, L["Match: currency"]) end
 	if reward.professionSkillup then AddReason(reasons, seen, L["Match: profession skill-up"]) end
 	if reward.gold then AddReason(reasons, seen, L["Match: gold"]) end
+	if reward.worldBossTransmog then AddReason(reasons, seen, L["Match: transmog"]) end
 	if reward.azeriteTraits then AddReason(reasons, seen, L["Match: Azerite trait"]) end
 	if reward[RewardType.Miscellaneous] then AddReason(reasons, seen, L["Match: miscellaneous reward"]) end
 

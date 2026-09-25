@@ -261,6 +261,21 @@ function WQA:CreateRewardOptions()
 						end,
 						order = newOrder()
 					},
+					worldBossTransmog = {
+						type = "toggle",
+						name = L["World bosses with missing transmog"],
+						desc = L["Track active, undefeated world bosses when their Encounter Journal loot for this class contains an enabled unknown appearance or source."],
+						width = "full",
+						set = function(info, val)
+							WQA.db.profile.options.reward.gear.worldBossTransmog = val
+							WQA:ScheduleOptionsRefresh()
+						end,
+						descStyle = "inline",
+						get = function()
+							return WQA.db.profile.options.reward.gear.worldBossTransmog
+						end,
+						order = newOrder()
+					},
 					azeriteTraits = {
 						name = L["Azerite Traits"],
 						desc = L["Comma separated spellIDs"],

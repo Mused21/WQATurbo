@@ -409,7 +409,12 @@ function WQA:UpdateQTip(tasks)
                 local more = false
                 for k, v in pairs(list) do
                     for n = 1, 3 do
-                        if n == 1 or (n > 1 and (k == "achievement" or k == "chance" or k == "azeriteTraits")) then
+                        if n == 1 or (n > 1 and (
+                            k == "achievement"
+                            or k == "chance"
+                            or k == "azeriteTraits"
+                            or k == "worldBossTransmog"
+                        )) then
                             local text = self:GetRewardTextByID(id, k, v, n, task.type)
                             if text then
                                 j = j + 1
@@ -434,7 +439,9 @@ function WQA:UpdateQTip(tasks)
                                             GameTooltip:SetText(WQA:GetRewardTextByID(id, k, v, n, task.type))
                                         end
                                         GameTooltip:Show()
-                                        if (IsModifiedClick("COMPAREITEMS") or GetCVarBool("alwaysCompareItems")) and k == "item" then
+                                        if (IsModifiedClick("COMPAREITEMS") or GetCVarBool("alwaysCompareItems"))
+                                            and (k == "item" or k == "worldBossTransmog")
+                                        then
                                             GameTooltip_ShowCompareItem()
                                         else
                                             GameTooltip_HideShoppingTooltips(GameTooltip)

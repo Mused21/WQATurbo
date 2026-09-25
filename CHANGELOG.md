@@ -1,5 +1,16 @@
 # WQA Turbo Changelog
 
+## 1.7.0
+
+### Added
+- Optionally show active, undefeated World Boss quests when their Encounter Journal loot for the current class contains an enabled unknown transmog appearance or exact source.
+
+### Fixed
+- World Boss matches now appear as soon as one missing transmog source is confirmed instead of being withheld by other Encounter Journal items whose cache data is still loading.
+- World Boss quests such as Predaxas can resolve through a unique Encounter Journal name or objective match when Blizzard exposes no encounter pin on the boss's zone map.
+- Legacy Epic Elite World Boss quests are confirmed through their unique Encounter Journal match even when Blizzard reports their `worldQuestType` as Normal.
+- World Boss rows use the weekly reset time when Blizzard omits the remote quest timer instead of displaying `0m` remaining.
+
 ## 1.6.0
 
 ### Added

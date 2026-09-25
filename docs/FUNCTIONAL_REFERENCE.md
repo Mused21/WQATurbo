@@ -164,6 +164,24 @@ the expected matrix is:
 | Off | On | Yes |
 | Off | Off | No |
 
+### World Boss loot
+
+The default-off **World bosses with missing transmog** Gear option extends the
+same ownership rules to boss drops listed in Blizzard's Encounter Journal.
+Only active World Boss quests are considered. A boss is shown when it is not
+complete for the current lockout and at least one class-filtered drop matches
+Unknown appearance or Unknown source. The popup lists the matching item links,
+using the existing overflow tooltip after the first three. Ambiguous or
+unavailable encounter mappings do not guess, and a visibly open Adventure Guide
+is left unchanged. Coordinate matching is preferred; a unique localized quest
+or objective match within the same expansion tier supports bosses whose maps
+expose no Encounter Journal pin.
+Legacy quests whose `worldQuestType` is Normal enter resolution only when
+Blizzard classifies them as Epic and Elite; a unique Encounter Journal match
+must then confirm that the quest is a World Boss.
+When Blizzard omits a remote World Boss quest's expiration payload, its popup
+row uses the regional weekly-reset timer instead of reporting zero minutes.
+
 ### Collection-state authority
 
 Blizzard APIs are authoritative.

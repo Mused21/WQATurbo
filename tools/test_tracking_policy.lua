@@ -42,7 +42,10 @@ C_DateAndTime = {
 GetServerTime = function() return serverTime end
 C_CurrencyInfo = {}
 Enum = {
-    QuestTagType = { PvP = 1, PetBattle = 2, Profession = 3, Dungeon = 4 },
+    QuestTagType = {
+        PvP = 1, PetBattle = 2, Profession = 3, Dungeon = 4,
+        Normal = 2, WorldBoss = 18
+    },
     GarrisonType = {}
 }
 CreateFrame = function() return { SetOwner = noop } end
@@ -94,6 +97,16 @@ loadSource("Rewards/RewardType.lua")
 assert(WQA.Criterias == criteriaNamespace and WQA.Criterias.sentinel)
 assert(WQA.Rewards == rewardsNamespace and WQA.Rewards.sentinel)
 loadSource("WQATurbo.lua")
+if not arg[1] then
+    assert(WQA:GetEffectiveWorldQuestType(42270, {
+        tagID = 289, worldQuestType = Enum.QuestTagType.Normal
+    }) == Enum.QuestTagType.WorldBoss,
+        "The World Boss quest tag must override a legacy Normal worldQuestType")
+    assert(WQA:GetEffectiveWorldQuestType(9000, {
+        tagID = 109, worldQuestType = Enum.QuestTagType.Normal
+    }) == Enum.QuestTagType.Normal,
+        "Ordinary World Quests must remain Normal")
+end
 if not arg[1] then loadSource("Utilities.lua") end
 local coreCreateQuestList = WQA.CreateQuestList
 local legacyCustom, legacyMounts, legacyPets, legacyToys, legacyCheckWQ, legacyReward =

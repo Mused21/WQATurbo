@@ -112,6 +112,12 @@ Change only for scanner/discovery/readiness behavior.
 
 Do not add ordinary item-ID classification rules here.
 
+### `Scanning/WorldBossScanner.lua`
+
+Conservative World Boss quest-to-encounter matching and class-filtered
+Encounter Journal transmog inspection. Change when World Boss loot discovery,
+completion suppression or Adventure Guide state preservation changes.
+
 ### `Scanning/EmissaryScanner.lua`
 
 Emissary bounty discovery, reward-data retries and quest-log activity checks.

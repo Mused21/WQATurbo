@@ -1,19 +1,62 @@
 # WQA Turbo Development Roadmap
 
-> **Current release target:** 1.6.0
+> **Current release target:** 1.7.0
 >
 > **Released baseline:** 1.5.2
 >
-> **Current milestone:** 1.6.0 release candidate
+> **Current milestone:** 1.7.0 World Boss transmog tracking
 >
-> **Current item:** Instance-aware refresh and reward-list bulk controls (Done)
+> **Current item:** World Boss Encounter Journal transmog tracking (Done)
 >
-> **Last reviewed:** 2026-09-24
+> **Last reviewed:** 2026-09-25
 
 This is the active work queue for WQA Turbo. Read it before planning or
 starting follow-up work. Update the current item and status in the same change
 that completes or reprioritizes roadmap work. Released version documents are
 historical records and must not be reused as active checklists.
+
+## 1.7.0: World Boss transmog tracking
+
+| Status | Priority | Work item | Completion criteria |
+|---|---:|---|---|
+| **Done** | P1 | World Boss Encounter Journal transmog tracking | A default-off Gear option surfaces an active, undefeated World Boss only when its class-filtered Encounter Journal loot contains an appearance or exact source selected by the existing transmog settings; ambiguous encounter matches fail closed; Adventure Guide state is preserved; focused automated and in-game checks pass. |
+
+The ordinary reward scanner cannot see boss drops because they are Encounter
+Journal loot rather than direct quest rewards. The implementation therefore
+matches active World Boss quest pins to Encounter Journal pins on the same map,
+falls back to a unique localized journal name when a map exposes no encounter
+pin, inspects only those encounters inside the existing frame-budgeted worker,
+recognizes legacy Epic Elite boss quests whose reported world-quest type is
+Normal, and publishes the missing item links through the canonical
+reward model.
+The project validator and all focused Lua coverage pass. The developer verified
+the World Boss reward listing and remote weekly-timer fallback in game on
+2026-09-25, completing the item.
+
+Focused 1.7.0 in-game checks:
+
+- Enable **Unknown appearance** and **World bosses with missing transmog** on a
+  character whose class can obtain at least one missing drop from an active
+  World Boss. Refresh and confirm the quest appears with its missing item links.
+- Repeat immediately after `/reload` on a character with a cold item cache.
+  Confirm the boss appears once the first missing source resolves, without
+  waiting for every Encounter Journal loot row to finish loading.
+- Collect or simulate ownership of every class-filtered appearance, then
+  refresh and confirm the boss disappears. Repeat with **Unknown source** to
+  verify exact-source behavior independently.
+- Defeat the boss for the current weekly lockout and confirm it no longer
+  appears even while missing loot remains.
+- Open the Adventure Guide to another encounter and filters, close it, refresh,
+  then reopen it. Confirm the selected encounter, class/spec and slot filters
+  are unchanged. Refresh while the Guide is visibly open and confirm WQA waits
+  rather than changing it.
+- Disable the World Boss option and compare `/wqat scan`; ordinary World Quest
+  results and scan performance should remain unchanged.
+- Check an active legacy Epic Elite boss such as a Legion or Battle for Azeroth
+  boss and confirm its Normal `worldQuestType` does not prevent publication.
+- From a capital or another remote map, confirm weekly bosses such as Nymrissa,
+  Reshanor or The Main Event show the remaining weekly-reset time instead of
+  `0m` when Blizzard omits their quest expiration payload.
 
 ## 1.6.0: instance-aware refresh and bulk controls
 

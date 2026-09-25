@@ -24,6 +24,13 @@ WQA Turbo changes the unit of retry from **the whole world scan** to **the indiv
 
 `Scanning/RewardScanner.lua` is responsible for dynamic reward enrichment.
 
+`Scanning/WorldBossScanner.lua` supplies the optional Encounter Journal
+classifier for active World Boss quests and confirmed legacy Epic Elite boss
+quests. Scheduling, frame budgeting and retries remain owned by `RewardScanner`.
+Missing EJ item data is requested once per item and unresolved rows remain
+pending. A confirmed missing source is published immediately while those
+retries complete the item list.
+
 It does not replace the static achievement/collectible mapping system.
 
 Its job is:
@@ -106,6 +113,8 @@ Typical pending causes:
 - Blizzard has quest data but not reward data;
 - an item hyperlink is not ready;
 - transmog source/appearance information is not ready.
+- Encounter Journal loot for one active World Boss is not ready, or the
+  Adventure Guide is currently visible.
 
 A retry does **not** rebuild every map.
 
@@ -295,6 +304,7 @@ The scanner records counters such as:
 - pending quests;
 - reward-pending quests;
 - item-pending quests;
+- World Boss pending quests and matches;
 - retry checks;
 - preload reissues;
 - enriched quests;
