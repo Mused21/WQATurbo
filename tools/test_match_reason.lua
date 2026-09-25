@@ -41,4 +41,8 @@ assert(WQA:GetTaskMatchReasonText({ id = 301, mapId = 2405, type = TaskType.Area
     "Matched because: Match: custom task")
 assert(WQA:GetTaskMatchReasonText({ id = 999, type = TaskType.WorldQuest }) == nil)
 
+WQA.questList[102] = { reward = { worldBossTransmog = { missingCount = 2 } } }
+assert(WQA:GetTaskMatchReasonText({ id = 102, type = TaskType.WorldQuest }) ==
+    "Matched because: Match: transmog")
+
 print("match reason tests passed")

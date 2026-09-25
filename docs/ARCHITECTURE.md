@@ -52,6 +52,7 @@ Tracking/CollectionCache.lua
 Tracking/Custom.lua
 Tracking/Callings.lua
 Tracking/QuestAvailability.lua
+Scanning/WorldBossScanner.lua
 Scanning/RewardScanner.lua
 Scanning/EmissaryScanner.lua
 Runtime/Runtime.lua
@@ -321,6 +322,17 @@ Key design principles:
 - asynchronous reward data does not trigger a global rescan;
 - retry only unresolved quests;
 - progressively publish newly ready dynamic relevance.
+
+### `Scanning/WorldBossScanner.lua`
+
+Owns opt-in World Boss Encounter Journal inspection. It resolves an active
+World Boss quest to an encounter on the same map, prefers conservative pin
+coordinate matching, and falls back to a unique localized quest-name or
+objective-name match within the quest's expansion tier when Blizzard exposes no
+map encounter pin. It filters loot to the active class and reuses the normal
+transmog ownership helper. It skips completed encounters and preserves hidden
+Adventure Guide selection, tier and loot-filter state. `RewardScanner` owns
+when the helper runs and retains unresolved boss data as per-quest pending work.
 
 ### `Scanning/EmissaryScanner.lua`
 

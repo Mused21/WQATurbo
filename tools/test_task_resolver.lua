@@ -248,6 +248,19 @@ assert(taskKeys(WQA.activeTasks)["WORLD_QUEST:105"],
 activeQuests[105] = nil
 WQA.questList[105] = nil
 
+-- World Boss transmog entries already contain Encounter Journal item links and
+-- must not enter ordinary quest-reward link readiness.
+WQA.questList[106] = { reward = { worldBossTransmog = {
+	items = { { itemLink = "item:1001" }, { itemLink = "item:1002" } }
+} } }
+local savedRewardLinkGetter = WQA.GetRewardLinkByID
+WQA.GetRewardLinkByID = function()
+	error("World Boss summaries must bypass reward-link resolution")
+end
+assert(WQA:TurboPrepareWorldQuest(106))
+WQA.GetRewardLinkByID = savedRewardLinkGetter
+WQA.questList[106] = nil
+
 -- Automatic publication must not reopen a closed popup for an empty result.
 -- Manual publication still exposes the empty state, and automatic publication
 -- resumes as soon as an interesting task exists.

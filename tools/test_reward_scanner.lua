@@ -23,6 +23,7 @@ C_TaskQuest = {
 }
 C_Reputation = { GetFactionDataByID = function() return nil end }
 C_Timer = { NewTimer = function() return { Cancel = noop } end }
+Enum = { QuestTagType = { Normal = 2, WorldBoss = 18 } }
 
 WQATurbo = {
     Constants = {
@@ -32,7 +33,12 @@ WQATurbo = {
     RegisterChatCommand = noop,
     ShouldTrackReputation = function(self, factionID)
         return self.db.profile.options.reward.reputation[factionID] == true
-    end
+	end,
+	IsWorldBossQuestCandidate = function(_, questTagInfo)
+		return questTagInfo and (
+			questTagInfo.worldQuestType == 18 or questTagInfo.legacyBoss == true
+		)
+	end
 }
 local WQA = WQATurbo
 dofile("Scanning/RewardScanner.lua")
@@ -110,6 +116,42 @@ assert(state.enrichmentDirty == true)
 WQA:RewardScannerPublishPendingChanges(state)
 assert(publications == 2)
 assert(state.stats.publishCount == 1)
+
+-- World Boss Encounter Journal work uses the same per-quest retry queue and
+-- progressive publication path as ordinary item readiness.
+state = NewState("initial")
+local bossReady = false
+WQA.InspectWorldBossTransmog = function()
+	return bossReady, not bossReady
+end
+WQA:RewardScannerProcessWorldBoss(state, { questID = 2000, mapID = 10 }, {
+	worldQuestType = 18
+})
+assert(#state.pending == 1 and state.pending[1].kind == "worldBoss")
+state.pending = {}
+bossReady = true
+WQA:RewardScannerRetryEntry(state, {
+	kind = "worldBoss",
+	work = { questID = 2000, mapID = 10 },
+	firstSeen = GetTime(), attempts = 1, reissues = 0
+})
+assert(#state.pending == 0 and state.enrichmentDirty == true)
+
+-- A partial World Boss result is publishable and remains queued so its count
+-- can finish resolving. Repeated matches count the quest only once.
+state = NewState("initial")
+WQA.InspectWorldBossTransmog = function() return true, true end
+WQA:RewardScannerProcessWorldBoss(state, { questID = 2001, mapID = 10 }, {
+	worldQuestType = 2, legacyBoss = true
+})
+assert(#state.pending == 1 and state.enrichmentDirty == true)
+assert(state.stats.worldBossMatches == 1)
+local partialBossEntry = state.pending[1]
+state.pending = {}
+WQA:RewardScannerRetryEntry(state, partialBossEntry)
+assert(#state.pending == 1)
+assert(state.stats.worldBossMatches == 1)
+WQA.InspectWorldBossTransmog = nil
 
 -- A scanner created by a Settings refresh retains silent publication mode;
 -- ordinary scans continue to use new-task publication.

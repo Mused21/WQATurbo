@@ -73,6 +73,8 @@ function WQA:AddReward(list, rewardType, reward, emissary)
         l.professionSkillup = reward
     elseif rewardType == RewardType.Gold then
         l.gold = reward
+    elseif rewardType == RewardType.WorldBossTransmog then
+        l.worldBossTransmog = reward
     elseif rewardType == RewardType.AzeriteTrait then
         if not l.azeriteTraits then
             l.azeriteTraits = {}

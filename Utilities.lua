@@ -198,7 +198,31 @@ function WQA:GetTaskTime(task)
 		then
 			return self:GetCallingTimeLeftMinutes(task.id)
 		end
-        return C_TaskQuest.GetQuestTimeLeftMinutes(task.id)
+
+        local minutesLeft = C_TaskQuest.GetQuestTimeLeftMinutes(task.id)
+        if minutesLeft and minutesLeft > 0 then
+            return minutesLeft
+        end
+
+        if type(C_TaskQuest.GetQuestTimeLeftSeconds) == "function" then
+            local secondsLeft = C_TaskQuest.GetQuestTimeLeftSeconds(task.id)
+            if secondsLeft and secondsLeft > 0 then
+                return secondsLeft / 60
+            end
+        end
+
+        local quest = self.questList[task.id]
+        if quest and quest.reward and quest.reward.worldBossTransmog
+            and C_DateAndTime
+            and type(C_DateAndTime.GetSecondsUntilWeeklyReset) == "function"
+        then
+            local secondsUntilReset = C_DateAndTime.GetSecondsUntilWeeklyReset()
+            if secondsUntilReset and secondsUntilReset > 0 then
+                return secondsUntilReset / 60
+            end
+        end
+
+        return minutesLeft
     elseif task.type == TaskType.Mission then
         return self:GetMissionTimeLeftMinutes(task.id)
     elseif task.type == TaskType.AreaPoi then

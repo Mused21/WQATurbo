@@ -3,6 +3,7 @@ local WQA = WQATurbo
 local RewardType = WQA.Constants.RewardType
 local TaskType = WQA.Constants.TaskType
 local TrackingMode = WQA.Constants.TrackingMode
+local WORLD_BOSS_QUEST_TAG_ID = 289
 
 -- AllTheThings exposes SearchForLink before its search module has necessarily
 -- finished OnLoad initialization. Protect the integration from that startup
@@ -46,6 +47,13 @@ function WQA:GetEffectiveWorldQuestType(questID, questTagInfo)
 	end
 
 	local worldQuestType = questTagInfo.worldQuestType
+
+	-- Legacy World Boss quests can retain the Normal worldQuestType while
+	-- carrying Blizzard's dedicated World Boss quest tag. Normalize the stable
+	-- tag before applying type filters or scheduling Encounter Journal work.
+	if questTagInfo.tagID == WORLD_BOSS_QUEST_TAG_ID then
+		return Enum.QuestTagType.WorldBoss
+	end
 
 	if
 		worldQuestType == Enum.QuestTagType.PvP
@@ -261,6 +269,7 @@ function WQA:OnInitialize()
 						itemLevelUpgradeMin = 1,
 						PercentUpgradeMin = 1,
 						unknownSource = false,
+						worldBossTransmog = false,
 						azeriteTraits = "",
 						conduit = false
 					},
@@ -525,7 +534,12 @@ function WQA:AnnounceChat(tasks, silent)
 		local more
 		for k, v in pairs(rewards) do
 			local rewardText = self:GetRewardTextByID(task.id, k, v, 1, task.type)
-			if k == "achievement" or k == "chance" or k == "azeriteTraits" then
+			if
+				k == "achievement"
+				or k == "chance"
+				or k == "azeriteTraits"
+				or k == "worldBossTransmog"
+			then
 				for j = 2, 3 do
 					local t = self:GetRewardTextByID(task.id, k, v, j, task.type)
 					if t then
@@ -1378,6 +1392,11 @@ function WQA:GetRewardTextByID(questID, key, value, i, type)
 		text = v
 	elseif k == "gold" then
 		text = GOLD_AMOUNT_TEXTURE_STRING:format(v, 0, 0)
+	elseif k == "worldBossTransmog" then
+		local item = v.items and v.items[i]
+		if item then
+			text = item.itemLink .. (item.transmog or "")
+		end
 	else
 		text = self:GetRewardLinkByID(questID, k, v, i)
 	end
@@ -1425,6 +1444,8 @@ function WQA:GetRewardLinkByID(questID, key, value, i)
 		return nil
 	elseif k == "gold" then
 		return nil
+	elseif k == "worldBossTransmog" then
+		link = v.items and v.items[i] and v.items[i].itemLink
 	elseif k == "azeriteTraits" then
 		if not v[i] then
 			return nil

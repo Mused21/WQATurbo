@@ -145,6 +145,19 @@ Returns whether item information still needs retry.
 
 This is shared classification logic and remains an important seam for the optimized scanner.
 
+### `WQA:ResolveWorldBossEncounter(work)`
+
+Owned by `Scanning/WorldBossScanner.lua`. Resolves an active World Boss quest
+to a unique Encounter Journal encounter. It prefers conservative same-map pin
+coordinates, then uses a localized quest-name or objective-name match within
+the expansion's raid journal tier when Blizzard exposes no encounter pin.
+
+### `WQA:InspectWorldBossTransmog(work)`
+
+Inspects class-filtered Encounter Journal loot, suppresses completed encounters,
+restores hidden journal selection/filter state, and returns `matched, retry`.
+It publishes successful summaries through `AddRewardToQuest()`.
+
 ### `WQA:CheckReward(questID, isEmissary, rewardIndex)`
 
 Classifies one quest reward item.
@@ -220,7 +233,14 @@ missing rotation result fails open.
 
 Normalizes Blizzard quest type.
 
-Notably uses `tradeskillLineID` as a profession fallback for older WQs.
+Notably uses `tradeskillLineID` as a profession fallback for older WQs and
+normalizes the dedicated World Boss quest tag when present.
+
+### `WQA:IsWorldBossQuestCandidate(questTagInfo)`
+
+Accepts the dedicated World Boss type/tag and legacy Normal-type quests marked
+Epic and Elite. Legacy candidates still require a unique Encounter Journal
+match before any loot is inspected or displayed.
 
 ### `WQA:ShouldIncludeWorldQuestForCurrentMode(questID, questTagInfo)`
 

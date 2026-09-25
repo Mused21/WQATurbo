@@ -28,6 +28,7 @@ Therefore:
 Examples:
 
 - `Scanning/RewardScanner.lua` owns the incremental runtime reward scanner.
+- `Scanning/WorldBossScanner.lua` owns opt-in Encounter Journal World Boss loot inspection.
 - `Scanning/EmissaryScanner.lua` owns emissary discovery and readiness.
 - `Runtime/TaskResolver.lua` owns readiness and final task publication.
 - `Runtime/Display.lua` owns the cache-first display/refresh split.
@@ -108,7 +109,7 @@ When debugging or extending the addon:
 
 ## Current release direction
 
-Version **1.5.2** is released. Version **1.6.0** usability work is in progress. The
+Version **1.5.2** is released. The tested **1.7.0** release candidate adds World Boss transmog tracking on top of the 1.6.0 usability work. The
 completed 1.2.0 refactor and verification
 history remain in [VERSION_1.2.0.md](VERSION_1.2.0.md). See
 [ROADMAP.md](ROADMAP.md) for follow-up work and research status.

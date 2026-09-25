@@ -48,6 +48,9 @@ jobs:
       - name: Test reward scanner publication
         run: lua5.1 tools/test_reward_scanner.lua
 
+      - name: Test World Boss transmog scanner
+        run: lua5.1 tools/test_world_boss_scanner.lua
+
       - name: Test runtime lifecycle
         run: lua5.1 tools/test_runtime_lifecycle.lua
 

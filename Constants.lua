@@ -14,7 +14,8 @@ local RewardType = {
     Miscellaneous = "MISCELLANEOUS",
     ProfessionSkillup = "PROFESSION_SKILLUP",
     Recipe = "RECIPE",
-    Reputation = "REPUTATION"
+    Reputation = "REPUTATION",
+    WorldBossTransmog = "WORLD_BOSS_TRANSMOG"
 }
 
 ---@enum CriteriaType

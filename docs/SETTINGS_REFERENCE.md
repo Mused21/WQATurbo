@@ -225,10 +225,16 @@ Gear settings include:
 - Weapon Cache;
 - Unknown appearance;
 - Unknown source;
+- World bosses with missing transmog;
 - Azerite traits;
 - Conduit.
 
 Not all legacy integrations are relevant to all modern content, but compatibility behavior is retained.
+
+**World bosses with missing transmog** defaults off. When enabled, it uses the
+existing Unknown appearance and Unknown source choices and inspects only active,
+undefeated World Bosses. Encounter Journal loot is filtered to the active class;
+if both transmog choices are off, no boss-loot inspection is performed.
 
 ### 1.1.0 cache semantics
 

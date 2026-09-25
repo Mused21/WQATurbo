@@ -127,7 +127,17 @@ for automatic completion. Item contexts 1 and 2 resolve to dungeon Azerite
 armor, while context 5 resolves to Warfront armor. Those context-specific pools
 are not registered, so WQA Turbo deliberately keeps those cache links visible.
 
-## 12. Current docs baseline
+## 12. World Boss encounter mapping
 
-These docs use released 1.4.1 behavior on `master` as the baseline. Historical
+World Boss transmog tracking prefers an Encounter Journal pin on the same map as
+the active quest. When Blizzard exposes no map pin, it can use a unique localized
+quest-name or objective-name match within the quest's expansion journal tier.
+A boss without any unique match is deliberately omitted rather than assigned
+another encounter's loot. Legacy Epic Elite quests that report a Normal
+world-quest type must still resolve to one unique Encounter Journal boss before
+they are treated as World Bosses.
+
+## 13. Current docs baseline
+
+These docs use released 1.5.2 behavior on `master` as the baseline. Historical
 1.2.0 refactor details remain in `VERSION_1.2.0.md`.

@@ -174,6 +174,7 @@ function WQA:TurboPrepareWorldQuest(questID)
 			rewardType ~= "custom"
 			and rewardType ~= "professionSkillup"
 			and rewardType ~= "gold"
+			and rewardType ~= "worldBossTransmog"
 		then
 			local link =
 				self:GetRewardLinkByID(

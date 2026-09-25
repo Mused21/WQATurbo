@@ -19,12 +19,18 @@ local WQA = WQATurbo
 dofile("Constants.lua")
 
 local mapInfo = {}
+local questMinutes = {}
+local questSeconds = {}
 C_Map = { GetMapInfo = function(mapID) return mapInfo[mapID] end }
 C_QuestLog = { GetTitleForQuestID = function(questID) return "Quest " .. questID end }
 C_TaskQuest = {
     GetQuestZoneID = function(questID) return questID == 100 and 80 or nil end,
-    GetQuestTimeLeftMinutes = function(questID) return questID + 10 end
+    GetQuestTimeLeftMinutes = function(questID)
+        return questMinutes[questID] ~= nil and questMinutes[questID] or questID + 10
+    end,
+    GetQuestTimeLeftSeconds = function(questID) return questSeconds[questID] end
 }
+C_DateAndTime = { GetSecondsUntilWeeklyReset = function() return 345600 end }
 C_AreaPoiInfo = {
     GetAreaPOISecondsLeft = function() return 180 end,
     GetAreaPOIInfo = function(mapID, poiID)
@@ -39,6 +45,9 @@ dofile("Utilities.lua")
 
 WQA.questList[100] = {}
 WQA.questList[101] = { isCalling = true, callingZoneID = 1699 }
+WQA.questList[102] = { reward = { worldBossTransmog = { missingCount = 1 } } }
+WQA.questList[103] = { reward = { worldBossTransmog = { missingCount = 1 } } }
+WQA.questList[104] = {}
 WQA.questList[9001] = { isEmissary = true }
 WQA.missionList[200] = { expansion = 8, offerEndTime = 1600 }
 WQA.missionList[201] = { expansion = 8, shipyard = true }
@@ -83,6 +92,16 @@ assert(WQA:GetMissionTimeLeftMinutes(200) == 10)
 assert(WQA:GetMissionTimeLeftMinutes(201) == 0)
 assert(WQA:GetTaskTime(worldQuest) == 110)
 assert(WQA:GetTaskTime(calling) == 42)
+questMinutes[102] = 0
+questSeconds[102] = 7200
+assert(WQA:GetTaskTime({ id = 102, type = TaskType.WorldQuest }) == 120,
+    "World Boss timers should use Blizzard's seconds value when available")
+questMinutes[103] = 0
+assert(WQA:GetTaskTime({ id = 103, type = TaskType.WorldQuest }) == 5760,
+    "World Boss timers should fall back to the weekly reset")
+questMinutes[104] = 0
+assert(WQA:GetTaskTime({ id = 104, type = TaskType.WorldQuest }) == 0,
+    "Ordinary World Quest zero-minute behavior should remain unchanged")
 assert(WQA:GetTaskTime(mission) == 10)
 assert(WQA:GetTaskTime(areaPoi) == 3)
 assert(WQA:GetTaskLink(worldQuest) == "quest:100")

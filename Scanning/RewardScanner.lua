@@ -169,6 +169,34 @@ local function timedOut(entry)
 	return GetTime() - entry.firstSeen >= MAX_PENDING_AGE_SECONDS
 end
 
+local function markWorldBossMatched(state, questID)
+	state.enrichmentDirty = true
+	state.worldBossMatchedQuestIDs = state.worldBossMatchedQuestIDs or {}
+	if not state.worldBossMatchedQuestIDs[questID] then
+		state.worldBossMatchedQuestIDs[questID] = true
+		state.stats.worldBossMatches = (state.stats.worldBossMatches or 0) + 1
+	end
+end
+
+function WQA:RewardScannerProcessWorldBoss(state, work, questTagInfo)
+	if
+		type(self.IsWorldBossQuestCandidate) ~= "function"
+		or not self:IsWorldBossQuestCandidate(questTagInfo)
+		or type(self.InspectWorldBossTransmog) ~= "function"
+	then
+		return
+	end
+
+	local matched, retry = self:InspectWorldBossTransmog(work)
+	if matched then
+		markWorldBossMatched(state, work.questID)
+	end
+	if retry then
+		addPending(state, "worldBoss", work)
+		state.stats.worldBossPending = (state.stats.worldBossPending or 0) + 1
+	end
+end
+
 function WQA:RewardScannerProcessReputations(state, questID)
 	if
 		type(DoesQuestAwardReputationWithFaction) ~= "function"
@@ -262,6 +290,8 @@ function WQA:RewardScannerProcessInitialQuest(state, work)
 	then
 		return
 	end
+
+	self:RewardScannerProcessWorldBoss(state, work, questTagInfo)
 
 	-- Preserve the original dynamically generated "100 different WQs"
 	-- achievement tracking.
@@ -371,6 +401,25 @@ function WQA:RewardScannerRetryEntry(state, entry)
 			-- ends so an already-open popup receives the final classification.
 			state.enrichmentDirty = true
 		end
+		return
+	end
+
+	if entry.kind == "worldBoss" then
+		local matched, retry = self:InspectWorldBossTransmog(work)
+		if matched then
+			markWorldBossMatched(state, work.questID)
+		end
+		if retry then
+			addPending(
+				state,
+				"worldBoss",
+				work,
+				entry.firstSeen,
+				entry.attempts + 1,
+				entry.lastRequestedAt,
+				entry.reissues
+			)
+		end
 	end
 end
 
@@ -463,7 +512,10 @@ function WQA:RewardScannerStepInitial(state)
 					state,
 					{
 						questID = quest.questID,
-						mapID = state.currentMapID
+						mapID = state.currentMapID,
+						expansion = state.zoneToExpansion[state.currentMapID],
+						x = quest.x,
+						y = quest.y
 					}
 				)
 			end
@@ -614,6 +666,8 @@ function WQA:Reward()
 			questVisits = 0,
 			rewardPending = 0,
 			itemPending = 0,
+			worldBossPending = 0,
+			worldBossMatches = 0,
 			pendingPeak = 0,
 			retryChecks = 0,
 			preloadReissues = 0,
@@ -655,13 +709,15 @@ function WQA:PrintRewardScannerStatus()
 	local pending = state and #state.pending or (stats.pendingRemaining or 0)
 
 	print(string.format(
-		"|cff00ccffWQA TURBO SCAN|r phase=%s usable=yes maps=%d quests=%d pending=%d rewardPending=%d itemPending=%d retries=%d reissues=%d enriched=%d repChecks=%d repMatches=%d publishes=%d timedOut=%d slices=%d cpu=%.3fms maxSlice=%.3fms initial=%.0fms enrichment=%.0fms",
+		"|cff00ccffWQA TURBO SCAN|r phase=%s usable=yes maps=%d quests=%d pending=%d rewardPending=%d itemPending=%d bossPending=%d bossMatches=%d retries=%d reissues=%d enriched=%d repChecks=%d repMatches=%d publishes=%d timedOut=%d slices=%d cpu=%.3fms maxSlice=%.3fms initial=%.0fms enrichment=%.0fms",
 		phase,
 		stats.mapsScanned or 0,
 		stats.questVisits or 0,
 		pending,
 		stats.rewardPending or 0,
 		stats.itemPending or 0,
+		stats.worldBossPending or 0,
+		stats.worldBossMatches or 0,
 		stats.retryChecks or 0,
 		stats.preloadReissues or 0,
 		stats.enrichedQuests or 0,

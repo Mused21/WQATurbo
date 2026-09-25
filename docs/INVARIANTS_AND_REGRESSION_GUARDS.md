@@ -122,6 +122,16 @@ collected.
 
 They are separate user choices.
 
+### 17a. World Boss inspection must not disturb the Adventure Guide
+
+Do not inspect while the Encounter Journal is visible. Hidden journal
+selection, difficulty, class/spec and slot filters must be restored after each
+inspection. Ambiguous quest-to-encounter matches must fail closed.
+
+Encounter Journal item metadata is asynchronous. An unavailable item must stay
+pending, while one confirmed missing source is sufficient to publish the boss;
+unrelated unresolved rows must not withhold that match.
+
 ## Reward item identity
 
 ### 18. Authoritative quest reward item ID wins
