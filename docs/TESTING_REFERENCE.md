@@ -305,7 +305,7 @@ Precondition:
 
 ```text
 Rewards > Gear > Azerite Armor Cache = enabled
-Rewards > Gear > Azerite Armor Cache on this character = enabled
+Rewards > Gear > BfA Armor Caches on this character = enabled
 ```
 
 Use active BfA WQ rewarding item 163857.
@@ -336,6 +336,13 @@ For recognized Armor/Weapon cache:
 - option enabled → cache itself makes WQ relevant;
 - upgrade metadata can still appear;
 - option disabled → no cache-category relevance.
+
+With the profile categories enabled, disable the BfA armor and weapon character
+overrides independently. Pure armor and pure weapon caches should follow their
+matching override. A dual-purpose 7th Legion or Honorbound cache should remain
+visible while either path is enabled and disappear when both are disabled.
+Benthic tokens must remain governed by their existing Armor Cache completion
+path.
 
 For Zandalari Empire Equipment Cache, verify it remains visible with a missing
 shared/current-armor appearance and disappears when that finite pool is

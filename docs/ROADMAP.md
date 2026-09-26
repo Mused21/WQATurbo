@@ -1,19 +1,45 @@
 # WQA Turbo Development Roadmap
 
-> **Current release target:** 1.7.0
+> **Current release target:** 1.7.1
 >
-> **Released baseline:** 1.5.2
+> **Released baseline:** 1.7.0
 >
-> **Current milestone:** 1.7.0 World Boss transmog tracking
+> **Current milestone:** 1.7.1 BfA cache controls
 >
-> **Current item:** World Boss Encounter Journal transmog tracking (Done)
+> **Current item:** Per-character BfA armor and weapon cache controls (In progress)
 >
-> **Last reviewed:** 2026-09-25
+> **Last reviewed:** 2026-09-26
 
 This is the active work queue for WQA Turbo. Read it before planning or
 starting follow-up work. Update the current item and status in the same change
 that completes or reprioritizes roadmap work. Released version documents are
 historical records and must not be reused as active checklists.
+
+## 1.7.1: BfA cache controls
+
+| Status | Priority | Work item | Completion criteria |
+|---|---:|---|---|
+| **In progress** | P1 | Per-character BfA armor and weapon cache controls | The existing armor override suppresses recognized BfA faction armor caches as well as Azerite Armor Cache; a default-on weapon override suppresses recognized BfA weapon caches only for the active character; dual-purpose caches remain visible when either category is still enabled; automated and in-game checks pass. |
+
+The recognized faction cache IDs do not all have verified finite appearance
+pools. Character controls provide an explicit opt-out without guessing class,
+specialization or weapon-proficiency outcomes, while the shared profile toggles
+remain available for account-wide configuration.
+
+Focused 1.7.1 in-game checks:
+
+- Leave **Armor Cache** enabled and disable **BfA Armor Caches on this
+  character**. Order of Embers, Storm's Wake and other recognized faction armor
+  caches should disappear on that character while Benthic tokens retain their
+  existing completion behavior.
+- Leave **Weapon Cache** enabled and disable **BfA Weapon Caches on this
+  character**. Kul Tiran or Zandalari weapon caches should disappear on that
+  character and remain enabled for another character using the same profile.
+- For a 7th Legion or Honorbound cache recognized as both armor and weapon,
+  disable only one character override and confirm the other enabled category
+  can still keep it visible; disable both and confirm it disappears.
+- Toggle each setting rapidly and confirm Settings schedules one coalesced,
+  silent refresh without duplicate popup or chat output.
 
 ## 1.7.0: World Boss transmog tracking
 

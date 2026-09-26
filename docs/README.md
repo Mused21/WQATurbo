@@ -109,7 +109,8 @@ When debugging or extending the addon:
 
 ## Current release direction
 
-Version **1.5.2** is released. The tested **1.7.0** release candidate adds World Boss transmog tracking on top of the 1.6.0 usability work. The
+Version **1.7.0** is released. Version **1.7.1** adds per-character controls for
+recognized BfA armor and weapon caches. The
 completed 1.2.0 refactor and verification
 history remain in [VERSION_1.2.0.md](VERSION_1.2.0.md). See
 [ROADMAP.md](ROADMAP.md) for follow-up work and research status.
@@ -123,7 +124,8 @@ The preserved **1.1.0** behavior includes:
 - Dragonflight racing purses hide independently after their own manuscript
   pools are complete.
 - Azerite Armor Cache uses a profile-wide master toggle, a per-character
-  override and a verified current-armor appearance pool; generic equipment
-  caches remain independent of obsolete upgrade value.
+  override and a verified current-armor appearance pool. Recognized BfA faction
+  armor and weapon caches share explicit character overrides and remain
+  independent of obsolete upgrade value.
 
 See [VERSION_1.1.0.md](VERSION_1.1.0.md).

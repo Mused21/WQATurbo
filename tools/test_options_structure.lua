@@ -37,7 +37,9 @@ local function build(baseline)
 					trackShadowlandsCallings = false,
 					shadowlandsCallingsByCovenant = { [1] = true, [2] = true, [3] = true, [4] = true },
                     missionTable = { reward = { currency = {}, reputation = {} } } } },
-            char = { options = { reward = { gear = { AzeriteArmorCache = true } } } } },
+            char = { options = { reward = { gear = {
+                AzeriteArmorCache = true, weaponCache = true
+            } } } } },
         IsMountCollectedBySpellID = function() return false end,
         IsPetOwnedByCreatureID = function() return false end, Print = noop,
     }
@@ -78,6 +80,14 @@ local function build(baseline)
     assert(gear.AzeriteArmorCacheCharacter.order() > gear.AzeriteArmorCache.order)
     assert(gear.AzeriteArmorCacheCharacter.order() < gear.itemLevelUpgradeMin.order)
     assert(gear.AzeriteArmorCacheCharacter.width == "full")
+    assert(gear.weaponCacheCharacter.order() > gear.weaponCache.order)
+    assert(gear.weaponCacheCharacter.width == "full")
+	assert(gear.AzeriteArmorCacheCharacter.disabled())
+	gear.armorCache.set(nil, true)
+	assert(not gear.AzeriteArmorCacheCharacter.disabled())
+	assert(gear.weaponCacheCharacter.disabled())
+	gear.weaponCache.set(nil, true)
+	assert(not gear.weaponCacheCharacter.disabled())
     assert(gear.jewelryCache == nil)
 	assert(gear.worldBossTransmog.width == "full")
     local reward = tree.args.reward.args
@@ -127,6 +137,7 @@ local function build(baseline)
 	assert(not shadowlandsWQ.callingCovenant4.disabled())
 	shadowlandsWQ.callingCovenant4.set(nil, false)
     tree.args.reward.args.gear.args.AzeriteArmorCacheCharacter.set(nil, false)
+	tree.args.reward.args.gear.args.weaponCacheCharacter.set(nil, false)
 	tree.args.reward.args.gear.args.worldBossTransmog.set(nil, true)
     reward.Expansion8.args.Expansion8MissionTable.args.currency.args.Currency88.set(nil, true)
     tree.args.general.args.Expansion10.args.bulkTracking.set(nil, WQA.Constants.TrackingMode.Always)
@@ -137,6 +148,7 @@ local function build(baseline)
     assert(WQA.db.profile.options.reward[10].profession[171].skillup == true)
     assert(WQA.db.profile.options.missionTable.reward.currency[8] == true)
     assert(WQA.db.char.options.reward.gear.AzeriteArmorCache == false)
+	assert(WQA.db.char.options.reward.gear.weaponCache == false)
 	assert(WQA.db.profile.options.reward.gear.worldBossTransmog == true)
 	assert(WQA.db.profile.options.trackShadowlandsCallings == true)
 	assert(WQA.db.profile.options.shadowlandsCallingsByCovenant[4] == false)
@@ -176,6 +188,8 @@ if arg[1] then
     local baseline = build(arg[1])
     current[1].args.reward.args.gear.args.AzeriteArmorCacheCharacter = nil
     current[2].args.reward.args.gear.args.AzeriteArmorCacheCharacter = nil
+	current[1].args.reward.args.gear.args.weaponCacheCharacter = nil
+	current[2].args.reward.args.gear.args.weaponCacheCharacter = nil
 	current[1].args.reward.args.gear.args.worldBossTransmog = nil
 	current[2].args.reward.args.gear.args.worldBossTransmog = nil
     baseline[1].args.reward.args.gear.args.jewelryCache = nil

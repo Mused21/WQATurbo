@@ -273,9 +273,10 @@ Supported gear-related behavior includes:
 - StatWeightScore integration;
 - direct item-level upgrade detection;
 - Azerite Armor Cache;
-- a per-character Azerite Armor Cache override;
+- a per-character BfA armor-cache override;
 - Armor Cache;
 - Weapon Cache;
+- a per-character BfA weapon-cache override;
 - unknown transmog appearance/source;
 - Azerite traits;
 - conduits where supported.
@@ -290,8 +291,11 @@ For 1.1.0:
 
 - enabling Azerite Armor Cache tracks the cache itself while its verified
   current-armor appearance pool is incomplete;
-- its per-character override can exclude characters whose armor type is complete;
+- its per-character armor override can exclude the ordinary Azerite cache and
+  recognized BfA faction armor caches on characters whose appearances are complete;
 - enabling recognized Armor/Weapon cache categories tracks the cache itself;
+- the weapon character override can exclude recognized BfA weapon caches while
+  leaving the profile-wide category enabled for other classes;
 - legacy upgrade calculation remains supplemental display metadata.
 
 Zandalari Empire Equipment Cache is hidden after its verified shared cloak and
@@ -358,6 +362,12 @@ checked only for the active character's armor type through Blizzard's transmog
 APIs. Dungeon and Warfront item contexts resolve different pools and remain
 visible rather than being hidden from the ordinary pool. The per-character
 override remains available for explicit character control.
+
+Most BfA faction armor and weapon caches lack a verified finite pool. Their
+character overrides therefore provide an explicit opt-out instead of guessing
+completion from another class or specialization. A cache recognized as both
+armor and weapon stays relevant while either enabled category remains active.
+The armor override does not change Benthic token completion behavior.
 
 ## 15. Gold
 

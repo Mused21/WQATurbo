@@ -129,8 +129,8 @@ function WQA:CreateRewardOptions()
 					},
 					AzeriteArmorCacheCharacter = {
 						type = "toggle",
-						name = L["Azerite Armor Cache on this character"],
-						desc = L["Keep the profile-wide cache setting enabled, then disable this on characters whose armor appearances are complete."],
+						name = L["BfA Armor Caches on this character"],
+						desc = L["Disable this on characters whose usable BfA armor-cache appearances are complete. This applies to Azerite Armor Cache and faction equipment caches."],
 						width = "full",
 						set = function(info, val)
 							WQA.db.char.options.reward.gear.AzeriteArmorCache = val
@@ -141,7 +141,8 @@ function WQA:CreateRewardOptions()
 							return WQA.db.char.options.reward.gear.AzeriteArmorCache
 						end,
 						disabled = function()
-							return not WQA.db.profile.options.reward.gear.AzeriteArmorCache
+							local gear = WQA.db.profile.options.reward.gear
+							return not gear.AzeriteArmorCache and not gear.armorCache
 						end,
 						order = function()
 							return WQA.options.args.reward.args.gear.args.AzeriteArmorCache.order + 0.1
@@ -184,6 +185,26 @@ function WQA:CreateRewardOptions()
 							return WQA.db.profile.options.reward.gear.weaponCache
 						end,
 						order = newOrder()
+					},
+					weaponCacheCharacter = {
+						type = "toggle",
+						name = L["BfA Weapon Caches on this character"],
+						desc = L["Disable this on characters whose usable BfA weapon-cache appearances are complete."],
+						width = "full",
+						set = function(info, val)
+							WQA.db.char.options.reward.gear.weaponCache = val
+							WQA:ScheduleOptionsRefresh()
+						end,
+						descStyle = "inline",
+						get = function()
+							return WQA.db.char.options.reward.gear.weaponCache
+						end,
+						disabled = function()
+							return not WQA.db.profile.options.reward.gear.weaponCache
+						end,
+						order = function()
+							return WQA.options.args.reward.args.gear.args.weaponCache.order + 0.1
+						end
 					},
 					desc1 = {
 						type = "description",
