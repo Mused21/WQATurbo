@@ -1,5 +1,15 @@
 # WQA Turbo Changelog
 
+## 1.7.1
+
+### Improved
+- Add per-character BfA weapon-cache tracking so completed weapon collections can be disabled without changing the shared profile for other classes.
+- Add Simplified and Traditional Chinese translations for the World Boss transmog setting and description.
+
+### Fixed
+- Apply the existing per-character BfA armor-cache override to faction equipment caches such as Order of Embers and Storm's Wake as well as the ordinary Azerite Armor Cache.
+- Keep Benthic armor tokens visible when **Unknown source** is enabled and an exact Benthic item source is still missing, even if its shared visual is already collected from another item.
+
 ## 1.7.0
 
 ### Added

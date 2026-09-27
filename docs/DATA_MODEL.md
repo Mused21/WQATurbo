@@ -176,7 +176,9 @@ Racing purses use account-wide hidden quest IDs. Benthic tokens and direct
 equipment caches use item-modified appearance source IDs for the active
 character's armor type because their generated armor follows the active loot
 specialization. Shared cloak sources apply to every class. A container may use
-either ownership representation.
+either ownership representation. Callers can request exact-source completion
+for a pool when the corresponding tracking behavior distinguishes a missing
+item source from an already-known shared visual.
 
 ### `WQA.questList`
 

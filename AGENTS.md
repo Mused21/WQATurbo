@@ -27,13 +27,12 @@ update the appropriate documentation as part of the change.
 
 ## Current Development
 
-Current development target: WQA Turbo 1.7.0.
+Current development target: WQA Turbo 1.7.1.
 
-1.5.2 functionality is the behavioral baseline.
+1.7.0 functionality is the behavioral baseline.
 
-1.5.2 is the released behavioral baseline. The 1.7.0 follow-up branch includes
-the tested 1.6.0 release candidate and continues from the active roadmap while
-preserving existing behavior except for explicitly planned fixes and features.
+1.7.0 is the released behavioral baseline. Continue 1.7.1 work from the active
+roadmap while preserving existing behavior except for explicitly planned fixes.
 
 The active work queue, current milestone, and completion criteria are
 documented in:
@@ -134,8 +133,8 @@ manually constructing parallel quest reward structures.
 - Azerite Armor Cache and recognized Armor/Weapon caches are tracked when
   their category is enabled and a relevant verified appearance pool remains
   incomplete, regardless of whether their obsolete item level is an upgrade.
-  Azerite Armor Cache also has an explicit per-character override; Tortollan
-  Trader's Stock is not an appearance cache.
+  BfA armor and weapon cache categories also have explicit per-character
+  overrides; Tortollan Trader's Stock is not an appearance cache.
 
 Upgrade calculations are supplemental metadata, not cache eligibility.
 

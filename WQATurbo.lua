@@ -231,7 +231,8 @@ function WQA:OnInitialize()
 			options = {
 				reward = {
 					gear = {
-						AzeriteArmorCache = true
+						AzeriteArmorCache = true,
+						weaponCache = true
 					}
 				}
 			},
@@ -901,7 +902,11 @@ local function ClassifyContainerReward(self, questID, isEmissary, itemID, itemLi
 	-- Benthic armor tokens
 	if benthicArmorToken[itemID] and self.db.profile.options.reward.gear.armorCache then
 		local complete
-		complete, retry = self:IsContainerCollectibleComplete(itemID)
+		complete, retry = self:IsContainerCollectibleComplete(
+			itemID,
+			nil,
+			self.db.profile.options.reward.gear.unknownSource
+		)
 		if not complete then
 			self:AddRewardToQuest(questID, RewardType.Item, { itemLink = itemLink }, isEmissary)
 		end
@@ -1061,12 +1066,14 @@ end
 
 local function ClassifyEquipmentCacheReward(self, questID, isEmissary, itemID, itemLink)
 	local retry = false
+	local profileGear = self.db.profile.options.reward.gear
+	local characterGear = self.db.char.options.reward.gear
 
 	-- Azerite Armor Cache
 	if
 		itemID == 163857
-		and self.db.profile.options.reward.gear.AzeriteArmorCache
-		and self.db.char.options.reward.gear.AzeriteArmorCache
+		and profileGear.AzeriteArmorCache
+		and characterGear.AzeriteArmorCache
 	then
 		local complete, completionRetry = self:IsContainerCollectibleComplete(itemID, itemLink)
 		if complete then
@@ -1114,9 +1121,14 @@ local function ClassifyEquipmentCacheReward(self, questID, isEmissary, itemID, i
 	end
 
 	-- Equipment Cache
+	local trackWeaponCache = weaponCache[itemID]
+		and profileGear.weaponCache
+		and characterGear.weaponCache
+	local trackArmorCache = armorCache[itemID]
+		and profileGear.armorCache
+		and characterGear.AzeriteArmorCache
 	if
-		(weaponCache[itemID] and self.db.profile.options.reward.gear.weaponCache) or
-		(armorCache[itemID] and self.db.profile.options.reward.gear.armorCache)
+		trackWeaponCache or trackArmorCache
 	then
 		local complete, completionRetry = self:IsContainerCollectibleComplete(itemID)
 		if complete then

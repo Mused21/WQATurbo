@@ -220,9 +220,10 @@ Gear settings include:
 - minimum percentage;
 - StatWeightScore;
 - Azerite Armor Cache;
-- Azerite Armor Cache on this character;
+- BfA Armor Caches on this character;
 - Armor Cache;
 - Weapon Cache;
+- BfA Weapon Caches on this character;
 - Unknown appearance;
 - Unknown source;
 - World bosses with missing transmog;
@@ -248,13 +249,20 @@ It no longer means:
 
 Upgrade calculations remain supplemental metadata.
 
-`Azerite Armor Cache` is the profile-wide master setting. Its adjacent
-`Azerite Armor Cache on this character` toggle is stored per character and is
-enabled by default. Both settings must be enabled for the cache to match.
+`Azerite Armor Cache` is a profile-wide setting. The adjacent
+`BfA Armor Caches on this character` toggle is stored per character, defaults
+on, and also gates recognized faction armor caches controlled by `Armor Cache`.
+Both the applicable profile setting and the character setting must be enabled.
 Ordinary item `163857` cache links then stop matching automatically when their
 verified BfA zone-reward appearance pool is complete for the active character's
 armor type. Dungeon and Warfront item contexts fail open because they use
 different pools. The character toggle remains an explicit override.
+
+`BfA Weapon Caches on this character` is the corresponding default-on override
+for recognized faction weapon caches. Disabling it does not change the shared
+`Weapon Cache` profile setting. A dual-purpose faction cache can still match
+through its enabled armor path. Neither character override changes Benthic
+token completion.
 
 Tortollan Trader's Stock is not tracked as a cache because its ring and trinket
 outcomes do not provide collectible appearances.
@@ -303,10 +311,12 @@ Rewards > Gear > Armor Cache
 This keeps the user model simple: these are equipment-container/token rewards.
 
 A Benthic token is automatically hidden when the appearances it can produce
-for the active character's armor type are collected. A missing appearance for
-another armor type does not keep the token visible because generated armor
-follows the active loot specialization. A missing transmog API result for the
-relevant pool keeps the token visible.
+for the active character's armor type are collected. When **Unknown source**
+is enabled, the token remains visible until those exact Benthic item sources
+are collected, even when the same visuals are known from other items. A missing
+appearance for another armor type does not keep the token visible because
+generated armor follows the active loot specialization. A missing transmog API
+result for the relevant pool keeps the token visible.
 
 ## 9. Reputation
 

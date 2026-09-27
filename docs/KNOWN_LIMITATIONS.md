@@ -139,5 +139,5 @@ they are treated as World Bosses.
 
 ## 13. Current docs baseline
 
-These docs use released 1.5.2 behavior on `master` as the baseline. Historical
+These docs use released 1.7.0 behavior on `master` as the baseline. Historical
 1.2.0 refactor details remain in `VERSION_1.2.0.md`.

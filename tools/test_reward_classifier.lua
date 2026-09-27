@@ -297,7 +297,10 @@ local function Reset(itemID)
     transmogSourceOwned = {}
     WQA.db = {
         profile = { options = NewOptions(), custom = { worldQuestReward = {} } },
-        char = { options = { reward = { gear = { AzeriteArmorCache = true } } } },
+        char = { options = { reward = { gear = {
+            AzeriteArmorCache = true,
+            weaponCache = true
+        } } } },
         global = { custom = { worldQuestReward = {} } }
     }
     WQA.itemList = {}
@@ -407,6 +410,39 @@ transmogAppearances[104104] = { appearanceID = 5002 }
 transmogAppearanceSources[5002] = { 104104, 999999 }
 transmogSourceInfo[104104] = { isCollected = false }
 transmogSourceInfo[999999] = { isCollected = true }
+assert(WQA:CheckReward(1000, false, 1) == false)
+assert(#rewards == 0)
+
+-- Reproduce a Benthic token whose five visuals are known through other items
+-- while only two of its exact item-modified appearance sources are collected.
+-- Unknown source must keep the token visible until all five exact sources are
+-- owned; disabling it preserves the shared-appearance completion behavior.
+Reset(169485)
+WQA.db.profile.options.reward.gear.armorCache = true
+WQA.db.profile.options.reward.gear.unknownSource = true
+playerClassID = 6
+SetContainerSourcesCollected(169485, true)
+for sourceIndex, sourceID in ipairs(WQA.data.containerCollectibles[169485].transmogSources.plate) do
+    local appearanceID = transmogAppearances[sourceID].appearanceID
+    local alternateSourceID = sourceID + 1000000
+    transmogAppearanceSources[appearanceID] = { sourceID, alternateSourceID }
+    transmogSourceOwned[sourceID] = sourceIndex <= 2
+    transmogSourceOwned[alternateSourceID] = true
+end
+assert(WQA:CheckReward(1000, false, 1) == false)
+assert(AssertReward(1, WQA.Constants.RewardType.Item).itemLink == scannedItemLink)
+
+Reset(169485)
+WQA.db.profile.options.reward.gear.armorCache = true
+playerClassID = 6
+SetContainerSourcesCollected(169485, true)
+for _, sourceID in ipairs(WQA.data.containerCollectibles[169485].transmogSources.plate) do
+    local appearanceID = transmogAppearances[sourceID].appearanceID
+    local alternateSourceID = sourceID + 1000000
+    transmogAppearanceSources[appearanceID] = { sourceID, alternateSourceID }
+    transmogSourceOwned[sourceID] = false
+    transmogSourceOwned[alternateSourceID] = true
+end
 assert(WQA:CheckReward(1000, false, 1) == false)
 assert(#rewards == 0)
 
@@ -653,6 +689,46 @@ Reset(165872)
 WQA.db.profile.options.reward.gear.weaponCache = true
 assert(WQA:CheckReward(1000, false, 1) == false)
 AssertReward(1, WQA.Constants.RewardType.Item)
+
+-- BfA faction armor and weapon caches can be disabled per character without
+-- changing their profile-wide category for other classes.
+Reset(165870)
+WQA.db.profile.options.reward.gear.armorCache = true
+WQA.db.char.options.reward.gear.AzeriteArmorCache = false
+assert(WQA:CheckReward(1000, false, 1) == false)
+assert(#rewards == 0, "BfA armor caches must respect the armor character override")
+
+Reset(169477)
+WQA.db.profile.options.reward.gear.armorCache = true
+WQA.db.char.options.reward.gear.AzeriteArmorCache = false
+transmogAppearances[104107] = { appearanceID = 7001 }
+transmogAppearanceSources[7001] = { 104107 }
+transmogSourceInfo[104107] = { isCollected = false }
+assert(WQA:CheckReward(1000, false, 1) == false)
+AssertReward(1, WQA.Constants.RewardType.Item)
+
+Reset(165867)
+WQA.db.profile.options.reward.gear.weaponCache = true
+WQA.db.char.options.reward.gear.weaponCache = false
+assert(WQA:CheckReward(1000, false, 1) == false)
+assert(#rewards == 0, "BfA weapon caches must support a per-character override")
+
+-- Dual-purpose faction caches remain visible when either enabled category is
+-- still active for this character.
+Reset(165872)
+WQA.db.profile.options.reward.gear.armorCache = true
+WQA.db.profile.options.reward.gear.weaponCache = true
+WQA.db.char.options.reward.gear.weaponCache = false
+assert(WQA:CheckReward(1000, false, 1) == false)
+AssertReward(1, WQA.Constants.RewardType.Item)
+
+Reset(165872)
+WQA.db.profile.options.reward.gear.armorCache = true
+WQA.db.profile.options.reward.gear.weaponCache = true
+WQA.db.char.options.reward.gear.AzeriteArmorCache = false
+WQA.db.char.options.reward.gear.weaponCache = false
+assert(WQA:CheckReward(1000, false, 1) == false)
+assert(#rewards == 0, "Dual-purpose caches must hide when both character paths are disabled")
 
 Reset(165872)
 WQA.db.profile.options.reward.gear.weaponCache = true

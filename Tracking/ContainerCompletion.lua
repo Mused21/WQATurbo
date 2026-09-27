@@ -19,6 +19,23 @@ local armorTypeByClassID = {
 
 local armorTypes = { "cloth", "leather", "mail", "plate" }
 
+local function IsTransmogSourceCollected(transmog, sourceID)
+	if type(transmog.PlayerHasTransmogItemModifiedAppearance) == "function" then
+		local collected = transmog.PlayerHasTransmogItemModifiedAppearance(sourceID)
+		if collected ~= nil then
+			return collected == true, false
+		end
+	end
+
+	-- Compatibility fallback for clients without the direct ownership API.
+	local getAppearanceSourceInfo = transmog.GetAppearanceSourceInfo
+	local sourceInfo = getAppearanceSourceInfo and getAppearanceSourceInfo(sourceID)
+	if not sourceInfo then
+		return false, true
+	end
+	return sourceInfo.isCollected == true, false
+end
+
 local function GetItemLinkField(itemLink, wantedField)
 	if type(itemLink) ~= "string" then
 		return nil
@@ -55,9 +72,10 @@ end
 ---is already owned. Missing data always keeps the container visible.
 ---@param itemID number
 ---@param itemLink string|nil
+---@param requireExactSource boolean|nil
 ---@return boolean complete
 ---@return boolean retry
-function WQA:IsContainerCollectibleComplete(itemID, itemLink)
+function WQA:IsContainerCollectibleComplete(itemID, itemLink, requireExactSource)
 	local containers = self.data and self.data.containerCollectibles
 	local container = containers and containers[itemID]
 	if not container then
@@ -97,8 +115,11 @@ function WQA:IsContainerCollectibleComplete(itemID, itemLink)
 		local transmog = C_TransmogCollection
 		local getAppearanceInfo = transmog and transmog.GetAppearanceInfoBySource
 		local getAllAppearanceSources = transmog and transmog.GetAllAppearanceSources
-		local getAppearanceSourceInfo = transmog and transmog.GetAppearanceSourceInfo
-		if not getAppearanceInfo or not getAllAppearanceSources or not getAppearanceSourceInfo then
+		if not transmog
+			or (not transmog.PlayerHasTransmogItemModifiedAppearance
+				and not transmog.GetAppearanceSourceInfo)
+			or (not requireExactSource and (not getAppearanceInfo or not getAllAppearanceSources))
+		then
 			return false, false
 		end
 
@@ -123,34 +144,42 @@ function WQA:IsContainerCollectibleComplete(itemID, itemLink)
 		for _, sourceIDs in ipairs(sourceGroups) do
 			checkedSource = true
 			for _, sourceID in ipairs(sourceIDs) do
-				local appearanceInfo = getAppearanceInfo(sourceID)
-				if not appearanceInfo or not appearanceInfo.appearanceID then
-					return false, true
-				end
-
-				local appearanceSources = getAllAppearanceSources(appearanceInfo.appearanceID)
-				if not appearanceSources then
-					return false, true
-				end
-
-				local appearanceIsCollected = false
-				local sourceDataUnavailable = false
-				for _, appearanceSourceID in ipairs(appearanceSources) do
-					local sourceInfo = getAppearanceSourceInfo(appearanceSourceID)
-					if sourceInfo and sourceInfo.isCollected then
-						appearanceIsCollected = true
-						break
+				if requireExactSource then
+					local sourceIsCollected, sourceRetry = IsTransmogSourceCollected(transmog, sourceID)
+					if sourceRetry then
+						return false, true
 					end
-					if not sourceInfo then
-						sourceDataUnavailable = true
+					if not sourceIsCollected then
+						return false, false
 					end
-				end
+				else
+					local appearanceInfo = getAppearanceInfo(sourceID)
+					if not appearanceInfo or not appearanceInfo.appearanceID then
+						return false, true
+					end
 
-				if not appearanceIsCollected and sourceDataUnavailable then
-					return false, true
-				end
-				if not appearanceIsCollected then
-					return false, false
+					local appearanceSources = getAllAppearanceSources(appearanceInfo.appearanceID)
+					if not appearanceSources then
+						return false, true
+					end
+
+					local appearanceIsCollected = false
+					local sourceDataUnavailable = false
+					for _, appearanceSourceID in ipairs(appearanceSources) do
+						local collected, sourceRetry = IsTransmogSourceCollected(transmog, appearanceSourceID)
+						if collected then
+							appearanceIsCollected = true
+							break
+						end
+						sourceDataUnavailable = sourceRetry or sourceDataUnavailable
+					end
+
+					if not appearanceIsCollected and sourceDataUnavailable then
+						return false, true
+					end
+					if not appearanceIsCollected then
+						return false, false
+					end
 				end
 			end
 		end

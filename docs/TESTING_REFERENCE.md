@@ -305,7 +305,7 @@ Precondition:
 
 ```text
 Rewards > Gear > Azerite Armor Cache = enabled
-Rewards > Gear > Azerite Armor Cache on this character = enabled
+Rewards > Gear > BfA Armor Caches on this character = enabled
 ```
 
 Use active BfA WQ rewarding item 163857.
@@ -337,6 +337,13 @@ For recognized Armor/Weapon cache:
 - upgrade metadata can still appear;
 - option disabled → no cache-category relevance.
 
+With the profile categories enabled, disable the BfA armor and weapon character
+overrides independently. Pure armor and pure weapon caches should follow their
+matching override. A dual-purpose 7th Legion or Honorbound cache should remain
+visible while either path is enabled and disappear when both are disabled.
+Benthic tokens must remain governed by their existing Armor Cache completion
+path.
+
 For Zandalari Empire Equipment Cache, verify it remains visible with a missing
 shared/current-armor appearance and disappears when that finite pool is
 complete. Tortollan Trader's Stock must not match a cache category.
@@ -351,6 +358,9 @@ Expected:
   uncollected;
 - token disappears when that armor-type pool is complete, even if another
   armor type is missing;
+- with Unknown source enabled, a token remains visible when all visuals are
+  known through other items but one or more exact Benthic sources are missing;
+- disabling Unknown source restores visual-completion behavior for that token;
 - a missing/uncached transmog source keeps the token visible and is retried;
 - no requirement that it upgrade current gear.
 
