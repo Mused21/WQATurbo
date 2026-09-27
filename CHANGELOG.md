@@ -4,6 +4,7 @@
 
 ### Improved
 - Add per-character BfA weapon-cache tracking so completed weapon collections can be disabled without changing the shared profile for other classes.
+- Add Simplified and Traditional Chinese translations for the World Boss transmog setting and description.
 
 ### Fixed
 - Apply the existing per-character BfA armor-cache override to faction equipment caches such as Order of Embers and Storm's Wake as well as the ordinary Azerite Armor Cache.
