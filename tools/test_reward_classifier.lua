@@ -413,6 +413,39 @@ transmogSourceInfo[999999] = { isCollected = true }
 assert(WQA:CheckReward(1000, false, 1) == false)
 assert(#rewards == 0)
 
+-- Reproduce a Benthic token whose five visuals are known through other items
+-- while only two of its exact item-modified appearance sources are collected.
+-- Unknown source must keep the token visible until all five exact sources are
+-- owned; disabling it preserves the shared-appearance completion behavior.
+Reset(169485)
+WQA.db.profile.options.reward.gear.armorCache = true
+WQA.db.profile.options.reward.gear.unknownSource = true
+playerClassID = 6
+SetContainerSourcesCollected(169485, true)
+for sourceIndex, sourceID in ipairs(WQA.data.containerCollectibles[169485].transmogSources.plate) do
+    local appearanceID = transmogAppearances[sourceID].appearanceID
+    local alternateSourceID = sourceID + 1000000
+    transmogAppearanceSources[appearanceID] = { sourceID, alternateSourceID }
+    transmogSourceOwned[sourceID] = sourceIndex <= 2
+    transmogSourceOwned[alternateSourceID] = true
+end
+assert(WQA:CheckReward(1000, false, 1) == false)
+assert(AssertReward(1, WQA.Constants.RewardType.Item).itemLink == scannedItemLink)
+
+Reset(169485)
+WQA.db.profile.options.reward.gear.armorCache = true
+playerClassID = 6
+SetContainerSourcesCollected(169485, true)
+for _, sourceID in ipairs(WQA.data.containerCollectibles[169485].transmogSources.plate) do
+    local appearanceID = transmogAppearances[sourceID].appearanceID
+    local alternateSourceID = sourceID + 1000000
+    transmogAppearanceSources[appearanceID] = { sourceID, alternateSourceID }
+    transmogSourceOwned[sourceID] = false
+    transmogSourceOwned[alternateSourceID] = true
+end
+assert(WQA:CheckReward(1000, false, 1) == false)
+assert(#rewards == 0)
+
 Reset(169479)
 WQA.db.profile.options.reward.gear.armorCache = true
 assert(WQA:CheckReward(1000, false, 1) == true)

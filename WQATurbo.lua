@@ -902,7 +902,11 @@ local function ClassifyContainerReward(self, questID, isEmissary, itemID, itemLi
 	-- Benthic armor tokens
 	if benthicArmorToken[itemID] and self.db.profile.options.reward.gear.armorCache then
 		local complete
-		complete, retry = self:IsContainerCollectibleComplete(itemID)
+		complete, retry = self:IsContainerCollectibleComplete(
+			itemID,
+			nil,
+			self.db.profile.options.reward.gear.unknownSource
+		)
 		if not complete then
 			self:AddRewardToQuest(questID, RewardType.Item, { itemLink = itemLink }, isEmissary)
 		end

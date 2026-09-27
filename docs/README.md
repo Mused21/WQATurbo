@@ -120,7 +120,8 @@ The preserved **1.1.0** behavior includes:
 - Shift+Left-click on the minimap button opens the cached World Quest popup and starts a silent refresh.
 - Dragonflight racing reward containers can be tracked.
 - Nazjatar Benthic gear tokens are recognized by Armor Cache tracking and hide
-  when their appearance pool for the active character's armor type is complete.
+  when their appearance pool for the active character's armor type is complete;
+  Unknown source tracking can instead require the exact Benthic item sources.
 - Dragonflight racing purses hide independently after their own manuscript
   pools are complete.
 - Azerite Armor Cache uses a profile-wide master toggle, a per-character

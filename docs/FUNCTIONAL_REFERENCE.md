@@ -324,10 +324,12 @@ They are slot-specific container/token rewards rather than generic random-slot c
 
 Each token is checked against the fixed appearance pool for the active
 character's armor type because generated armor follows the active loot
-specialization. The token stops making the World Quest relevant when that pool
-is complete. Cloak tokens use their shared four-appearance pool. If Blizzard
-has not made a relevant source available to the transmog API yet, the token
-stays visible and the scanner retries.
+specialization. With **Unknown source** disabled, the token stops making the
+World Quest relevant when every visual in that pool is known through any item.
+With **Unknown source** enabled, every exact Benthic item-modified appearance
+source in the pool must be collected. Cloak tokens use their shared four-source
+pool. If Blizzard has not made a relevant source available to the transmog API
+yet, the token stays visible and the scanner retries.
 
 ## 14. Dragonflight racing reward containers — 1.1.0
 

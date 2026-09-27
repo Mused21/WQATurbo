@@ -311,10 +311,12 @@ Rewards > Gear > Armor Cache
 This keeps the user model simple: these are equipment-container/token rewards.
 
 A Benthic token is automatically hidden when the appearances it can produce
-for the active character's armor type are collected. A missing appearance for
-another armor type does not keep the token visible because generated armor
-follows the active loot specialization. A missing transmog API result for the
-relevant pool keeps the token visible.
+for the active character's armor type are collected. When **Unknown source**
+is enabled, the token remains visible until those exact Benthic item sources
+are collected, even when the same visuals are known from other items. A missing
+appearance for another armor type does not keep the token visible because
+generated armor follows the active loot specialization. A missing transmog API
+result for the relevant pool keeps the token visible.
 
 ## 9. Reputation
 

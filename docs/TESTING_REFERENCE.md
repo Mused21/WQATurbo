@@ -358,6 +358,9 @@ Expected:
   uncollected;
 - token disappears when that armor-type pool is complete, even if another
   armor type is missing;
+- with Unknown source enabled, a token remains visible when all visuals are
+  known through other items but one or more exact Benthic sources are missing;
+- disabling Unknown source restores visual-completion behavior for that token;
 - a missing/uncached transmog source keeps the token visible and is retried;
 - no requirement that it upgrade current gear.
 
