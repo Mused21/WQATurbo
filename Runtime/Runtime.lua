@@ -116,7 +116,7 @@ function WQA:OnEnable()
 			self:Show("new", true)
 
 		elseif eventName == "GARRISON_MISSION_LIST_UPDATE" then
-			self:ScheduleTaskResolverCheck(true)
+			self:ScheduleTaskResolverCheck(true, true)
 		end
 	end)
 

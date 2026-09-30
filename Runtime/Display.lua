@@ -22,7 +22,7 @@ Turbo separates those concerns:
 This also provides progressive background publishing. When dynamic reward
 enrichment discovers new information, CheckWQ updates active/new task state
 once using the originating publication mode, and an already-open popup is
-rebuilt from that fresh state.
+rebuilt from that fresh state or closed when automation owns an empty window.
 ]]
 
 local function hasUsableCache(self)
@@ -147,13 +147,38 @@ function WQA:Show(mode, auto)
 	return self:Refresh(mode, auto)
 end
 
----Fully rebuild an already-open popup from current activeTasks.
+---Remember whether the current popup opening belongs to automatic output.
+---A manual request takes ownership of an already-open automatic popup so a
+---later empty automatic refresh does not close a window the player requested.
+---@param automatic boolean?
+---@param wasShown boolean?
+function WQA:TurboRecordPopupOpen(automatic, wasShown)
+	if not (self.PopUp and self.PopUp.shown) then
+		return
+	end
+
+	if automatic ~= true or wasShown ~= true then
+		self.PopUp.wqaTurboOpenedAutomatically = automatic == true
+	end
+end
+
+---Fully rebuild or close an already-open popup from current activeTasks.
 ---
 ---UpdateQTip() intentionally de-duplicates quest rows and therefore cannot
 ---update reward columns for an existing row. Releasing/reacquiring the QTip
 ---gives us a true in-place refresh of the popup's contents.
-function WQA:TurboRefreshOpenPopup()
+---@param automatic boolean?
+function WQA:TurboRefreshOpenPopup(automatic)
 	if not (self.PopUp and self.PopUp.shown) then
+		return
+	end
+
+	if
+		automatic == true
+		and next(self.activeTasks or {}) == nil
+		and self.PopUp.wqaTurboOpenedAutomatically == true
+	then
+		self.PopUp:Hide()
 		return
 	end
 

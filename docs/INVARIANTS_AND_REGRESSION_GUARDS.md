@@ -52,8 +52,9 @@ Never show the full WQ list merely because the user hovers the icon.
 ### Automatic empty results keep a closed popup closed
 
 An automatic refresh may open a closed popup only when it publishes an
-interesting task. Manual popup requests must still be able to show the empty
-state, and an already-open popup must continue to refresh in place.
+interesting task. If a later automatic refresh has no active tasks, close that
+automatically opened popup. Manual popup requests take ownership of the window,
+must still be able to show the empty state, and continue to refresh in place.
 
 ### Automatic instance suppression preserves manual access
 
@@ -61,6 +62,9 @@ When the profile option is enabled, automatic scans and new output pause only
 for party, raid, scenario, battleground and arena instance types. Preserve
 manual cached popup access and explicit refresh commands. Keep at most one
 deferred automatic request and resume it after returning to the open world.
+Game events that arrive before startup has built `questList`, including mission
+and Calling updates after an instance reload, must retain automatic origin and
+must not start a publication retry that bypasses this policy.
 
 ## Tooltip safety
 

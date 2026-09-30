@@ -14,6 +14,7 @@ local taskResolverSchedules = 0
 local deferredRefreshes = 0
 local instanceDeferredRefreshes = 0
 local taskResolverRestartWindow
+local taskResolverAutomatic
 local commandCalls = {}
 local function commandCall(name)
 	return function(_, ...)
@@ -120,9 +121,10 @@ WQATurbo = {
 	Show = function(_, mode, auto)
 		shown[#shown + 1] = { mode = mode, auto = auto }
 	end,
-	ScheduleTaskResolverCheck = function(_, restartWindow)
+	ScheduleTaskResolverCheck = function(_, restartWindow, automatic)
 		taskResolverSchedules = taskResolverSchedules + 1
 		taskResolverRestartWindow = restartWindow
+		taskResolverAutomatic = automatic
 	end,
 	ResumeDeferredRefresh = function()
 		deferredRefreshes = deferredRefreshes + 1
@@ -136,7 +138,7 @@ WQATurbo = {
 	CompleteCalling = function(self, questID)
 		self.completedCalling = questID
 		self._wqaCallingQuestIDs[questID] = nil
-		self:ScheduleTaskResolverCheck(true)
+		self:ScheduleTaskResolverCheck(true, true)
 		self:RequestCallings()
 	end,
 	ShowCached = commandCall("cached"),
@@ -235,6 +237,7 @@ eventFrame.onEvent(eventFrame, "GARRISON_MISSION_LIST_UPDATE")
 assert(taskResolverSchedules == 2)
 assert(#loadedAddons == 0, "mission updates use C_Garrison without loading its UI")
 assert(taskResolverRestartWindow == true)
+assert(taskResolverAutomatic == true, "mission updates must retain automatic origin")
 
 -- Execute all three profile events through real Options/Display refresh methods.
 dofile("Constants.lua")

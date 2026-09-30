@@ -187,7 +187,7 @@ function WQA:UpdateCallings(callings)
 	self._wqaCallingCovenantID = covenantID
 	self._wqaUnmappedCallingQuestIDs = unmapped
 	self:RegisterCallings()
-	if self.questList then self:ScheduleTaskResolverCheck(true) end
+	if self.questList then self:ScheduleTaskResolverCheck(true, true) end
 end
 
 function WQA:CompleteCalling(questID)
@@ -197,7 +197,7 @@ function WQA:CompleteCalling(questID)
 	callingCompletions(self)[questID] = calling.expiresAt
 
 	self._wqaCallingQuestIDs[questID] = nil
-	if self.questList then self:ScheduleTaskResolverCheck(true) end
+	if self.questList then self:ScheduleTaskResolverCheck(true, true) end
 	self:RequestCallings()
 end
 
@@ -206,7 +206,7 @@ function WQA:ClearCallings()
 	self._wqaCallingCovenantID = nil
 	self._wqaCallingQuestIDs = nil
 	self._wqaUnmappedCallingQuestIDs = nil
-	if hadCallings and self.questList then self:ScheduleTaskResolverCheck(true) end
+	if hadCallings and self.questList then self:ScheduleTaskResolverCheck(true, true) end
 end
 
 function WQA:IsCallingActive(questID)

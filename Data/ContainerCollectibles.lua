@@ -45,6 +45,67 @@ WQA.data.containerCollectibles = {
 		}
 	},
 
+	-- The six faction reputation cache mappings below were verified against
+	-- ATT source ec0b33ad on 2026-09-30.
+	-- Order of Embers Equipment Cache. ATT resolves this cache to Drustvar
+	-- zone rewards for wrists, hands, waist, legs, feet and the shared cloak.
+	[165870] = {
+		transmogSources = {
+			all = { 103013 },
+			cloth = { 94098, 94093, 94097, 94095, 94092 },
+			leather = { 94106, 94101, 94105, 94103, 94100 },
+			mail = { 94114, 94109, 94113, 94111, 94108 },
+			plate = { 94123, 94117, 94122, 94120, 94116 }
+		}
+	},
+
+	-- Storm's Wake Equipment Cache. ATT resolves this cache to Stormsong
+	-- Valley zone rewards for wrists, hands, waist, legs and feet.
+	[165868] = {
+		transmogSources = {
+			cloth = { 94130, 94125, 94129, 94127, 94124 },
+			leather = { 94138, 94133, 94137, 94135, 94132 },
+			mail = { 94146, 94141, 94145, 94143, 94140 },
+			plate = { 94155, 94149, 94154, 94152, 94148 }
+		}
+	},
+
+	-- Proudmoore Admiralty Equipment Cache. ATT resolves this cache to
+	-- Tiragarde Sound zone rewards for wrists, hands, waist, legs and feet,
+	-- plus the explicitly listed plate shoulder source.
+	[165869] = {
+		transmogSources = {
+			cloth = { 94066, 94061, 94065, 94063, 94060 },
+			leather = { 94074, 94069, 94073, 94071, 94068 },
+			mail = { 94082, 94077, 94081, 94079, 94076 },
+			plate = { 94089, 94091, 94085, 94090, 94088, 94084 }
+		}
+	},
+
+	-- Nazmir Expeditionary Equipment Cache. ATT resolves this cache to Nazmir
+	-- zone rewards for wrists, hands, waist, legs, feet and the shared cloak.
+	[165865] = {
+		transmogSources = {
+			all = { 103014 },
+			cloth = { 93970, 93965, 93969, 93967, 93964 },
+			leather = { 93978, 93973, 93977, 93975, 93972 },
+			mail = { 93986, 93981, 93985, 93983, 93980 },
+			plate = { 93995, 93989, 93994, 93992, 93988 }
+		}
+	},
+
+	-- Voldunai Equipment Cache. ATT resolves this cache to Vol'dun zone
+	-- rewards for wrists, hands, waist, legs, feet and the shared cloak.
+	[165864] = {
+		transmogSources = {
+			all = { 103015 },
+			cloth = { 94034, 94029, 94033, 94031, 94028 },
+			leather = { 94042, 94037, 94041, 94039, 94036 },
+			mail = { 94050, 94045, 94049, 94047, 94044 },
+			plate = { 94059, 94053, 94058, 94056, 94052 }
+		}
+	},
+
 	-- Zandalari Empire Equipment Cache. Unlike Benthic tokens, this cache
 	-- resolves directly to armor for the current loot specialization, so only
 	-- the active character's armor type is relevant.

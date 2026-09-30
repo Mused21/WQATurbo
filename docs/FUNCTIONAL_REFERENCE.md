@@ -298,9 +298,10 @@ For 1.1.0:
   leaving the profile-wide category enabled for other classes;
 - legacy upgrade calculation remains supplemental display metadata.
 
-Zandalari Empire Equipment Cache is hidden after its verified shared cloak and
-current armor-type appearance pool is complete. Tortollan Trader's Stock is not
-an appearance cache and is therefore excluded.
+All six BfA faction reputation armor caches are hidden after their verified
+zone-reward appearance pools for the current armor type are complete. Shared
+cloaks apply only where ATT lists one. Tortollan Trader's Stock is not an
+appearance cache and is therefore excluded.
 
 ## 13. Benthic gear — 1.1.0
 
@@ -365,11 +366,15 @@ APIs. Dungeon and Warfront item contexts resolve different pools and remain
 visible rather than being hidden from the ordinary pool. The per-character
 override remains available for explicit character control.
 
-Most BfA faction armor and weapon caches lack a verified finite pool. Their
-character overrides therefore provide an explicit opt-out instead of guessing
-completion from another class or specialization. A cache recognized as both
-armor and weapon stays relevant while either enabled category remains active.
-The armor override does not change Benthic token completion behavior.
+Order of Embers, Storm's Wake, Proudmoore Admiralty, Nazmir Expeditionary,
+Voldunai and Zandalari Empire Equipment Caches use their verified zone-reward
+pools. Each hides automatically when its shared and active armor-type
+appearances are complete. The 7th Legion and Honorbound assault caches and the
+two faction weapon pools still use their character overrides as an explicit
+opt-out because their class-eligible contents are not safely mapped. A cache
+recognized as both armor and weapon stays relevant while either enabled
+category remains active. The armor override does not change Benthic token
+completion behavior.
 
 ## 15. Gold
 
@@ -471,7 +476,9 @@ Features:
 
 An automatic refresh does not reopen a closed popup when it finds no
 interesting tasks. Manual popup opening can still show the empty state, and an
-automatic refresh may open the popup when a newly interesting task appears.
+automatic refresh may open the popup when a newly interesting task appears. If
+that automatically opened popup later has no active tasks, it closes; a popup
+the player opened manually remains visible and shows the empty state.
 
 When **Pause automatic scans in instances** is enabled, automatic refreshes and
 notifications pause in dungeons, raids, scenarios, battlegrounds and arenas.
@@ -479,6 +486,8 @@ Only the latest deferred request is retained and resumed after returning to the
 open world. Manual cached popup access and explicit refresh commands continue
 to work. Automatic enrichment that began before instance entry may update the
 cache, but it cannot open a new popup or announce results inside the instance.
+Mission and Calling update events retain automatic origin during startup, so a
+reload inside an instance cannot bypass this policy through a readiness retry.
 
 Minimap click instructions are not included inside the persistent popup.
 

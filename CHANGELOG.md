@@ -1,5 +1,12 @@
 # WQA Turbo Changelog
 
+## 1.7.2
+
+### Fixed
+- Hide all six BfA faction reputation armor caches automatically when their verified zone-reward appearance pool for the active armor type is complete.
+- Close an automatically opened World Quest popup when a later automatic refresh has no interesting tasks, while preserving an empty popup the player opened manually.
+- Keep mission and Calling update events automatic during an instance reload so they cannot bypass paused-instance policy and repeatedly reopen the popup.
+
 ## 1.7.1
 
 ### Improved

@@ -258,6 +258,13 @@ verified BfA zone-reward appearance pool is complete for the active character's
 armor type. Dungeon and Warfront item contexts fail open because they use
 different pools. The character toggle remains an explicit override.
 
+All six BfA faction reputation armor caches have verified finite zone-reward
+appearance pools. With both armor-cache settings enabled, each cache hides
+automatically after its applicable shared and active character armor-type
+appearances are complete. Missing data keeps the cache visible. The 7th Legion
+and Honorbound assault caches remain controlled by the character override
+because their container contents are not enumerated safely.
+
 `BfA Weapon Caches on this character` is the corresponding default-on override
 for recognized faction weapon caches. Disabling it does not change the shared
 `Weapon Cache` profile setting. A dual-purpose faction cache can still match

@@ -246,6 +246,36 @@ assert(refreshModeDuringCreate == "new")
 assert(WQA._wqaTurboRefreshMode == nil)
 assert(checkAutomatic == true)
 
+-- Empty automatic updates close only a popup originally opened by automatic
+-- output. A manual request takes ownership and keeps its empty popup visible.
+local popupHides, popupRebuilds = 0, 0
+WQA.PopUp = {
+	shown = true,
+	Hide = function(self)
+		popupHides = popupHides + 1
+		self.shown = false
+	end
+}
+WQA.RebuildQTip = function(_, mode, tasks)
+	assert(mode == "popup" and tasks == WQA.activeTasks)
+	popupRebuilds = popupRebuilds + 1
+end
+WQA.activeTasks = { { id = 1 } }
+WQA:TurboRecordPopupOpen(true, false)
+assert(WQA.PopUp.wqaTurboOpenedAutomatically == true)
+WQA:TurboRefreshOpenPopup(true)
+assert(popupHides == 0 and popupRebuilds == 1)
+WQA.activeTasks = {}
+WQA:TurboRefreshOpenPopup(true)
+assert(popupHides == 1 and popupRebuilds == 1)
+WQA.PopUp.shown = true
+WQA:TurboRecordPopupOpen(false, true)
+assert(WQA.PopUp.wqaTurboOpenedAutomatically == false)
+WQA:TurboRecordPopupOpen(true, true)
+assert(WQA.PopUp.wqaTurboOpenedAutomatically == false)
+WQA:TurboRefreshOpenPopup(true)
+assert(popupHides == 1 and popupRebuilds == 2)
+
 inCombat = true
 WQA.db.profile.options.delayCombat = true
 WQA:Refresh("settings", true)

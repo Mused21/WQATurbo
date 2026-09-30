@@ -1,49 +1,67 @@
 # WQA Turbo Development Roadmap
 
-> **Current release target:** 1.7.1
+> **Current release target:** 1.7.2
 >
-> **Released baseline:** 1.7.0
+> **Released baseline:** 1.7.1
 >
-> **Current milestone:** 1.7.1 cache controls and completion correctness
+> **Current milestone:** 1.7.2 cache completion and runtime correctness
 >
-> **Current item:** Cache controls and Benthic exact-source completion (In progress)
+> **Current item:** 1.7.2 release bundle (Done)
 >
-> **Last reviewed:** 2026-09-27
+> **Last reviewed:** 2026-09-30
 
 This is the active work queue for WQA Turbo. Read it before planning or
 starting follow-up work. Update the current item and status in the same change
 that completes or reprioritizes roadmap work. Released version documents are
 historical records and must not be reused as active checklists.
 
+## 1.7.2: cache completion and runtime correctness
+
+| Status | Priority | Work item | Completion criteria |
+|---|---:|---|---|
+| **Done** | P1 | Faction reputation armor-cache completion | All six faction reputation armor caches use their verified ATT zone-reward pools for automatic active-armor completion; missing data fails open; sources for another armor type cannot keep a cache visible; focused automated and in-game checks pass. |
+| **Done** | P1 | Automatic popup empty-state lifecycle | A closed popup stays closed for an empty automatic result; a popup opened automatically closes when no active tasks remain; a manually opened popup retains the empty state; focused automated and in-game checks pass. |
+| **Done** | P1 | Reload-in-instance event suppression | Mission and Calling update events retain automatic origin during startup; a reload in a paused dungeon, raid or scenario cannot start readiness retries or repeatedly reopen the popup; one deferred automatic refresh resumes after leaving; explicit manual access remains available; focused automated and in-game checks pass. |
+
+All six faction reputation armor caches have verified finite ATT zone-reward
+pools and now resolve completion for the active armor type. The 7th Legion and
+Honorbound assault caches still lack enumerated container contents, while the
+two faction weapon pools require class loot-eligibility filtering. Character
+controls remain an explicit opt-out for those incomplete mappings without
+guessing class, specialization or weapon-proficiency outcomes, while the shared
+profile toggles remain available for account-wide configuration.
+
+Implementation and local verification are complete. The developer confirmed
+the combined cache and runtime behavior in game on 2026-09-30.
+
+Focused 1.7.2 in-game checks:
+
+- With both armor-cache settings enabled, confirm each faction reputation cache
+  remains visible when one active-armor zone appearance is missing, then
+  disappears when its finite pool is complete. Shared cloaks apply where ATT
+  lists them. A missing source for another armor type must not keep a cache
+  visible.
+- Let an interesting task open the popup automatically, then let the final task
+  expire and wait for an automatic refresh. The popup closes. Open the empty
+  popup manually and confirm a later empty automatic refresh keeps it open.
+- With **Pause automatic scans in instances** enabled, reload inside a dungeon,
+  raid or scenario, close any restored popup once, and wait through mission or
+  Calling updates. It must remain closed. Leave the instance and confirm one
+  deferred automatic refresh resumes; cached popup access and `/wqat refresh`
+  remain available manually inside the instance.
+
 ## 1.7.1: BfA cache controls
 
 | Status | Priority | Work item | Completion criteria |
 |---|---:|---|---|
-| **In progress** | P1 | Cache controls and Benthic exact-source completion | The existing armor override suppresses recognized BfA faction armor caches as well as Azerite Armor Cache; a default-on weapon override suppresses recognized BfA weapon caches only for the active character; dual-purpose caches remain visible when either category is still enabled; Benthic completion follows the selected appearance/source tracking semantics; automated and in-game checks pass. |
+| **Done** | P1 | Cache controls and Benthic exact-source completion | The armor override suppresses recognized BfA faction armor caches as well as Azerite Armor Cache; a default-on weapon override suppresses recognized BfA weapon caches only for the active character; dual-purpose caches remain visible while either category is enabled; Benthic completion follows the selected appearance/source tracking semantics; automated and in-game checks pass. |
 
-The recognized faction cache IDs do not all have verified finite appearance
-pools. Character controls provide an explicit opt-out without guessing class,
-specialization or weapon-proficiency outcomes, while the shared profile toggles
-remain available for account-wide configuration.
+The developer verified the combined behavior in game before PR #26 merged and
+the GitHub `v1.7.1` release was created on 2026-09-27.
 
-Focused 1.7.1 in-game checks:
-
-- Leave **Armor Cache** enabled and disable **BfA Armor Caches on this
-  character**. Order of Embers, Storm's Wake and other recognized faction armor
-  caches should disappear on that character while Benthic tokens retain their
-  existing completion behavior.
-- Leave **Weapon Cache** enabled and disable **BfA Weapon Caches on this
-  character**. Kul Tiran or Zandalari weapon caches should disappear on that
-  character and remain enabled for another character using the same profile.
-- For a 7th Legion or Honorbound cache recognized as both armor and weapon,
-  disable only one character override and confirm the other enabled category
-  can still keep it visible; disable both and confirm it disappears.
-- With **Armor Cache** and **Unknown source** enabled, confirm a Benthic token
-  remains visible when its visuals are known but one or more exact Benthic item
-  sources are missing. Disable **Unknown source** and confirm the same token
-  hides once every visual for the active armor type is known.
-- Toggle each setting rapidly and confirm Settings schedules one coalesced,
-  silent refresh without duplicate popup or chat output.
+Focused 1.7.1 checks covered per-character armor and weapon overrides,
+dual-purpose cache behavior, exact Benthic source tracking and coalesced silent
+Settings refreshes.
 
 ## 1.7.0: World Boss transmog tracking
 

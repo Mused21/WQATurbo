@@ -133,7 +133,7 @@ Responsibilities include:
 
 - sole ownership of the optimized `OnEnable()`;
 - startup scheduling;
-- event orchestration;
+- event orchestration with automatic/manual refresh origin preserved;
 - `/wqat` command dispatch;
 - avoiding legacy broad preload behavior;
 - leaving `Blizzard_GarrisonUI` load-on-demand while mission scans use the
@@ -163,6 +163,7 @@ Responsibilities include:
 - active checks;
 - final WQ filtering;
 - task link readiness;
+- pre-start automatic-event rejection and grouped-instance deferral;
 - `activeTasks`;
 - `newTasks`;
 - display-mode publication;
@@ -310,9 +311,9 @@ Calling tracker; contains no API calls or mutable runtime state.
 ### `Data/ContainerCollectibles.lua`
 
 Fixed collectible pools for racing purses, Benthic armor tokens, ordinary
-Azerite Armor Cache and verified equipment caches. Stores account-wide
-manuscript quest IDs, item-context exclusions and item-modified appearance
-source IDs; it contains no collection API calls.
+Azerite Armor Cache and all six ATT-derived BfA faction reputation armor cache
+pools. Stores account-wide manuscript quest IDs, item-context exclusions and
+item-modified appearance source IDs; it contains no collection API calls.
 
 ## Criterias
 
@@ -422,9 +423,10 @@ the expanded collectible-search help translations.
 inspection and completed item retries, including silent Settings publication
 and inactive rotating-map exclusion, plus Tazavesh inclusion when enabled.
 `test_runtime_lifecycle.lua` checks Settings registration, startup timing,
-event dispatch, combat recovery, War Mode refresh and mission updates.
+event dispatch, combat recovery, War Mode refresh and automatic mission-update
+origin.
 `test_task_resolver.lua` checks progressive readiness, retry ownership, final
-filtering and display-mode routing.
+filtering, display-mode routing and reload-in-instance event suppression.
 `test_tooltip_lifecycle.lua` checks exact ownership, stale callbacks,
 idempotent cleanup and popup/LDB rebuild ordering, including POI hover metadata
 loss and recovery. The core/classifier suite also covers Quest Pin readiness,

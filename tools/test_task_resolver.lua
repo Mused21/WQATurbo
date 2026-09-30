@@ -58,8 +58,10 @@ local rewardLinksReady = false
 local missionDataPending = true
 local chatPublications = {}
 local popupPublications = {}
+local popupOpenRecords = {}
 local ldbPublications = {}
 local openPopupRefreshes = 0
+local lastOpenPopupRefreshAutomatic
 local ldbUpdates = 0
 
 WQA.db = {
@@ -144,11 +146,18 @@ end
 WQA.AnnounceLDB = function(_, tasks)
 	ldbPublications[#ldbPublications + 1] = tasks
 end
+WQA.TurboRecordPopupOpen = function(_, automatic, wasShown)
+	popupOpenRecords[#popupOpenRecords + 1] = {
+		automatic = automatic,
+		wasShown = wasShown
+	}
+end
 WQA.UpdateLDBText = function()
 	ldbUpdates = ldbUpdates + 1
 end
-WQA.TurboRefreshOpenPopup = function()
+WQA.TurboRefreshOpenPopup = function(_, automatic)
 	openPopupRefreshes = openPopupRefreshes + 1
+	lastOpenPopupRefreshAutomatic = automatic
 end
 
 local function taskKeys(tasks)
@@ -274,10 +283,14 @@ WQA.Criterias.AreaPoi.Check = function()
 end
 WQA.db.profile.options.PopUp = true
 local popupCount = #popupPublications
+local popupOpenRecordCount = #popupOpenRecords
 WQA:CheckWQ(nil, nil, true)
 assert(#popupPublications == popupCount, "Empty automatic refresh must keep a closed popup closed")
+assert(#popupOpenRecords == popupOpenRecordCount and lastOpenPopupRefreshAutomatic == true)
 WQA:CheckWQ()
 assert(#popupPublications == popupCount + 1, "Manual output must still show the empty popup state")
+assert(#popupOpenRecords == popupOpenRecordCount + 1)
+assert(popupOpenRecords[#popupOpenRecords].automatic == nil)
 activeQuests[101] = true
 WQA.ShouldPauseAutomaticRefreshInInstance = function() return true end
 local chatCount = #chatPublications
@@ -287,6 +300,8 @@ assert(#chatPublications == chatCount and #popupPublications == popupCount + 1,
 WQA.ShouldPauseAutomaticRefreshInInstance = function() return false end
 WQA:CheckWQ(nil, nil, true)
 assert(#popupPublications == popupCount + 2, "Automatic refresh must open for an interesting task")
+assert(#popupOpenRecords == popupOpenRecordCount + 2)
+assert(popupOpenRecords[#popupOpenRecords].automatic == true)
 WQA.db.profile.options.PopUp = false
 activeQuests = savedActiveQuests
 WQA.CheckMissions = savedCheckMissions
@@ -360,6 +375,24 @@ assert(eventTimer.cancelled == true)
 assert(WQA._wqaTurboTaskGeneration == boundedGeneration + 1)
 eventTimer.callback()
 assert(WQA._wqaTurboCheckRetryTimer == nil, "A stale generation callback must be inert")
+
+-- Automatic game events arriving before startup initialization, or while
+-- grouped-instance policy is active, must not create manual-looking retries.
+local savedQuestList = WQA.questList
+local automaticEventTimerCount = #timers
+WQA.questList = nil
+assert(WQA:ScheduleTaskResolverCheck(true, true) == false)
+assert(#timers == automaticEventTimerCount)
+assert(WQA._wqaTaskRetryAutomatic == true)
+WQA.questList = savedQuestList
+WQA.ShouldPauseAutomaticRefreshInInstance = function() return true end
+WQA._wqaTurboPendingInstanceRefresh = nil
+assert(WQA:ScheduleTaskResolverCheck(true, true) == false)
+assert(#timers == automaticEventTimerCount)
+assert(WQA._wqaTurboPendingInstanceRefresh.mode == "new")
+assert(WQA._wqaTurboPendingInstanceRefresh.auto == true)
+WQA.ShouldPauseAutomaticRefreshInInstance = function() return false end
+WQA._wqaTurboPendingInstanceRefresh = nil
 
 -- Readiness retries retain whether their originating refresh was automatic so
 -- late data cannot bypass grouped-instance output suppression.

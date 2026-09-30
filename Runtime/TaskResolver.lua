@@ -48,6 +48,15 @@ local CHECK_RETRY_DELAY_SECONDS = 0.50
 local CHECK_RETRY_MAX_AGE_SECONDS = 30.0
 local SHADOWLANDS_EXPANSION_ID = 9
 
+local function announcePopup(self, tasks, silent, automatic)
+	local wasShown = self.PopUp and self.PopUp.shown == true
+	self:AnnouncePopUp(tasks, silent)
+
+	if self.TurboRecordPopupOpen then
+		self:TurboRecordPopupOpen(automatic, wasShown)
+	end
+end
+
 local function cancelCheckRetry(self)
 	local timer = self._wqaTurboCheckRetryTimer
 
@@ -72,11 +81,35 @@ end
 
 ---Schedule one generation-owned readiness pass.
 ---@param restartWindow boolean? Start a new retry window after an external event.
+---@param automatic boolean? Treat an external game event as automatic work.
 ---@return boolean scheduled
-function WQA:ScheduleTaskResolverCheck(restartWindow)
+function WQA:ScheduleTaskResolverCheck(restartWindow, automatic)
 	-- Coalesce all unresolved task/link retries into one timer.
 	if self._wqaTurboCheckRetryTimer then
 		return true
+	end
+
+	if automatic == true then
+		self._wqaTaskRetryMode = "new"
+		self._wqaTaskRetryAutomatic = true
+
+		-- On reload inside an instance, game events can arrive before the
+		-- deferred startup scan has created questList. Do not let those events
+		-- create a manual-looking retry that bypasses instance suppression.
+		if not self.questList then
+			return false
+		end
+
+		if
+			self.ShouldPauseAutomaticRefreshInInstance
+			and self:ShouldPauseAutomaticRefreshInInstance()
+		then
+			self._wqaTurboPendingInstanceRefresh = {
+				mode = "new",
+				auto = true
+			}
+			return false
+		end
 	end
 
 	local now = GetTime()
@@ -438,11 +471,11 @@ function WQA:CheckWQ(mode, fromRetry, automatic)
 				self.db.profile.options.PopUp == true
 				and (automatic ~= true or next(self.newTasks) ~= nil)
 			then
-				self:AnnouncePopUp(self.newTasks, self.first)
+				announcePopup(self, self.newTasks, self.first, automatic)
 			end
 		end
 	elseif mode == "popup" then
-		self:AnnouncePopUp(self.activeTasks)
+		announcePopup(self, self.activeTasks, nil, false)
 	elseif mode == "LDB" then
 		self:AnnounceLDB(self.activeTasks)
 	elseif not suppressAutomaticOutput then
@@ -452,7 +485,7 @@ function WQA:CheckWQ(mode, fromRetry, automatic)
 			self.db.profile.options.PopUp == true
 			and (automatic ~= true or next(self.activeTasks) ~= nil)
 		then
-			self:AnnouncePopUp(self.activeTasks)
+			announcePopup(self, self.activeTasks, nil, automatic)
 		end
 	end
 
@@ -467,9 +500,9 @@ function WQA:CheckWQ(mode, fromRetry, automatic)
 	end
 
 	-- A retry or background enrichment may have changed activeTasks while the
-	-- user has the minimap popup open. Rebuild that popup from the current
-	-- ready-task set without starting another data scan.
+	-- popup is open. Rebuild it from the current ready-task set, or close an
+	-- automatically opened empty popup, without starting another data scan.
 	if mode ~= "popup" and self.TurboRefreshOpenPopup then
-		self:TurboRefreshOpenPopup()
+		self:TurboRefreshOpenPopup(automatic == true)
 	end
 end

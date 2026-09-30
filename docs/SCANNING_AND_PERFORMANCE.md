@@ -191,7 +191,10 @@ so one incomplete POI does not suppress another ready POI.
 Mission discovery returns ready missions together with an aggregate pending
 flag. A missing mission payload or item therefore schedules another readiness
 pass without discarding unrelated ready missions. Mission-list update events
-use the same coalesced TaskResolver path and republish the task cache.
+use the same coalesced TaskResolver path and republish the task cache. These
+game-event requests are marked automatic: before startup they wait for the
+initial quest list, and inside a restricted grouped instance they become one
+deferred open-world refresh instead of starting a popup-producing retry.
 
 The readiness retry is coalesced through a timer rather than spawning
 uncontrolled timers. A full refresh owns a new retry generation and limits its
