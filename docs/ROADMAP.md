@@ -1,12 +1,12 @@
 # WQA Turbo Development Roadmap
 
-> **Current release target:** 1.7.2
+> **Current release target:** 1.8.0
 >
 > **Released baseline:** 1.7.1
 >
-> **Current milestone:** 1.7.2 cache completion and runtime correctness
+> **Current milestone:** 1.8.0 cache completion and runtime correctness
 >
-> **Current item:** 1.7.2 release bundle (Done)
+> **Current item:** 1.8.0 release bundle (Done)
 >
 > **Last reviewed:** 2026-09-30
 
@@ -15,7 +15,7 @@ starting follow-up work. Update the current item and status in the same change
 that completes or reprioritizes roadmap work. Released version documents are
 historical records and must not be reused as active checklists.
 
-## 1.7.2: cache completion and runtime correctness
+## 1.8.0: cache completion and runtime correctness
 
 | Status | Priority | Work item | Completion criteria |
 |---|---:|---|---|
@@ -34,7 +34,7 @@ profile toggles remain available for account-wide configuration.
 Implementation and local verification are complete. The developer confirmed
 the combined cache and runtime behavior in game on 2026-09-30.
 
-Focused 1.7.2 in-game checks:
+Focused 1.8.0 in-game checks:
 
 - With both armor-cache settings enabled, confirm each faction reputation cache
   remains visible when one active-armor zone appearance is missing, then
