@@ -1,6 +1,6 @@
 # WQA Turbo Changelog
 
-## 1.7.2
+## 1.8.0
 
 ### Fixed
 - Hide all six BfA faction reputation armor caches automatically when their verified zone-reward appearance pool for the active armor type is complete.
