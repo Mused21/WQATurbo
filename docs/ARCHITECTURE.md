@@ -193,8 +193,8 @@ zone fallback, and loads before `Tracking/Callings.lua`.
 ### `Data/ContainerCollectibles.lua`
 
 Owns fixed collectible outcome data for racing purses, Benthic armor tokens,
-ordinary Azerite Armor Cache and verified equipment caches such as Zandalari
-Empire Equipment Cache. It is loaded before
+ordinary Azerite Armor Cache and all six verified BfA faction reputation armor
+caches. It is loaded before
 `Tracking/ContainerCompletion.lua` and the reward classifiers.
 
 ### `Tracking/ContainerCompletion.lua`
@@ -350,7 +350,9 @@ It avoids the old startup behavior that synchronously preloaded/scanned every ma
 It registers `GARRISON_MISSION_LIST_UPDATE` without loading
 `Blizzard_GarrisonUI`. Mission scanning uses the global `C_Garrison` API, while
 Blizzard remains responsible for loading its mission-table frames when a
-player opens that UI.
+player opens that UI. Mission and Calling update events carry automatic origin
+through TaskResolver scheduling so reload-time events obey grouped-instance
+suppression.
 
 Since 1.3.0, the profile callback handles changed, copied and reset profiles.
 It detaches the exact old tooltip, clears watched sets, rebinds LibDBIcon to the
@@ -381,7 +383,9 @@ It converts `questList` relevance into ready `activeTasks`/`newTasks`, while:
 - applying final task eligibility;
 - resolving links;
 - allowing ready quests through even when another quest is waiting on data;
-- scheduling coalesced readiness retries.
+- scheduling coalesced readiness retries;
+- rejecting pre-start automatic event retries and deferring restricted-instance
+  events as one open-world refresh.
 
 ### `UI/Tooltip.lua`
 

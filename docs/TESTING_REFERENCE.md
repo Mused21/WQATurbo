@@ -96,7 +96,9 @@ AceDB profile callbacks through the real Options/Display refresh path, checking
 queued refresh cancellation, silent immediate rebuild, watched-state reset and
 LibDBIcon rebinding even with combat deferral enabled.
 It also covers grouped-instance deferral, open-world resumption and explicit
-manual refresh access inside an instance.
+manual refresh access inside an instance. Reload-time mission updates retain
+automatic origin and cannot start a resolver timer before startup or while the
+grouped-instance policy is active.
 It also checks Calling event dispatch, turn-in completion handling and
 covenant-change invalidation. The Calling test verifies all 24 families and 96
 unique IDs, selected-covenant expansion, labels and shared expiration, per-
@@ -111,7 +113,9 @@ per-task readiness, retry coalescing/cancellation, final filtering and
 Settings/popup/LDB publication modes. It also verifies that an empty automatic
 publication leaves a closed popup closed while manual empty output and a later
 interesting automatic result still open it. Automatic publication after entry
-into a restricted instance remains silent.
+into a restricted instance remains silent. Automatic event scheduling before
+`questList` exists or during a restricted instance is suppressed and retained
+as one deferred open-world refresh where applicable.
 
 The tooltip-lifecycle test checks exact-object ownership, stale `OnHide`
 callbacks, idempotent release, attached-task cleanup and popup/LDB rebuild
@@ -250,8 +254,16 @@ With the popup closed and automatic popup output enabled:
 - manual left-click or `/wqat popup` can still show the empty state;
 - an automatic refresh opens it after a newly interesting task appears.
 
-With the popup already open, an empty automatic refresh updates it to the
-localized no-interest message without closing or duplicating it.
+With an automatically opened popup, let the last interesting task expire and
+allow an automatic refresh to run. The popup closes. Open the popup manually,
+then repeat an empty automatic refresh; it remains visible and updates to the
+localized no-interest message without duplicating the window.
+
+With **Pause automatic scans in instances** enabled, reload inside a dungeon,
+raid or scenario and close any restored popup. Wait through mission/Calling
+updates and confirm the popup does not reopen. Manual `/wqat popup` and
+`/wqat refresh` remain available. Leave the instance and confirm exactly one
+deferred automatic refresh resumes.
 
 Repeatedly:
 
@@ -344,9 +356,12 @@ visible while either path is enabled and disappear when both are disabled.
 Benthic tokens must remain governed by their existing Armor Cache completion
 path.
 
-For Zandalari Empire Equipment Cache, verify it remains visible with a missing
-shared/current-armor appearance and disappears when that finite pool is
-complete. Tortollan Trader's Stock must not match a cache category.
+For Order of Embers, Storm's Wake, Proudmoore Admiralty, Nazmir Expeditionary,
+Voldunai and Zandalari Empire Equipment Caches, verify each remains visible
+with a missing applicable shared/current-armor appearance and disappears when
+its finite pool is complete. A missing appearance from another armor type must
+not keep a cache visible, and unavailable collection data must fail open.
+Tortollan Trader's Stock must not match a cache category.
 
 ## 14. 1.1.0 Benthic tokens
 

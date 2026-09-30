@@ -41,8 +41,9 @@ WQATurbo = {
 		self.questList[questID] = self.questList[questID] or {}
 		self.questList[questID].reward = { custom = true }
 	end,
-	ScheduleTaskResolverCheck = function(_, restart)
+	ScheduleTaskResolverCheck = function(_, restart, automatic)
 		assert(restart == true)
+		assert(automatic == true)
 		resolverChecks = resolverChecks + 1
 	end,
 }

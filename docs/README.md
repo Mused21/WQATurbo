@@ -127,6 +127,8 @@ The preserved **1.1.0** behavior includes:
 - Azerite Armor Cache uses a profile-wide master toggle, a per-character
   override and a verified current-armor appearance pool. Recognized BfA faction
   armor and weapon caches share explicit character overrides and remain
-  independent of obsolete upgrade value.
+  independent of obsolete upgrade value. All six faction reputation armor
+  caches also hide automatically when their verified active-armor pools are
+  complete.
 
 See [VERSION_1.1.0.md](VERSION_1.1.0.md).

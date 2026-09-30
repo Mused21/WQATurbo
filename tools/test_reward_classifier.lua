@@ -192,6 +192,15 @@ assert(#WQA.data.containerCollectibles[163857].transmogSources.cloth == 18)
 assert(#WQA.data.containerCollectibles[163857].transmogSources.leather == 19)
 assert(#WQA.data.containerCollectibles[163857].transmogSources.mail == 18)
 assert(#WQA.data.containerCollectibles[163857].transmogSources.plate == 18)
+assert(#WQA.data.containerCollectibles[165870].transmogSources.all == 1)
+assert(#WQA.data.containerCollectibles[165870].transmogSources.cloth == 5)
+assert(#WQA.data.containerCollectibles[165870].transmogSources.leather == 5)
+assert(#WQA.data.containerCollectibles[165870].transmogSources.mail == 5)
+assert(#WQA.data.containerCollectibles[165870].transmogSources.plate == 5)
+assert(#WQA.data.containerCollectibles[165868].transmogSources.cloth == 5)
+assert(#WQA.data.containerCollectibles[165869].transmogSources.plate == 6)
+assert(#WQA.data.containerCollectibles[165865].transmogSources.all == 1)
+assert(#WQA.data.containerCollectibles[165864].transmogSources.all == 1)
 assert(WQA.data.containerCollectibles[163857].unsupportedItemContexts[1])
 assert(WQA.data.containerCollectibles[163857].unsupportedItemContexts[2])
 assert(WQA.data.containerCollectibles[163857].unsupportedItemContexts[5])
@@ -396,6 +405,73 @@ SetContainerSourcesCollected(165866, true)
 transmogSourceInfo[94002].isCollected = false
 assert(WQA:CheckReward(1000, false, 1) == false)
 assert(AssertReward(1, WQA.Constants.RewardType.Item).itemLink == scannedItemLink)
+
+-- Order of Embers uses its finite Drustvar armor pool. Completion follows the
+-- active armor type plus the shared cloak and fails open while data is absent.
+Reset(165870)
+WQA.db.profile.options.reward.gear.armorCache = true
+SetContainerSourcesCollected(165870, true)
+assert(WQA:CheckReward(1000, false, 1) == false)
+assert(#rewards == 0, "A complete Order of Embers pool must hide the cache")
+
+Reset(165870)
+WQA.db.profile.options.reward.gear.armorCache = true
+SetContainerSourcesCollected(165870, true)
+transmogSourceInfo[94098].isCollected = false
+assert(WQA:CheckReward(1000, false, 1) == false)
+assert(AssertReward(1, WQA.Constants.RewardType.Item).itemLink == scannedItemLink)
+
+Reset(165870)
+WQA.db.profile.options.reward.gear.armorCache = true
+SetContainerSourcesCollected(165870, true)
+transmogSourceInfo[94106].isCollected = false
+assert(WQA:CheckReward(1000, false, 1) == false)
+assert(#rewards == 0, "Another armor type must not keep Order of Embers visible")
+
+Reset(165870)
+WQA.db.profile.options.reward.gear.armorCache = true
+SetContainerSourcesCollected(165870, true)
+transmogSourceInfo[103013].isCollected = false
+assert(WQA:CheckReward(1000, false, 1) == false)
+assert(AssertReward(1, WQA.Constants.RewardType.Item).itemLink == scannedItemLink)
+
+Reset(165870)
+WQA.db.profile.options.reward.gear.armorCache = true
+SetContainerSourcesCollected(165870, true)
+transmogAppearances[94098] = nil
+assert(WQA:CheckReward(1000, false, 1) == true)
+assert(AssertReward(1, WQA.Constants.RewardType.Item).itemLink == scannedItemLink)
+
+-- Every other reputation equipment cache uses the same finite, active-armor
+-- completion rule. A complete cloth pool hides it, a missing cloth source
+-- keeps it visible, and an unrelated leather source cannot keep it visible.
+local factionArmorCacheSources = {
+    [165868] = { current = 94130, other = 94138 },
+    [165869] = { current = 94066, other = 94074 },
+    [165865] = { current = 93970, other = 93978 },
+    [165864] = { current = 94034, other = 94042 }
+}
+for itemID, sources in pairs(factionArmorCacheSources) do
+    Reset(itemID)
+    WQA.db.profile.options.reward.gear.armorCache = true
+    SetContainerSourcesCollected(itemID, true)
+    assert(WQA:CheckReward(1000, false, 1) == false)
+    assert(#rewards == 0, "A complete faction armor pool must hide cache " .. itemID)
+
+    Reset(itemID)
+    WQA.db.profile.options.reward.gear.armorCache = true
+    SetContainerSourcesCollected(itemID, true)
+    transmogSourceInfo[sources.current].isCollected = false
+    assert(WQA:CheckReward(1000, false, 1) == false)
+    assert(AssertReward(1, WQA.Constants.RewardType.Item).itemLink == scannedItemLink)
+
+    Reset(itemID)
+    WQA.db.profile.options.reward.gear.armorCache = true
+    SetContainerSourcesCollected(itemID, true)
+    transmogSourceInfo[sources.other].isCollected = false
+    assert(WQA:CheckReward(1000, false, 1) == false)
+    assert(#rewards == 0, "Another armor type must not keep cache visible " .. itemID)
+end
 
 -- Tortollan Trader's Stock only contains rings/trinkets, not appearances.
 Reset(165785)

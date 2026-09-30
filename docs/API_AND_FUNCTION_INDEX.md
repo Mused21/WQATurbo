@@ -327,20 +327,23 @@ The Turbo implementation:
 - publishes ready tasks without waiting for every unresolved task;
 - populates `activeTasks` and `newTasks`;
 - routes to chat/popup/LDB behavior by mode;
-- suppresses empty automatic popup creation while preserving manual empty
-  output and updates to an already-open popup.
+- suppresses empty automatic popup creation, records whether automation opened
+  the current popup, and preserves manual empty output.
 
 ### `WQA:ResetTaskResolverRetry()`
 
 Cancels a pending TaskResolver timer and starts ownership for a new full-refresh
 generation.
 
-### `WQA:ScheduleTaskResolverCheck(restartWindow)`
+### `WQA:ScheduleTaskResolverCheck(restartWindow, automatic)`
 
 Coalesces readiness retries and mission-list event updates behind the existing
-TaskResolver timer before calling `CheckWQ("new", true)`. Retries are limited to
-30 seconds per generation; `restartWindow` lets an external readiness event
-start a fresh bounded window.
+TaskResolver timer before calling `CheckWQ("new", true, automatic)`. Retries are
+limited to 30 seconds per generation; `restartWindow` lets an external
+readiness event start a fresh bounded window. Runtime mission and Calling
+events pass `automatic = true`, so startup events wait for the initial quest
+list and defer through grouped-instance suppression instead of being treated as
+manual refreshes.
 
 ### `WQA:Show(...)`
 
@@ -381,9 +384,16 @@ Called when background dynamic scanning discovers useful additional relevance.
 Triggers readiness/publication without restarting the global scan, retaining
 silent `settings` mode when that refresh started the scanner.
 
-### `WQA:TurboRefreshOpenPopup()`
+### `WQA:TurboRecordPopupOpen(automatic, wasShown)`
 
-Delegates persistent-popup replacement to the canonical `RebuildQTip()` path.
+Records automatic ownership only for a popup newly opened by automatic output.
+A manual popup request takes ownership of an already-open window.
+
+### `WQA:TurboRefreshOpenPopup(automatic)`
+
+Closes an automatically opened popup when an automatic publication has no
+active tasks. Otherwise delegates persistent-popup replacement to the canonical
+`RebuildQTip()` path.
 
 ## Popup / tooltip
 
