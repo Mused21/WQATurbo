@@ -1,19 +1,51 @@
 # WQA Turbo Development Roadmap
 
-> **Current release target:** 1.8.0
+> **Current release target:** 1.8.1
 >
-> **Released baseline:** 1.7.1
+> **Released baseline:** 1.8.0
 >
-> **Current milestone:** 1.8.0 cache completion and runtime correctness
+> **Current milestone:** 1.8.1 collectible data and Retail 12.1.5 readiness
 >
-> **Current item:** 1.8.0 release bundle (Done)
+> **Current item:** Retail 12.1.5 compatibility verification (In progress)
 >
-> **Last reviewed:** 2026-09-30
+> **Last reviewed:** 2026-10-13
 
 This is the active work queue for WQA Turbo. Read it before planning or
 starting follow-up work. Update the current item and status in the same change
 that completes or reprioritizes roadmap work. Released version documents are
 historical records and must not be reused as active checklists.
+
+## 1.8.1: collectible data and Retail 12.1.5 readiness
+
+| Status | Priority | Work item | Completion criteria |
+|---|---:|---|---|
+| **In progress** | P1 | Chompy Korthia daily tracking | Chompy appears under Shadowlands Pets; Default tracking watches its exact reward item while no copy is owned, shows either Korthia visitor daily only when it actually offers Chompy, and suppresses the reward after one copy is collected; focused automated and in-game checks pass. |
+| **In progress** | P1 | Retail 12.1.5 compatibility | The TOC declares interface `120105`; no removed API aliases remain; existing Midnight zone scans and reward classification work on the live 12.1.5 client; Aqir Invasions produce no errors or duplicate rows, and are only mapped if the live API exposes stable trackable tasks or rewards; focused automated and in-game checks pass. |
+
+Implementation and local automated verification cover Chompy item `186548`,
+creature `179230` and species `3127`. The verified source quests are visitor
+dailies `64016` and `64065`, but runtime matching uses the advertised item
+reward so an unrelated reward rotation does not produce a false positive.
+In-game verification remains before this item can be marked Done.
+
+Focused 1.8.1 in-game checks:
+
+- Under **Shadowlands > Pets**, confirm Chompy appears in the uncompleted group
+  with **Default** tracking when the account owns no copy.
+- When either **Oozing with Character** or **Local Reagents** actually offers
+  Chompy in Korthia, refresh and confirm the daily appears with the Chompy item
+  reward. Confirm the same daily stays hidden on a different reward rotation.
+  Disable Chompy and confirm an offered Chompy no longer produces a match.
+- Learn one Chompy, restore **Default** tracking, refresh, and confirm neither
+  daily appears for an offered Chompy. **Always track** should still recognize
+  the actual Chompy reward.
+- On Retail 12.1.5, confirm WQA Turbo loads without enabling out-of-date addons
+  and item-level upgrade tracking handles both ordinary equipment and equipment
+  caches without a Lua error.
+- Refresh in Eversong Woods, Zul'Aman and the Coiled Isle and confirm existing
+  World Quests remain discoverable without duplicate output. During an Aqir
+  Invasion, confirm automatic and manual scans remain stable; record any live
+  quest, Area POI or reward IDs before adding static tracking data.
 
 ## 1.8.0: cache completion and runtime correctness
 

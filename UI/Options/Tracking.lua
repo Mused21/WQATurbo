@@ -130,7 +130,7 @@ function WQA:GetTrackedObjectDisplayName(groupName, object)
 	end
 
 	if object.itemID then
-		local itemName, itemLink = GetItemInfo(object.itemID)
+		local itemName, itemLink = C_Item.GetItemInfo(object.itemID)
 		if not itemLink then
 			if optionsTimer then
 				self:CancelTimer(optionsTimer)
@@ -168,7 +168,7 @@ function WQA:GetTrackedObjectSearchText(groupName, object)
 			name = achievementLink and string.match(achievementLink, "%[(.-)%]") or nil
 		end
 	elseif object.itemID then
-		name = GetItemInfo(object.itemID) or name
+		name = C_Item.GetItemInfo(object.itemID) or name
 	end
 
 	local values = { name or "", id or "" }

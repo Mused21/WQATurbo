@@ -1,4 +1,4 @@
-## Interface: 120100
+## Interface: 120105
 ## Title: WQA Turbo
 ## Notes: Performance-first World Quest achievement and reward tracking
 ## Author: Mused21; based on WQAchievements by Urtgard and contributors

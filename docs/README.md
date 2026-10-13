@@ -66,6 +66,7 @@ runtime methods.
 | [DEPENDENCIES_AND_INTEGRATIONS.md](DEPENDENCIES_AND_INTEGRATIONS.md) | Embedded libraries, Blizzard APIs and optional addons |
 | [GLOSSARY.md](GLOSSARY.md) | Project terminology |
 | [CURRENT_PATCH_AUDIT_1.3.0.md](CURRENT_PATCH_AUDIT_1.3.0.md) | Sourced Retail 12.1 map, faction, currency, profession and achievement audit |
+| [CURRENT_PATCH_AUDIT_1.8.1.md](CURRENT_PATCH_AUDIT_1.8.1.md) | Retail 12.1.5 compatibility audit and live verification boundary |
 
 ## Quick mental model
 

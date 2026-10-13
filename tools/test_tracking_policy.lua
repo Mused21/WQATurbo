@@ -28,6 +28,8 @@ local serverTime = 1782345500
 local secondsUntilWeeklyReset = 100
 local petRowOwned
 local petCollectedCount
+local petSpeciesID = 10
+local petCompanionID = 100
 C_QuestLog = {
     IsQuestFlaggedCompleted = function(id) return blocked[id] end,
     GetQuestTagInfo = function() return nil end,
@@ -67,10 +69,10 @@ C_PetJournal = {
     GetPetInfoByIndex = function()
         local rowOwned = petRowOwned
         if rowOwned == nil then rowOwned = owned end
-        return nil, 10, rowOwned, nil, nil, nil, nil, nil, nil, nil, 100
+        return nil, petSpeciesID, rowOwned, nil, nil, nil, nil, nil, nil, nil, petCompanionID
     end,
     GetNumCollectedInfo = function(speciesID)
-        assert(speciesID == 10)
+        assert(speciesID == petSpeciesID)
         if petCollectedCount ~= nil then return petCollectedCount, 3 end
         return owned and 1 or 0, 3
     end
@@ -125,6 +127,20 @@ loadSource("Tracking/CollectionCache.lua")
 if not arg[1] then
     assert(WQA.CreateQuestList == coreCreateQuestList,
         "CollectionCache must not replace the core CreateQuestList owner")
+end
+local shadowlandsChompy
+if not arg[1] then
+    loadSource("Data/Expansions/Shadowlands.lua")
+    for _, pet in ipairs(WQA.data[9].pets) do
+        if pet.creatureID == 179230 then
+            shadowlandsChompy = pet
+            break
+        end
+    end
+    assert(shadowlandsChompy and shadowlandsChompy.name == "Chompy")
+    assert(shadowlandsChompy.itemID == 186548)
+    assert(shadowlandsChompy.source.type == "ITEM")
+    assert(shadowlandsChompy.source.itemID == 186548)
 end
 loadSource("Tracking/Achievements.lua")
 dofile("tools/load_options.lua")(sourceRoot)
@@ -216,6 +232,8 @@ local function reset(group, case)
     blocked = {}
     petRowOwned = nil
     petCollectedCount = nil
+    petSpeciesID = 10
+    petCompanionID = 100
 end
 
 local collectors = {
@@ -245,6 +263,26 @@ for _, collector in ipairs(collectors) do
             assert(publications == 0, "Always must not bypass a completed tracking quest")
         end
     end
+end
+
+-- Chompy is an advertised randomized reward from either Korthia visitor daily.
+-- Watch its exact reward item only while unowned so unrelated daily rewards do
+-- not produce false positive quest matches.
+if shadowlandsChompy then
+    reset("pets", modes[1])
+    owned = false
+    petSpeciesID = 3127
+    petCompanionID = 179230
+    WQA:InvalidateCollectionCache()
+    WQA:AddPets({ shadowlandsChompy })
+    assert(publications == 0)
+    assert(WQA.itemList[186548] == true)
+
+    WQA.itemList = {}
+    owned = true
+    WQA:InvalidateCollectionCache()
+    WQA:AddPets({ shadowlandsChompy })
+    assert(WQA.itemList[186548] == nil, "Owned Chompy must suppress its reward watch")
 end
 
 -- Species collection counts take precedence when a journal row temporarily

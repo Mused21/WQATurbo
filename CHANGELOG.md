@@ -1,5 +1,13 @@
 # WQA Turbo Changelog
 
+## 1.8.1
+
+### Improved
+- Declare Retail 12.1.5 compatibility and migrate item lookup and item-level reward checks to Blizzard's supported `C_Item` APIs before the deprecated globals are removed.
+
+### Fixed
+- Add the missing Chompy pet option and detect it when either Korthia visitor daily actually offers the pet.
+
 ## 1.8.0
 
 ### Fixed

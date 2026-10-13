@@ -8,8 +8,8 @@ C_Covenants = { GetCovenantData = function(id) return { name = "Covenant" .. id 
 C_Map = { GetMapInfo = named("Map") }
 C_Reputation = { GetFactionDataByID = named("Faction") }
 C_Garrison = { GetMissionLink = noop }
+C_Item = { GetItemInfo = function(id) return "Item" .. id, "item:" .. id end }
 GetQuestLink = C_QuestLog.GetTitleForQuestID
-GetItemInfo = function(id) return "Item" .. id, "item:" .. id end
 GetAchievementInfo = function(id) return id, "Achievement" .. id, nil, id == 2 end
 GetAchievementLink = function(id) return "achievement:" .. id end
 UnitFactionGroup = function() return "Alliance" end

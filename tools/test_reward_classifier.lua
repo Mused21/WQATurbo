@@ -64,7 +64,18 @@ C_Timer = {
 }
 C_Item = {
     GetItemInfoInstant = function() return scannedItemID end,
-    GetItemInfo = function() return "Item", fallbackItemLink end
+    GetItemInfo = function(link)
+        local itemLink = link
+        if type(link) == "number" then
+            itemLink = fallbackItemLink
+        end
+        return "Item", itemLink, nil, nil, nil, nil, nil, nil,
+            itemEquipLoc, nil, nil, itemClassID, nil
+    end,
+    GetDetailedItemLevelInfo = function(link)
+        local slotID = string.match(link or "", "^equipped:(%d+)$")
+        return slotID and inventoryLevels[tonumber(slotID)] or rewardItemLevel
+    end
 }
 C_AzeriteEmpoweredItem = {
     IsAzeriteEmpoweredItemByID = function() return false end
@@ -144,20 +155,12 @@ LibStub = setmetatable({ GetLibrary = function() return broker end }, {
 GetQuestLogRewardInfo = function()
     return "Item", nil, 1, nil, nil, rewardItemID
 end
-GetItemInfo = function(link)
-    return "Item", link, nil, nil, nil, nil, nil, nil, itemEquipLoc, nil, nil, itemClassID, nil
-end
 GetInventoryItemID = function(_, slotID)
     return inventoryLevels[slotID] and slotID or nil
 end
 GetInventoryItemLink = function(_, slotID)
     return inventoryLevels[slotID] and ("equipped:" .. slotID) or nil
 end
-GetDetailedItemLevelInfo = function(link)
-    local slotID = string.match(link or "", "^equipped:(%d+)$")
-    return slotID and inventoryLevels[tonumber(slotID)] or rewardItemLevel
-end
-
 WQATurbo = {
     data = {},
     Criterias = {},
@@ -886,8 +889,8 @@ availableMissions[8] = {
     { missionID = 501, rewards = { { currencyID = 0, quantity = 10000 } } },
     { missionID = 502, rewards = { { itemID = 999 } } }
 }
-local getItemInfo = GetItemInfo
-GetItemInfo = function(item)
+local getItemInfo = C_Item.GetItemInfo
+C_Item.GetItemInfo = function(item)
     if item == 999 then
         return nil
     end
