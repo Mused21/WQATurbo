@@ -28,6 +28,12 @@ TOC = ROOT / "WQATurbo.toc"
 PKGMETA = ROOT / ".pkgmeta"
 CHANGELOG = ROOT / "CHANGELOG.md"
 ROADMAP = ROOT / "docs" / "ROADMAP.md"
+EXPECTED_RETAIL_INTERFACE = "120105"
+
+REMOVED_1215_GLOBAL_APIS = (
+    "GetDetailedItemLevelInfo",
+    "GetItemInfo",
+)
 
 ALLOWED_CRITERIA_TYPES = {
     "ACHIEVEMENT",
@@ -269,6 +275,13 @@ def validate_toc(validation: Validation) -> None:
     if "## SavedVariables: WQATurboDB" not in text:
         validation.error(
             "WQATurbo.toc must declare WQATurboDB as SavedVariables."
+        )
+
+    interface = re.search(r"^## Interface:\s*(\d+)\s*$", text, re.MULTILINE)
+    if not interface or interface.group(1) != EXPECTED_RETAIL_INTERFACE:
+        validation.error(
+            "WQATurbo.toc must declare Retail interface "
+            f"{EXPECTED_RETAIL_INTERFACE}."
         )
 
     sources = parse_toc_sources(text)
@@ -636,6 +649,23 @@ def validate_namespace_identity(validation: Validation) -> None:
         )
 
 
+def validate_removed_api_aliases(validation: Validation) -> None:
+    """Retail 12.1.5 removed these deprecated global item API fallbacks."""
+    toc_sources = parse_toc_sources(read_text(TOC, validation))
+
+    for source in toc_sources:
+        if not source.endswith(".lua") or source.startswith("Libs/"):
+            continue
+
+        text = read_text(ROOT / source, validation)
+        for api in REMOVED_1215_GLOBAL_APIS:
+            if re.search(rf"(?<![\w.:]){re.escape(api)}\s*\(", text):
+                validation.error(
+                    f"{source} calls removed Retail 12.1.5 global {api}(); "
+                    f"use C_Item.{api}()."
+                )
+
+
 def validate_runtime_method_owners(validation: Validation) -> None:
     """Consolidated runtime methods must have exactly one source owner."""
     toc_sources = parse_toc_sources(read_text(TOC, validation))
@@ -774,6 +804,7 @@ def main() -> int:
     validate_repository_hygiene(validation)
     validate_static_data(validation)
     validate_namespace_identity(validation)
+    validate_removed_api_aliases(validation)
     validate_runtime_method_owners(validation)
     validate_qtip_lifecycle(validation)
 

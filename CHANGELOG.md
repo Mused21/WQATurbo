@@ -1,5 +1,14 @@
 # WQA Turbo Changelog
 
+## 1.8.1
+
+### Improved
+- Declare Retail 12.1.5 compatibility.
+
+### Fixed
+- Prevent reward scans and item-based Settings from raising Lua errors after Retail 12.1.5 removed the deprecated global item APIs.
+- Add the missing Chompy pet option and detect it when either Korthia visitor daily actually offers the pet.
+
 ## 1.8.0
 
 ### Fixed

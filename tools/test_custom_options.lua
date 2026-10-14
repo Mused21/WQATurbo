@@ -9,7 +9,8 @@ C_CurrencyInfo = {}
 C_QuestLog = { GetTitleForQuestID = noop }
 C_Map = { GetMapInfo = function(id) if id == 84 then return {} end end }
 C_Garrison = { GetMissionLink = noop }
-GetQuestLink, GetItemInfo = noop, noop
+C_Item = { GetItemInfo = noop }
+GetQuestLink = noop
 GameTooltip = { Hide = noop }
 dofile("tools/load_options.lua")()
 local timers, scheduled, refreshed = {}, 0, 0

@@ -467,7 +467,7 @@ function WQA:UpdateCustomRewards()
 	end
 	local args = self.options.args.custom.args.reward.args
 	for id, _ in pairs(data) do
-		local _, itemLink = GetItemInfo(id)
+		local _, itemLink = C_Item.GetItemInfo(id)
 		args[tostring(id)] = {
 			type = "toggle",
 			name = itemLink or tostring(id),
@@ -634,7 +634,7 @@ function WQA:UpdateCustomMissionRewards()
 	end
 	local args = self.options.args.custom.args.missionReward.args
 	for id, _ in pairs(data) do
-		local _, itemLink = GetItemInfo(id)
+		local _, itemLink = C_Item.GetItemInfo(id)
 		args[tostring(id)] = {
 			type = "toggle",
 			name = itemLink or tostring(id),

@@ -111,6 +111,12 @@ data.achievements = {
 data.pets = {
     {name = "Dal", itemID = 183859, creatureID = 171136, quest = {{trackingID = 0, wqID = 60655}}},
     {name = "Carpal", itemID = 183114, creatureID = 173847, source = {type = "ITEM", itemID = 183111}},
+    {
+        name = "Chompy",
+        itemID = 186548,
+        creatureID = 179230,
+        source = {type = "ITEM", itemID = 186548}
+    },
     {name = "Primordial Bogling", itemID = 180588, creatureID = 171121, quest = {{trackingID = 0, wqID = 59808}}}
 }
 

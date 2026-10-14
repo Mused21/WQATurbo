@@ -1025,7 +1025,7 @@ local function ClassifyGearUpgradeReward(self, questID, isEmissary, itemLink, it
 			if GetInventoryItemID("player", slotID) then
 				local itemLink1 = GetInventoryItemLink("player", slotID)
 				if itemLink1 then
-					itemLevel1 = GetDetailedItemLevelInfo(itemLink1)
+					itemLevel1 = C_Item.GetDetailedItemLevelInfo(itemLink1)
 					if not itemLevel1 then
 						retry = true
 					end
@@ -1039,7 +1039,7 @@ local function ClassifyGearUpgradeReward(self, questID, isEmissary, itemLink, it
 			if GetInventoryItemID("player", slotID) then
 				local itemLink2 = GetInventoryItemLink("player", slotID)
 				if itemLink2 then
-					itemLevel2 = GetDetailedItemLevelInfo(itemLink2)
+					itemLevel2 = C_Item.GetDetailedItemLevelInfo(itemLink2)
 					if not itemLevel2 then
 						retry = true
 					end
@@ -1049,7 +1049,7 @@ local function ClassifyGearUpgradeReward(self, questID, isEmissary, itemLink, it
 			end
 		end
 
-		local itemLevel = GetDetailedItemLevelInfo(itemLink)
+		local itemLevel = C_Item.GetDetailedItemLevelInfo(itemLink)
 		if not itemLevel then
 			retry = true
 		else
@@ -1085,7 +1085,7 @@ local function ClassifyEquipmentCacheReward(self, questID, isEmissary, itemID, i
 		-- A verified incomplete appearance pool keeps it relevant; upgrade
 		-- calculations below are only supplemental metadata.
 		self:AddRewardToQuest(questID, RewardType.Item, { itemLink = itemLink }, isEmissary)
-		local itemLevel = GetDetailedItemLevelInfo(itemLink)
+		local itemLevel = C_Item.GetDetailedItemLevelInfo(itemLink)
 		if not itemLevel then
 			return true
 		end
@@ -1095,7 +1095,7 @@ local function ClassifyEquipmentCacheReward(self, questID, isEmissary, itemID, i
 			if GetInventoryItemID("player", i) then
 				local itemLink1 = GetInventoryItemLink("player", i)
 				if itemLink1 then
-					local itemLevel1 = GetDetailedItemLevelInfo(itemLink1)
+					local itemLevel1 = C_Item.GetDetailedItemLevelInfo(itemLink1)
 					if itemLevel1 then
 						AzeriteArmorCache[i] = itemLevel - itemLevel1
 						if itemLevel > itemLevel1 and itemLevel - itemLevel1 >= self.db.profile.options.reward.gear.itemLevelUpgradeMin then
@@ -1139,7 +1139,7 @@ local function ClassifyEquipmentCacheReward(self, questID, isEmissary, itemID, i
 		-- Enabling a cache category tracks the cache itself.
 		-- Upgrade calculations below are only supplemental metadata.
 		self:AddRewardToQuest(questID, RewardType.Item, { itemLink = itemLink }, isEmissary)
-		local itemLevel = GetDetailedItemLevelInfo(itemLink)
+		local itemLevel = C_Item.GetDetailedItemLevelInfo(itemLink)
 		if not itemLevel then
 			return true
 		end
@@ -1153,7 +1153,7 @@ local function ClassifyEquipmentCacheReward(self, questID, isEmissary, itemID, i
 				if GetInventoryItemID("player", i) then
 					local itemLink1 = GetInventoryItemLink("player", i)
 					if itemLink1 then
-						local itemLevel1 = GetDetailedItemLevelInfo(itemLink1)
+						local itemLevel1 = C_Item.GetDetailedItemLevelInfo(itemLink1)
 						if itemLevel1 then
 							n = n + 1
 							upgrade = itemLevel - itemLevel1
@@ -1182,7 +1182,7 @@ local function ClassifyEquipmentCacheReward(self, questID, isEmissary, itemID, i
 					if GetInventoryItemID("player", i) then
 						local itemLink1 = GetInventoryItemLink("player", i)
 						if itemLink1 then
-							local itemLevel1 = GetDetailedItemLevelInfo(itemLink1)
+							local itemLevel1 = C_Item.GetDetailedItemLevelInfo(itemLink1)
 							if itemLevel1 then
 								n = n + 1
 								upgrade = itemLevel - itemLevel1
@@ -1313,7 +1313,7 @@ function WQA:CheckReward(questID, isEmissary, rewardIndex)
 		itemLink = rewardItemLink
 	end
 
-	local _, _, _, _, _, _, _, _, itemEquipLoc, _, _, itemClassID = GetItemInfo(itemLink)
+	local _, _, _, _, _, _, _, _, itemEquipLoc, _, _, itemClassID = C_Item.GetItemInfo(itemLink)
 	local expacID = self:GetExpansionByQuestID(questID)
 	local retry = false
 
@@ -1431,7 +1431,7 @@ function WQA:GetRewardLinkByID(questID, key, value, i)
 		if not v[i] then
 			return nil
 		end
-		link = v[i].itemLink or select(2, GetItemInfo(v[i].id))
+		link = v[i].itemLink or select(2, C_Item.GetItemInfo(v[i].id))
 	elseif k == "custom" then
 		return nil
 	elseif k == "item" then
@@ -1797,7 +1797,7 @@ function WQA:CheckMissions()
 							itemTexture,
 							itemSellPrice,
 							itemClassID,
-							itemSubClassID = GetItemInfo(itemID)
+							itemSubClassID = C_Item.GetItemInfo(itemID)
 
 							if not itemLink then
 								pending["mission:" .. tostring(missionID) .. "@item:" .. tostring(itemID)] = true
