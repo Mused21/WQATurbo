@@ -1,5 +1,10 @@
 # WQA Turbo Changelog
 
+## 1.8.2
+
+### Improved
+- Register the minimap data object as a LibDataBroker launcher so HidingBar and other broker displays can host its working button.
+
 ## 1.8.1
 
 ### Improved

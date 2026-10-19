@@ -1,32 +1,49 @@
 # WQA Turbo Development Roadmap
 
-> **Current release target:** 1.8.1
+> **Current release target:** 1.8.2
 >
-> **Released baseline:** 1.8.0
+> **Released baseline:** 1.8.1
 >
-> **Current milestone:** 1.8.1 collectible data and Retail 12.1.5 readiness
+> **Current milestone:** 1.8.2 HidingBar compatibility
 >
-> **Current item:** Retail 12.1.5 compatibility verification (In progress)
+> **Current item:** HidingBar LibDataBroker compatibility (In progress)
 >
-> **Last reviewed:** 2026-10-13
+> **Last reviewed:** 2026-10-19
 
 This is the active work queue for WQA Turbo. Read it before planning or
 starting follow-up work. Update the current item and status in the same change
 that completes or reprioritizes roadmap work. Released version documents are
 historical records and must not be reused as active checklists.
 
+## 1.8.2: HidingBar compatibility
+
+| Status | Priority | Work item | Completion criteria |
+|---|---:|---|---|
+| **In progress** | P1 | HidingBar LibDataBroker compatibility | WQA Turbo registers its clickable data object as a launcher; HidingBar discovers it without its add-any-type fallback; the hosted button preserves hover, left-click, Shift-left-click and right-click behavior; focused automated and in-game checks pass. |
+
+Local implementation and automated verification are complete. In-game
+verification remains before this item can be marked Done.
+
+Focused 1.8.2 in-game checks:
+
+- With HidingBar enabled, confirm WQA Turbo appears in its DataBroker button
+  list without enabling the add-any-type fallback. Host the button on a bar and
+  confirm hover shows its tooltip, left-click toggles the popup, Shift-left-click
+  refreshes it, and right-click opens Settings.
+
 ## 1.8.1: collectible data and Retail 12.1.5 readiness
 
 | Status | Priority | Work item | Completion criteria |
 |---|---:|---|---|
-| **In progress** | P1 | Chompy Korthia daily tracking | Chompy appears under Shadowlands Pets; Default tracking watches its exact reward item while no copy is owned, shows either Korthia visitor daily only when it actually offers Chompy, and suppresses the reward after one copy is collected; focused automated and in-game checks pass. |
-| **In progress** | P1 | Retail 12.1.5 compatibility | The TOC declares interface `120105`; no removed API aliases remain; existing Midnight zone scans and reward classification work on the live 12.1.5 client; Aqir Invasions produce no errors or duplicate rows, and are only mapped if the live API exposes stable trackable tasks or rewards; focused automated and in-game checks pass. |
+| **Done** | P1 | Chompy Korthia daily tracking | Chompy appears under Shadowlands Pets; Default tracking watches its exact reward item while no copy is owned, shows either Korthia visitor daily only when it actually offers Chompy, and suppresses the reward after one copy is collected; focused automated and in-game checks pass. |
+| **Done** | P1 | Retail 12.1.5 compatibility | The TOC declares interface `120105`; no removed API aliases remain; existing Midnight zone scans and reward classification work on the live 12.1.5 client; Aqir Invasions produce no errors or duplicate rows, and are only mapped if the live API exposes stable trackable tasks or rewards; focused automated and in-game checks pass. |
 
 Implementation and local automated verification cover Chompy item `186548`,
 creature `179230` and species `3127`. The verified source quests are visitor
 dailies `64016` and `64065`, but runtime matching uses the advertised item
 reward so an unrelated reward rotation does not produce a false positive.
-In-game verification remains before this item can be marked Done.
+The developer verified the Chompy and Retail 12.1.5 behavior in game on
+2026-10-19, completing both items.
 
 Focused 1.8.1 in-game checks:
 

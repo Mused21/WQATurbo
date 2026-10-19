@@ -39,7 +39,8 @@ Library infrastructure.
 
 ### LibDataBroker-1.1
 
-Minimap/data-object integration surface.
+Minimap/data-object integration surface. The clickable WQA Turbo object is
+registered as a `launcher` so broker displays such as HidingBar can host it.
 
 ### LibDBIcon-1.0
 
