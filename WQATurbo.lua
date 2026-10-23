@@ -196,7 +196,7 @@ local dataobj =
 	ldb:NewDataObject(
 		"WQATurbo",
 		{
-			type = "data source",
+			type = "launcher",
 			text = "WQA",
 			icon = "Interface\\Icons\\INV_Misc_Map06"
 		}

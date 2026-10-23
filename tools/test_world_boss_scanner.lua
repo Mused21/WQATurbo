@@ -10,6 +10,9 @@ local journalShown = false
 local transmogableByLink = {}
 local requestedItemData = {}
 local selectedTier = 9
+local accountQuestByID = {}
+local accountCompletedByID = {}
+local encounterMapQueries = 0
 local lootByEncounter = {
 	[101] = {
 		{ itemID = 1001, link = "item:1001", encounterID = 101 },
@@ -56,6 +59,10 @@ C_TaskQuest = {
 	end
 }
 C_QuestLog = {
+	IsAccountQuest = function(questID) return accountQuestByID[questID] == true end,
+	IsQuestFlaggedCompletedOnAccount = function(questID)
+		return accountCompletedByID[questID] == true
+	end,
 	GetQuestObjectives = function(questID)
 		if questID == 5004 then return { { text = "Nithogg slain" } } end
 		return {}
@@ -69,7 +76,10 @@ C_Item = {
 	RequestLoadItemDataByID = function(itemID) requestedItemData[itemID] = true end
 }
 C_EncounterJournal = {
-	GetEncountersOnMap = function(mapID) return encountersByMap[mapID] or {} end,
+	GetEncountersOnMap = function(mapID)
+		encounterMapQueries = encounterMapQueries + 1
+		return encountersByMap[mapID] or {}
+	end,
 	IsEncounterComplete = function() return encounterComplete end,
 	GetLootInfoByIndex = function(index)
 		local loot = lootByEncounter[selectedEncounter] or {}
@@ -184,6 +194,44 @@ assert(added.reward.items[1].transmog == "missing")
 assert(selectedInstance == 900 and selectedEncounter == 901, "Encounter selection must be restored")
 assert(lootClass == 7 and lootSpec == 264 and slotFilter == 4, "Loot filters must be restored")
 
+-- Modern outdoor boss loot can be claimed only once per warband each week,
+-- even though the World Quest remains active on an alt.
+added = nil
+accountCompletedByID[92636] = true
+local mapQueriesBeforeCompletionCheck = encounterMapQueries
+matched, retry = WQA:InspectWorldBossTransmog({
+	questID = 92636, mapID = 10, x = 0.50, y = 0.50
+})
+assert(not matched and not retry and not added,
+	"A claimed warband-weekly World Boss reward must be suppressed on alts")
+assert(encounterMapQueries == mapQueriesBeforeCompletionCheck,
+	"Warband completion must short-circuit Encounter Journal resolution")
+
+accountCompletedByID[92636] = false
+matched, retry = WQA:InspectWorldBossTransmog({
+	questID = 92636, mapID = 10, x = 0.50, y = 0.50
+})
+assert(matched and not retry and added,
+	"An unclaimed warband-weekly World Boss reward must remain eligible")
+
+added = nil
+accountCompletedByID[5001] = true
+matched, retry = WQA:InspectWorldBossTransmog({
+	questID = 5001, mapID = 10, x = 0.50, y = 0.50
+})
+assert(matched and not retry and added,
+	"Account history must not suppress a legacy per-character World Boss")
+
+added = nil
+accountQuestByID[5001] = true
+matched, retry = WQA:InspectWorldBossTransmog({
+	questID = 5001, mapID = 10, x = 0.50, y = 0.50
+})
+assert(not matched and not retry and not added,
+	"Future account World Boss quests must use account completion")
+accountQuestByID[5001] = false
+accountCompletedByID[5001] = false
+
 -- EJ item links can precede full item-cache data. A known missing appearance
 -- must publish immediately while unresolved rows remain on the bounded retry.
 added = nil
@@ -229,4 +277,4 @@ matched, retry = WQA:InspectWorldBossTransmog({
 })
 assert(not matched and not retry, "Disabled tracking must avoid Encounter Journal work")
 
-print("World Boss scanner tests passed (matching, completion, collection and journal restoration).")
+print("World Boss scanner tests passed (matching, warband and character completion, collection and journal restoration).")

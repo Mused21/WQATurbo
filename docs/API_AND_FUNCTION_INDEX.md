@@ -154,9 +154,11 @@ the expansion's raid journal tier when Blizzard exposes no encounter pin.
 
 ### `WQA:InspectWorldBossTransmog(work)`
 
-Inspects class-filtered Encounter Journal loot, suppresses completed encounters,
-restores hidden journal selection/filter state, and returns `matched, retry`.
-It publishes successful summaries through `AddRewardToQuest()`.
+Inspects class-filtered Encounter Journal loot, suppresses character-completed
+encounters and claimed warband-weekly outdoor boss rewards, restores hidden
+journal selection/filter state, and returns `matched, retry`. Legacy bosses
+remain eligible per character. It publishes successful summaries through
+`AddRewardToQuest()`.
 
 ### `WQA:CheckReward(questID, isEmissary, rewardIndex)`
 

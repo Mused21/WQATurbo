@@ -76,7 +76,10 @@ The World Boss scanner test covers coordinate and exact-name encounter
 matching, ambiguous-match rejection, completed-boss suppression, class-filtered
 missing-item listing, visible-Guide deferral, disabled-option short-circuiting
 and restoration of Encounter Journal selection and loot filters. It also covers
-pinless exact quest-name and legacy objective-name fallbacks, journal-tier
+claimed and unclaimed warband-weekly rewards, future account-quest detection,
+legacy per-character eligibility, and completion short-circuiting before any
+Encounter Journal resolution, as well as pinless exact quest-name and legacy
+objective-name fallbacks, journal-tier
 restoration, cold item-cache retries and immediate publication of a confirmed
 match while other EJ rows remain unresolved. TaskResolver coverage verifies
 that its Encounter Journal item links bypass quest-reward readiness. Tracking-policy

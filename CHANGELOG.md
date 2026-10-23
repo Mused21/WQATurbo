@@ -1,5 +1,14 @@
 # WQA Turbo Changelog
 
+## 1.8.2
+
+### Improved
+- Register the minimap data object as a LibDataBroker launcher so HidingBar and other broker displays can host its working button.
+- Add Simplified and Traditional Chinese translations for the per-character BfA armor- and weapon-cache settings.
+
+### Fixed
+- Hide modern outdoor World Boss transmog rows on alts after their once-per-warband weekly gear reward has already been claimed.
+
 ## 1.8.1
 
 ### Improved

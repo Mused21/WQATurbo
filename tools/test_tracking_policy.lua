@@ -53,7 +53,12 @@ Enum = {
 CreateFrame = function() return { SetOwner = noop } end
 UnitFullName = function() return "Tester", "Realm" end
 PlayerHasToy = function() return owned end
-local broker = { NewDataObject = function() return {} end }
+local brokerDataObject
+local broker = { NewDataObject = function(_, name, data)
+    assert(name == "WQATurbo")
+    brokerDataObject = data
+    return {}
+end }
 LibStub = setmetatable({ GetLibrary = function() return broker end }, {
     __call = function() return {} end
 })
@@ -100,6 +105,8 @@ assert(WQA.Criterias == criteriaNamespace and WQA.Criterias.sentinel)
 assert(WQA.Rewards == rewardsNamespace and WQA.Rewards.sentinel)
 loadSource("WQATurbo.lua")
 if not arg[1] then
+    assert(brokerDataObject and brokerDataObject.type == "launcher",
+        "The clickable LibDataBroker object must be registered as a launcher")
     assert(WQA:GetEffectiveWorldQuestType(42270, {
         tagID = 289, worldQuestType = Enum.QuestTagType.Normal
     }) == Enum.QuestTagType.WorldBoss,

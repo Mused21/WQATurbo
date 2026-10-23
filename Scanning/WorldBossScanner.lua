@@ -4,8 +4,34 @@ local RewardType = WQA.Constants.RewardType
 
 local MAX_COORDINATE_DISTANCE_SQUARED = 0.0025
 local AMBIGUOUS_DISTANCE_DELTA_SQUARED = 0.000025
+local WARBAND_WEEKLY_WORLD_BOSS_QUESTS = {
+	[85088] = true, -- The Main Event (The Gobfather)
+	[87354] = true, -- Reshanor, the Untethered
+	[92034] = true, -- Thorm'belan
+	[92123] = true, -- Cragpine
+	[92560] = true, -- Lu'ashal
+	[92636] = true -- Predaxas
+}
 local requestedItemData = {}
 local encounterIndexByTier = {}
+
+local function isWarbandWorldBossRewardClaimed(questID)
+	if
+		type(questID) ~= "number"
+		or not C_QuestLog
+		or type(C_QuestLog.IsQuestFlaggedCompletedOnAccount) ~= "function"
+	then
+		return false
+	end
+
+	local isWarbandQuest = WARBAND_WEEKLY_WORLD_BOSS_QUESTS[questID] == true
+	if not isWarbandQuest and type(C_QuestLog.IsAccountQuest) == "function" then
+		isWarbandQuest = C_QuestLog.IsAccountQuest(questID) == true
+	end
+
+	return isWarbandQuest
+		and C_QuestLog.IsQuestFlaggedCompletedOnAccount(questID) == true
+end
 
 ---Return whether Blizzard's quest metadata can represent a World Boss. Modern
 ---quests have the dedicated type/tag. Legacy bosses often report Normal and
@@ -379,6 +405,14 @@ function WQA:InspectWorldBossTransmog(work)
 		not gear.worldBossTransmog
 		or (not gear.unknownAppearance and not gear.unknownSource)
 	then
+		return false, false
+	end
+
+	-- Modern outdoor bosses can keep their World Quest active on alts after the
+	-- once-per-warband weekly gear reward was claimed. Suppress only verified
+	-- warband-limited bosses (or future bosses Blizzard flags account-wide), so
+	-- legacy per-character lockouts remain eligible on other characters.
+	if isWarbandWorldBossRewardClaimed(work.questID) then
 		return false, false
 	end
 
