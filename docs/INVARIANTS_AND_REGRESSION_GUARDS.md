@@ -131,6 +131,9 @@ They are separate user choices.
 Do not inspect while the Encounter Journal is visible. Hidden journal
 selection, difficulty, class/spec and slot filters must be restored after each
 inspection. Ambiguous quest-to-encounter matches must fail closed.
+Account completion may suppress only verified warband-weekly bosses or World
+Boss quests Blizzard explicitly marks account-wide. Legacy bosses must retain
+their per-character eligibility when another character has completed them.
 
 Encounter Journal item metadata is asynchronous. An unavailable item must stay
 pending, while one confirmed missing source is sufficient to publish the boss;

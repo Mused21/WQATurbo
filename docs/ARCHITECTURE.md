@@ -330,9 +330,11 @@ World Boss quest to an encounter on the same map, prefers conservative pin
 coordinate matching, and falls back to a unique localized quest-name or
 objective-name match within the quest's expansion tier when Blizzard exposes no
 map encounter pin. It filters loot to the active class and reuses the normal
-transmog ownership helper. It skips completed encounters and preserves hidden
-Adventure Guide selection, tier and loot-filter state. `RewardScanner` owns
-when the helper runs and retains unresolved boss data as per-quest pending work.
+transmog ownership helper. It skips character-completed encounters and
+warband-weekly outdoor bosses whose account reward is already claimed, while
+preserving legacy per-character eligibility. It also preserves hidden Adventure
+Guide selection, tier and loot-filter state. `RewardScanner` owns when the
+helper runs and retains unresolved boss data as per-quest pending work.
 
 ### `Scanning/EmissaryScanner.lua`
 

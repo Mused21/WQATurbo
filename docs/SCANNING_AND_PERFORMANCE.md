@@ -29,7 +29,9 @@ classifier for active World Boss quests and confirmed legacy Epic Elite boss
 quests. Scheduling, frame budgeting and retries remain owned by `RewardScanner`.
 Missing EJ item data is requested once per item and unresolved rows remain
 pending. A confirmed missing source is published immediately while those
-retries complete the item list.
+retries complete the item list. Verified warband-weekly bosses whose account
+reward is already claimed are rejected before encounter resolution, avoiding
+all Encounter Journal work for those rows.
 
 It does not replace the static achievement/collectible mapping system.
 

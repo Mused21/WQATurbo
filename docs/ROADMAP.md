@@ -4,21 +4,22 @@
 >
 > **Released baseline:** 1.8.1
 >
-> **Current milestone:** 1.8.2 HidingBar compatibility
+> **Current milestone:** 1.8.2 HidingBar and World Boss correctness
 >
-> **Current item:** HidingBar LibDataBroker compatibility (In progress)
+> **Current item:** Warband-weekly World Boss completion (In progress)
 >
-> **Last reviewed:** 2026-10-19
+> **Last reviewed:** 2026-10-23
 
 This is the active work queue for WQA Turbo. Read it before planning or
 starting follow-up work. Update the current item and status in the same change
 that completes or reprioritizes roadmap work. Released version documents are
 historical records and must not be reused as active checklists.
 
-## 1.8.2: HidingBar compatibility
+## 1.8.2: HidingBar and World Boss correctness
 
 | Status | Priority | Work item | Completion criteria |
 |---|---:|---|---|
+| **In progress** | P1 | Warband-weekly World Boss completion | Gobfather, Reshanor and Midnight outdoor World Boss rows are suppressed on alts after their weekly warband reward is claimed; unclaimed and legacy per-character bosses remain eligible; Encounter Journal work is skipped for completed warband rewards; focused automated and in-game checks pass. |
 | **In progress** | P1 | HidingBar LibDataBroker compatibility | WQA Turbo registers its clickable data object as a launcher; HidingBar discovers it without its add-any-type fallback; the hosted button preserves hover, left-click, Shift-left-click and right-click behavior; focused automated and in-game checks pass. |
 
 Local implementation and automated verification are complete. In-game
@@ -30,6 +31,13 @@ Focused 1.8.2 in-game checks:
   list without enabling the add-any-type fallback. Host the button on a bar and
   confirm hover shows its tooltip, left-click toggles the popup, Shift-left-click
   refreshes it, and right-click opens Settings.
+- Before claiming the active modern outdoor World Boss reward this week,
+  confirm its missing transmog appears. Kill it on one character, log into an
+  alt, refresh, and confirm the same boss is suppressed there.
+- Confirm a legacy World Boss remains visible on an eligible alt when that alt
+  has not used its character-specific lockout, even if another character has
+  defeated it. After the next weekly reset, confirm the modern boss becomes
+  eligible again before the warband's first kill.
 
 ## 1.8.1: collectible data and Retail 12.1.5 readiness
 
