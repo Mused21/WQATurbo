@@ -279,6 +279,10 @@ mis-typed arguments at runtime. The project validator enforces these rules.
 ### 36. Calling variants follow one observed daily family rotation
 
 Use Blizzard's active-covenant Calling payload to identify live daily families.
+Treat its three slots as sparse; a completed earlier slot must not prevent later
+live slots from being read. Remove absent incomplete families from cached
+rotation state, and never fabricate a multi-day expiration when Blizzard has
+not loaded the timer yet. Retry missing timer data with a bounded request.
 Only expand IDs present in the verified covenant-family table; an unknown ID
 must remain limited to the active covenant. Keep observed family expiration
 account-wide, completion suppression character-specific, and both bounded by

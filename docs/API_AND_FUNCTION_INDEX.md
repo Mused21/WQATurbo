@@ -102,9 +102,11 @@ Quest, Quest Flag, Quest Pin and mission tracking data.
 
 ### `WQA:AddCallings()` / `WQA:UpdateCallings(callings)`
 
-Owned by `Tracking/Callings.lua`. Reuses unexpired family rotations, merges
-Blizzard's active-covenant payload, and registers each selected covenant's
-mapped variant. `WQA:IsCallingActive(questID)` rejects stale transient state.
+Owned by `Tracking/Callings.lua`. Reconciles Blizzard's sparse active-covenant
+payload with unexpired family rotations, removes absent incomplete families,
+and registers each selected covenant's mapped variant. Missing expiration data
+uses a bounded request retry instead of a speculative lifetime.
+`WQA:IsCallingActive(questID)` rejects stale transient state.
 `WQA:CompleteCalling(questID)` stores a character completion lock through the
 observed expiration. `WQA:GetCallingCovenantName(questID)` and
 `WQA:GetCallingTimeLeftMinutes(questID)` supply display metadata for inferred

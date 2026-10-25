@@ -49,8 +49,10 @@ db.global.shadowlandsCallingRotations[familyID] = expiresAt
 The profile stores user choices. Character completion locks prevent a turned-in
 variant from returning during the same Calling rotation. The account-wide
 rotation cache lets another character or covenant reuse the active covenant's
-observed daily families. Both time-based caches prune expired or malformed
-entries when Calling state is rebuilt.
+observed daily families. Each authoritative payload removes cached families
+that are absent and not completed by the active character. Both time-based
+caches prune expired or malformed entries when Calling state is rebuilt, and a
+family enters the cache only after Blizzard supplies a positive expiration.
 
 ## 2. Important profile structures
 

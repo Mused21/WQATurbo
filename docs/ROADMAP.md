@@ -1,29 +1,46 @@
 # WQA Turbo Development Roadmap
 
-> **Current release target:** 1.8.2
+> **Current release target:** 1.8.3
 >
-> **Released baseline:** 1.8.1
+> **Released baseline:** 1.8.2
 >
-> **Current milestone:** 1.8.2 HidingBar and World Boss correctness
+> **Current milestone:** 1.8.3 Shadowlands Calling correctness
 >
-> **Current item:** Warband-weekly World Boss completion (In progress)
+> **Current item:** Shadowlands Calling payload reconciliation (In progress)
 >
-> **Last reviewed:** 2026-10-23
+> **Last reviewed:** 2026-10-25
 
 This is the active work queue for WQA Turbo. Read it before planning or
 starting follow-up work. Update the current item and status in the same change
 that completes or reprioritizes roadmap work. Released version documents are
 historical records and must not be reused as active checklists.
 
+## 1.8.3: Shadowlands Calling correctness
+
+| Status | Priority | Work item | Completion criteria |
+|---|---:|---|---|
+| **In progress** | P1 | Shadowlands Calling payload reconciliation | Sparse three-slot Calling payloads retain every later live slot; absent incomplete rotations are removed from the account cache; completed rotations remain available for selected alternate covenants until their observed expiration; unavailable timers trigger bounded data retries instead of fabricated three-day rows; focused automated and in-game checks pass. |
+
+Local implementation and automated verification are complete. In-game
+verification remains before this item can be marked Done.
+
+Focused 1.8.3 in-game checks:
+
+- Enable all four Shadowlands Calling covenants and compare WQA Turbo with the
+  three slots in Blizzard's Covenant Sanctum report. Complete the oldest
+  Calling, refresh or reload, and confirm the later live slots remain while an
+  absent old rotation such as **Training in Bastion** does not return. A turned-
+  in Calling may remain for another selected covenant only until its actual
+  observed expiration.
+
 ## 1.8.2: HidingBar and World Boss correctness
 
 | Status | Priority | Work item | Completion criteria |
 |---|---:|---|---|
-| **In progress** | P1 | Warband-weekly World Boss completion | Gobfather, Reshanor and Midnight outdoor World Boss rows are suppressed on alts after their weekly warband reward is claimed; unclaimed and legacy per-character bosses remain eligible; Encounter Journal work is skipped for completed warband rewards; focused automated and in-game checks pass. |
-| **In progress** | P1 | HidingBar LibDataBroker compatibility | WQA Turbo registers its clickable data object as a launcher; HidingBar discovers it without its add-any-type fallback; the hosted button preserves hover, left-click, Shift-left-click and right-click behavior; focused automated and in-game checks pass. |
+| **Done** | P1 | Warband-weekly World Boss completion | Gobfather, Reshanor and Midnight outdoor World Boss rows are suppressed on alts after their weekly warband reward is claimed; unclaimed and legacy per-character bosses remain eligible; Encounter Journal work is skipped for completed warband rewards; focused automated and in-game checks pass. |
+| **Done** | P1 | HidingBar LibDataBroker compatibility | WQA Turbo registers its clickable data object as a launcher; HidingBar discovers it without its add-any-type fallback; the hosted button preserves hover, left-click, Shift-left-click and right-click behavior; focused automated and in-game checks pass. |
 
-Local implementation and automated verification are complete. In-game
-verification remains before this item can be marked Done.
+Released as 1.8.2 on 2026-10-23.
 
 Focused 1.8.2 in-game checks:
 

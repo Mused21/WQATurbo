@@ -87,10 +87,12 @@ The War Within map list includes K'aresh (2371) and its Tazavesh open-world
 hub (2472). A map is still scanned only when its zone setting is enabled.
 Shadowlands Callings are a separate opt-in task source: Blizzard's
 `COVENANT_CALLINGS_UPDATED` payload supplies the active covenant's live daily
-families, a fixed lookup expands them to the selected covenant variants, and
-the existing task resolver prepares and publishes their links. Observed family
-expirations avoid polling inactive covenant quest logs. This does not add
-another broad map scan.
+families, including live entries after sparse completed slots. A fixed lookup
+expands them to the selected covenant variants, and the existing task resolver
+prepares and publishes their links. Each payload removes absent incomplete
+families; missing expiration data uses a coalesced, bounded payload retry.
+Observed family expirations avoid polling inactive covenant quest logs. This
+does not add another broad map scan.
 
 `WQA:IsMapCurrentlyAvailable()` prefers the localized live portal Area POI and
 uses Blizzard's regional weekly-reset clock as fallback. It returns available

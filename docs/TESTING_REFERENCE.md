@@ -106,8 +106,9 @@ It also checks Calling event dispatch, turn-in completion handling and
 covenant-change invalidation. The Calling test verifies all 24 families and 96
 unique IDs, selected-covenant expansion, labels and shared expiration, per-
 character completion retention, Blizzard completion flags, expiration pruning,
-unknown-ID fallback, request gating and the disabled setting. The options suite
-checks the master row and four dependent covenant selectors.
+unknown-ID fallback, sparse payload traversal, stale-family reconciliation,
+missing-timer retry coalescing, request gating and the disabled setting. The
+options suite checks the master row and four dependent covenant selectors.
 The locale suite also locks the contributed Simplified and Traditional Chinese
 Calling labels and selected-covenant description against English fallback.
 

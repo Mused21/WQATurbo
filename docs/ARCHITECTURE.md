@@ -263,9 +263,12 @@ sources. Consolidated runtime methods have one source owner.
 `Tracking/Callings.lua` owns optional Shadowlands Calling registration.
 `Runtime/Runtime.lua` forwards Calling, turn-in and covenant-change events.
 The active covenant's payload identifies shared daily families; the tracker
-expands those families into the selected covenant-specific variants. Observed
-family expirations are global, per-character completion locks are retained only
-through the same expiration, and covenant selections are profile settings.
+processes its sparse three-slot shape and expands those families into the
+selected covenant-specific variants. Each update removes absent incomplete
+families from the account cache. Observed family expirations are global,
+per-character completion locks are retained only through the same expiration,
+and covenant selections are profile settings. Missing expiration data triggers
+a bounded payload retry instead of creating a speculative rotation.
 
 `CheckReward()` owns item-link acquisition and retry aggregation. Its focused
 classifiers decide what the resolved reward means and publish through
@@ -298,10 +301,12 @@ Flags, Quest Pins and missions during each `CreateQuestList()` rebuild.
 
 Requests the active covenant's Calling data when the Shadowlands option is
 enabled. Known IDs resolve to a shared daily family and register every selected
-covenant's variant. Unmapped future IDs remain active-covenant only. Covenant
-changes invalidate transient event state before requesting current data;
-turn-in records a character-scoped completion through the observed expiration
-and removes that variant immediately.
+covenant's variant. Sparse payload slots are processed independently, absent
+incomplete families are removed, and rows without an authoritative expiration
+wait for a bounded Calling-data retry. Unmapped future IDs remain active-
+covenant only. Covenant changes invalidate transient event state before
+requesting current data; turn-in records a character-scoped completion through
+the observed expiration and removes that variant immediately.
 
 ### `Tracking/QuestAvailability.lua`
 
