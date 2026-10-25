@@ -90,8 +90,9 @@ Editor validation and option-tree changes belong in `UI/Options/Custom.lua`.
 ### `Tracking/Callings.lua`
 
 Owns opt-in Shadowlands Calling registration. It resolves Blizzard's active
-covenant payload to shared daily families, registers selected covenant variants,
-tracks observed expirations and per-character completion locks, and limits
+covenant's sparse payload to shared daily families, reconciles stale rotations,
+registers selected covenant variants, tracks observed expirations and per-
+character completion locks, and limits
 unknown future IDs to the active covenant. Event wiring belongs in
 `Runtime/Runtime.lua`.
 

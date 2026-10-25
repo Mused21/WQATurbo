@@ -3,7 +3,8 @@ local WQA = WQATurbo
 local RewardType = WQA.Constants.RewardType
 local CallingData = WQA.ShadowlandsCallingData
 
-local MAX_CALLING_DURATION_SECONDS = 3 * 24 * 60 * 60
+local CALLING_TIME_RETRY_DELAY_SECONDS = 2
+local MAX_CALLING_TIME_RETRIES = 5
 
 local function activeCovenantID()
 	return C_Covenants and C_Covenants.GetActiveCovenantID
@@ -76,6 +77,21 @@ local function addCalling(active, questID, familyID, covenantID, expiresAt)
 		covenantID = covenantID,
 		expiresAt = expiresAt,
 	}
+end
+
+local function scheduleCallingTimeRetry(self)
+	if type(self.ScheduleTimer) ~= "function" then return end
+	if self._wqaCallingTimeRetryScheduled then return end
+
+	local retryCount = tonumber(self._wqaCallingTimeRetryCount) or 0
+	if retryCount >= MAX_CALLING_TIME_RETRIES then return end
+
+	self._wqaCallingTimeRetryCount = retryCount + 1
+	self._wqaCallingTimeRetryScheduled = true
+	self:ScheduleTimer(function()
+		self._wqaCallingTimeRetryScheduled = nil
+		self:RequestCallings()
+	end, CALLING_TIME_RETRY_DELAY_SECONDS)
 end
 
 local function rebuildActiveCallings(self)
@@ -161,27 +177,53 @@ function WQA:UpdateCallings(callings)
 	local rotations = callingRotations(self)
 	local completions = callingCompletions(self)
 	local unmapped = {}
+	local observedFamilies = {}
+	local missingExpiration = false
 
 	pruneExpiredCallingState(self, now)
 
 	if type(callings) == "table" then
-		for _, calling in ipairs(callings) do
+		-- Blizzard exposes three Calling slots and leaves completed slots nil.
+		-- pairs() is intentional: ipairs() stops at the first completed slot.
+		for _, calling in pairs(callings) do
 			local questID = type(calling) == "table" and calling.questID
 			if type(questID) == "number" and questID > 0 then
 				local secondsLeft = C_TaskQuest.GetQuestTimeLeftSeconds(questID)
-				local expiresAt = now +
-					(type(secondsLeft) == "number" and secondsLeft > 0
-						and secondsLeft or MAX_CALLING_DURATION_SECONDS)
+				local hasExpiration = type(secondsLeft) == "number" and secondsLeft > 0
+				local expiresAt = hasExpiration and now + secondsLeft
 				local mapping = CallingData.ByQuestID[questID]
 
 				if mapping and mapping.covenantID == covenantID then
-					rotations[mapping.familyID] = expiresAt
+					observedFamilies[mapping.familyID] = true
+					if expiresAt then rotations[mapping.familyID] = expiresAt end
 					completions[questID] = nil
-				elseif not mapping then
+				elseif not mapping and expiresAt then
 					unmapped[questID] = expiresAt
+				end
+
+				if not hasExpiration then missingExpiration = true end
+			end
+		end
+
+		-- The newest payload is authoritative for offered/active Callings. Keep
+		-- an absent family only when this character completed its active-covenant
+		-- variant and the previously observed rotation has not expired; this lets
+		-- the selected variants for other covenants remain useful after turn-in.
+		for familyID in pairs(rotations) do
+			if not observedFamilies[familyID] then
+				local family = CallingData.QuestFamilies[familyID]
+				local activeQuestID = family and family[covenantID]
+				if not activeQuestID or not isCallingCompleted(self, activeQuestID, now) then
+					rotations[familyID] = nil
 				end
 			end
 		end
+	end
+
+	if missingExpiration then
+		scheduleCallingTimeRetry(self)
+	else
+		self._wqaCallingTimeRetryCount = 0
 	end
 
 	self._wqaCallingCovenantID = covenantID

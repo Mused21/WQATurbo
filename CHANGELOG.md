@@ -1,5 +1,10 @@
 # WQA Turbo Changelog
 
+## 1.8.3
+
+### Fixed
+- Reconcile Shadowlands Callings against Blizzard's latest sparse three-slot payload so completed slots cannot hide later live Callings and stale rotations such as Training in Bastion cannot persist with an invented three-day timer.
+
 ## 1.8.2
 
 ### Improved

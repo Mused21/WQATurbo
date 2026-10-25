@@ -6,6 +6,7 @@ local requests, resolverChecks = 0, 0
 local timeLeft = {}
 local completed = {}
 local requestedQuestData = {}
+local scheduledCallingRetries = {}
 
 GetServerTime = function() return now end
 C_Covenants = {
@@ -45,6 +46,11 @@ WQATurbo = {
 		assert(restart == true)
 		assert(automatic == true)
 		resolverChecks = resolverChecks + 1
+	end,
+	ScheduleTimer = function(_, callback, delay)
+		assert(delay == 2)
+		table.insert(scheduledCallingRetries, callback)
+		return #scheduledCallingRetries
 	end,
 }
 local WQA = WQATurbo
@@ -94,19 +100,45 @@ WQA:RegisterCallings()
 assert(not WQA:IsCallingActive(60365) and not WQA:IsCallingActive(60389))
 assert(WQA:IsCallingActive(60363) and WQA:IsCallingActive(60390))
 
+-- Future active-covenant IDs get the same turn-in suppression even though
+-- their family cannot safely be inferred for other covenants.
+WQA:CompleteCalling(69999)
+assert(not WQA:IsCallingActive(69999))
+assert(WQA.db.char.shadowlandsCallingCompletions[69999] == now + 1800)
+assert(requests == 2)
+
+-- Blizzard leaves completed Calling slots nil. Later live slots must still be
+-- processed, and a cached family absent from the authoritative payload must be
+-- removed instead of surviving as a phantom Calling.
+WQA.db.global.shadowlandsCallingRotations[10] = now + 10000
+WQA:UpdateCallings({ [2] = { questID = 60358 }, [3] = { questID = 60391 } })
+assert(WQA:IsCallingActive(60358) and WQA:IsCallingActive(60391))
+assert(WQA.db.global.shadowlandsCallingRotations[10] == nil,
+	"An absent, incomplete Calling family must be removed")
+
+-- A temporarily unavailable timer must not invent a new three-day rotation.
+-- The tracker waits for a bounded fresh Calling payload instead.
+timeLeft[60404] = nil
+WQA:UpdateCallings({
+	[1] = { questID = 60358 },
+	[2] = { questID = 60391 },
+	[3] = { questID = 60404 },
+})
+assert(WQA.db.global.shadowlandsCallingRotations[10] == nil)
+assert(#scheduledCallingRetries == 1, "Missing Calling time must schedule one retry")
+WQA:UpdateCallings({
+	[1] = { questID = 60358 },
+	[2] = { questID = 60391 },
+	[3] = { questID = 60404 },
+})
+assert(#scheduledCallingRetries == 1, "Repeated payloads must coalesce the timer retry")
+
 -- Turning in one covenant's quest hides only that variant until the shared
 -- rotation expires. Other selected covenant variants remain available.
 WQA:CompleteCalling(60358)
 assert(not WQA:IsCallingActive(60358))
 assert(WQA:IsCallingActive(60364) and WQA:IsCallingActive(60363))
 assert(WQA.db.char.shadowlandsCallingCompletions[60358] == now + 3600)
-assert(requests == 2)
-
--- Future active-covenant IDs get the same turn-in suppression even though
--- their family cannot safely be inferred for other covenants.
-WQA:CompleteCalling(69999)
-assert(not WQA:IsCallingActive(69999))
-assert(WQA.db.char.shadowlandsCallingCompletions[69999] == now + 1800)
 assert(requests == 3)
 
 -- A payload with the completed slot absent must retain the observed rotation.
@@ -154,4 +186,4 @@ WQA:UpdateCallings({ { questID = 60455 } })
 assert(not WQA:IsCallingActive(60455))
 assert(resolverChecks >= 5)
 
-print("Covenant Calling family, selection, completion and expiration tests passed")
+print("Covenant Calling sparse payload, reconciliation, completion and expiration tests passed")

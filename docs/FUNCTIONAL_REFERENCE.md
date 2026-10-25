@@ -409,6 +409,9 @@ The four covenant selectors are enabled by default when the master option is
 first enabled. Turning in a variant hides it for that character until the
 observed Calling expires, without hiding the other covenant variants. The
 selection and completion behavior survives covenant switches and `/reload`.
+The latest Blizzard payload removes incomplete rotations that are no longer
+offered. If its expiration timer is still loading, the row waits for a bounded
+retry instead of being assigned a speculative three-day lifetime.
 
 ## 17. Mission tables
 
