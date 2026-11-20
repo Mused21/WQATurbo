@@ -33,6 +33,9 @@ jobs:
       - name: Test tracking policy
         run: lua5.1 tools/test_tracking_policy.lua
 
+      - name: Test expansion data
+        run: lua5.1 tools/test_expansion_data.lua
+
       - name: Test utility routing
         run: lua5.1 tools/test_utilities.lua
 

@@ -1,5 +1,13 @@
 # WQA Turbo Changelog
 
+## 1.8.4
+
+### Improved
+- Declare Retail 12.1.5 and 12.1.7 compatibility together after auditing WQA Turbo's Blizzard API usage against the PTR definitions.
+
+### Fixed
+- Track the Hungry, Hungry Ranishu achievement when its A Few More Charges World Quest is active in Vol'dun.
+
 ## 1.8.3
 
 ### Fixed

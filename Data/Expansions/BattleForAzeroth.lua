@@ -50,6 +50,7 @@ data.achievements = {
         faction = "Alliance"
     },
     {name = "By de Power of de Loa!", id = 13035, criteriaType = "QUESTS", criteria = {{51178, 51232}}},
+    {name = "Hungry, Hungry Ranishu", id = 13041, criteriaType = "QUEST_SINGLE", criteria = 52798, faction = "Horde"},
     {name = "Bless the Rains Down in Freehold", id = 13050, criteriaType = "QUESTS", criteria = {{53196, 52159}}},
     {
         name = "Kul Runnings",
