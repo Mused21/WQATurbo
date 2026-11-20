@@ -413,9 +413,10 @@ Development tooling/scripts. Excluded from release package.
 `validate_project.py` checks structure, startup load order and package hygiene.
 `test_tracking_policy.lua` exercises tracking behavior and Val/Naigtal
 availability with stubbed Blizzard APIs and runs under Lua 5.1 in the validation
-workflow. `test_callings.lua` covers the complete 96-ID mapping, selected
-covenant expansion, completion retention, expiration, unknown-ID fallback and
-disabled states. `test_reward_classifier.lua`
+workflow. `test_expansion_data.lua` guards focused declarative expansion
+mappings such as Hungry, Hungry Ranishu. `test_callings.lua` covers the complete
+96-ID mapping, selected covenant expansion, completion retention, expiration,
+unknown-ID fallback and disabled states. `test_reward_classifier.lua`
 checks representative reward categories, link fallbacks and retry propagation.
 `test_locales.lua` ensures Simplified and Traditional Chinese override every
 task match-reason label, retain the formatted explanation argument and include

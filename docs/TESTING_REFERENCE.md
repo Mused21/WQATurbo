@@ -15,6 +15,7 @@ From the repository root with a Lua 5.1 interpreter:
 
 ```text
 lua5.1 tools/test_tracking_policy.lua
+lua5.1 tools/test_expansion_data.lua
 lua5.1 tools/test_callings.lua
 lua5.1 tools/test_reward_classifier.lua
 lua5.1 tools/test_reward_scanner.lua
@@ -32,6 +33,10 @@ and custom pages using TOC load order, then checks search, settings scope and
 shared refresh coalescing. An optional path to a pre-split `Options.lua` compares
 generated metadata (function types, not callback identity), excluding generated
 order numbers and intentional Gear-setting additions/removals.
+
+The expansion-data suite loads the real declarative expansion file and guards
+small, release-critical static mappings such as the Horde-only Hungry, Hungry
+Ranishu World Quest relationship.
 
 In the local Windows workspace, Lua 5.1.5 is installed at:
 

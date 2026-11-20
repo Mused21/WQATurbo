@@ -1,10 +1,10 @@
 # WQA Turbo Developer Documentation
 
-> **Documentation baseline:** WQA Turbo **1.5.2** / `master`
+> **Documentation baseline:** WQA Turbo **1.8.4 development** / `fix/1.8.4-bfa-12.1.7`
 >
-> **Behavioral baseline:** released WQA Turbo 1.5.2 behavior
+> **Behavioral baseline:** released WQA Turbo 1.8.3 behavior
 >
-> **Last major documentation refresh:** 2026-09-24
+> **Last reviewed:** 2026-11-20
 
 This directory is the canonical architectural and functional reference for WQA Turbo.
 
@@ -67,6 +67,7 @@ runtime methods.
 | [GLOSSARY.md](GLOSSARY.md) | Project terminology |
 | [CURRENT_PATCH_AUDIT_1.3.0.md](CURRENT_PATCH_AUDIT_1.3.0.md) | Sourced Retail 12.1 map, faction, currency, profession and achievement audit |
 | [CURRENT_PATCH_AUDIT_1.8.1.md](CURRENT_PATCH_AUDIT_1.8.1.md) | Retail 12.1.5 compatibility audit and live verification boundary |
+| [CURRENT_PATCH_AUDIT_1.8.4.md](CURRENT_PATCH_AUDIT_1.8.4.md) | Retail 12.1.7 interface/API audit and live verification boundary |
 
 ## Quick mental model
 
@@ -110,11 +111,11 @@ When debugging or extending the addon:
 
 ## Current release direction
 
-Version **1.7.0** is released. Version **1.7.1** adds per-character controls for
-recognized BfA armor and weapon caches. The
-completed 1.2.0 refactor and verification
-history remain in [VERSION_1.2.0.md](VERSION_1.2.0.md). See
-[ROADMAP.md](ROADMAP.md) for follow-up work and research status.
+Version **1.8.3** is released. Version **1.8.4** adds the missing Hungry,
+Hungry Ranishu achievement mapping and prepares the TOC for Retail 12.1.7.
+The completed 1.2.0 refactor and verification history remain in
+[VERSION_1.2.0.md](VERSION_1.2.0.md). See [ROADMAP.md](ROADMAP.md) for active
+work and verification status.
 
 The preserved **1.1.0** behavior includes:
 

@@ -28,7 +28,7 @@ TOC = ROOT / "WQATurbo.toc"
 PKGMETA = ROOT / ".pkgmeta"
 CHANGELOG = ROOT / "CHANGELOG.md"
 ROADMAP = ROOT / "docs" / "ROADMAP.md"
-EXPECTED_RETAIL_INTERFACE = "120105"
+EXPECTED_RETAIL_INTERFACES = ("120105", "120107")
 
 REMOVED_1215_GLOBAL_APIS = (
     "GetDetailedItemLevelInfo",
@@ -87,6 +87,7 @@ REQUIRED_PROJECT_FILES = (
     "Rewards/RewardType.lua",
     "Criterias/CriteriaType.lua",
     "Criterias/AreaPoi.lua",
+    "tools/test_expansion_data.lua",
     "tools/test_reward_classifier.lua",
     "tools/test_locales.lua",
     "tools/test_match_reason.lua",
@@ -277,11 +278,14 @@ def validate_toc(validation: Validation) -> None:
             "WQATurbo.toc must declare WQATurboDB as SavedVariables."
         )
 
-    interface = re.search(r"^## Interface:\s*(\d+)\s*$", text, re.MULTILINE)
-    if not interface or interface.group(1) != EXPECTED_RETAIL_INTERFACE:
+    interface = re.search(r"^## Interface:\s*([\d,\s]+)$", text, re.MULTILINE)
+    interface_versions = tuple(
+        version.strip() for version in interface.group(1).split(",")
+    ) if interface else ()
+    if interface_versions != EXPECTED_RETAIL_INTERFACES:
         validation.error(
-            "WQATurbo.toc must declare Retail interface "
-            f"{EXPECTED_RETAIL_INTERFACE}."
+            "WQATurbo.toc must declare Retail interfaces "
+            f"{', '.join(EXPECTED_RETAIL_INTERFACES)}."
         )
 
     sources = parse_toc_sources(text)

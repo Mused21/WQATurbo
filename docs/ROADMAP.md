@@ -1,28 +1,57 @@
 # WQA Turbo Development Roadmap
 
-> **Current release target:** 1.8.3
+> **Current release target:** 1.8.4
 >
-> **Released baseline:** 1.8.2
+> **Released baseline:** 1.8.3
 >
-> **Current milestone:** 1.8.3 Shadowlands Calling correctness
+> **Current milestone:** 1.8.4 BFA data and Retail 12.1.7 readiness
 >
-> **Current item:** Shadowlands Calling payload reconciliation (In progress)
+> **Current item:** BFA achievement mapping and Retail 12.1.7 compatibility (In progress)
 >
-> **Last reviewed:** 2026-10-25
+> **Last reviewed:** 2026-11-20
 
 This is the active work queue for WQA Turbo. Read it before planning or
 starting follow-up work. Update the current item and status in the same change
 that completes or reprioritizes roadmap work. Released version documents are
 historical records and must not be reused as active checklists.
 
+## 1.8.4: BFA data and Retail 12.1.7 readiness
+
+| Status | Priority | Work item | Completion criteria |
+|---|---:|---|---|
+| **In progress** | P1 | Hungry, Hungry Ranishu achievement mapping | Achievement `13041` registers Horde World Quest `52798` while incomplete, respects its tracking mode and zone settings, and stops appearing after completion; focused automated and in-game checks pass. |
+| **In progress** | P1 | Retail 12.1.7 compatibility | The TOC declares interfaces `120105, 120107` so one package loads before and after the update; APIs used by WQA Turbo remain compatible with the 12.1.7 client; login, refresh, representative legacy/current World Quest discovery, reward classification and popup behavior pass in-game verification on Retail 12.1.7. |
+
+The static mapping and interface/API audit are complete. Final in-game
+verification remains before either item can be marked Done. Blizzard has
+announced that Retail 12.1.7 launches on 2026-12-01.
+
+Focused 1.8.4 in-game checks:
+
+- With achievement `13041` incomplete and BFA/Vol'dun achievement tracking
+  enabled, confirm **A Few More Charges** appears while World Quest `52798` is
+  active and names **Hungry, Hungry Ranishu** as its achievement reason.
+- Disable Vol'dun or the achievement and confirm the World Quest no longer
+  appears for that reason. Confirm it does not appear on an Alliance character.
+- After earning achievement `13041`, restore Default tracking and confirm the
+  World Quest is suppressed; Always track should continue to force it.
+- On Retail 12.1.7, confirm WQA Turbo loads without the out-of-date override or
+  Lua errors, then refresh representative BFA and Midnight maps and inspect an
+  equipment/transmog reward. Confirm the popup, minimap button and Settings
+  still open normally.
+
 ## 1.8.3: Shadowlands Calling correctness
 
 | Status | Priority | Work item | Completion criteria |
 |---|---:|---|---|
-| **In progress** | P1 | Shadowlands Calling payload reconciliation | Sparse three-slot Calling payloads retain every later live slot; absent incomplete rotations are removed from the account cache; completed rotations remain available for selected alternate covenants until their observed expiration; unavailable timers trigger bounded data retries instead of fabricated three-day rows; focused automated and in-game checks pass. |
+| **Done** | P1 | Shadowlands Calling payload reconciliation | Sparse three-slot Calling payloads retain every later live slot; absent incomplete rotations are removed from the account cache; completed rotations remain available for selected alternate covenants until their observed expiration; unavailable timers trigger bounded data retries instead of fabricated three-day rows; focused automated and in-game checks pass. |
 
-Local implementation and automated verification are complete. In-game
-verification remains before this item can be marked Done.
+Local automated verification and in-game verification were completed on
+2026-10-25. The live three-Calling rotation appeared for all four selected
+covenants, including their native-zone replacement names, while the stale
+**Training in Bastion** rotation remained absent.
+
+Released as 1.8.3 on 2026-10-25.
 
 Focused 1.8.3 in-game checks:
 
